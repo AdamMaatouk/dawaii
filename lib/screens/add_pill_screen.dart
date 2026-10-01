@@ -1,2517 +1,1088 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/pill_model.dart';
-import '../services/storage_service.dart';
-import '../services/notification_service.dart';
-import '../services/language_service.dart';
+import '../services/dose_actions.dart';
+import '../theme/app_theme.dart';
+import '../utils/formatters.dart';
 import '../widgets/pill_shape_widget.dart';
 
 class AddPillScreen extends StatefulWidget {
   final PillModel? pillToEdit;
 
-  const AddPillScreen({
-    super.key,
-    this.pillToEdit,
-  });
+  const AddPillScreen({super.key, this.pillToEdit});
 
   @override
   State<AddPillScreen> createState() => _AddPillScreenState();
 }
 
+class _ColorOption {
+  final int value;
+  final String Function(AppLocalizations) name;
+  const _ColorOption(this.value, this.name);
+}
+
+final List<_ColorOption> _colorOptions = [
+  _ColorOption(0xFF6366F1, (l) => l.colorIndigo),
+  _ColorOption(0xFF3B82F6, (l) => l.colorBlue),
+  _ColorOption(0xFF10B981, (l) => l.colorGreen),
+  _ColorOption(0xFFFACC15, (l) => l.colorYellow),
+  _ColorOption(0xFFF59E0B, (l) => l.colorOrange),
+  _ColorOption(0xFFEF4444, (l) => l.colorRed),
+  _ColorOption(0xFFEC4899, (l) => l.colorPink),
+  _ColorOption(0xFF92400E, (l) => l.colorBrown),
+  _ColorOption(0xFF9CA3AF, (l) => l.colorGray),
+  _ColorOption(0xFFFFFFFF, (l) => l.colorWhite),
+];
+
+/// Common reminder times offered as one-tap chips.
+const List<TimeOfDay> _quickTimes = [
+  TimeOfDay(hour: 8, minute: 0),
+  TimeOfDay(hour: 13, minute: 0),
+  TimeOfDay(hour: 20, minute: 0),
+  TimeOfDay(hour: 22, minute: 0),
+];
+
 class _AddPillScreenState extends State<AddPillScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController _nameController;
-  late final TextEditingController _dosageController;
-  late final TextEditingController _pillCountController;
-  late final TextEditingController _durationController;
-  late final TextEditingController _instructionsController;
+  late final TextEditingController _name;
+  late final TextEditingController _dosage;
+  late final TextEditingController _pillCount;
+  late final TextEditingController _duration;
+  late final TextEditingController _instructions;
+  late final TextEditingController _stock;
+  late final TextEditingController _threshold;
 
-  late PillShape _selectedShape;
-  late int _selectedColorHex;
-  late FrequencyType _selectedFrequency;
+  late PillShape _shape;
+  late int _colorHex;
+  late FrequencyType _frequency;
+  late List<TimeOfDay> _times;
+  late List<int> _days;
+  late int _intervalDays;
+  late bool _ongoing;
+  late TreatmentDurationUnit _durationUnit;
+  late bool _trackStock;
 
   final ImagePicker _imagePicker = ImagePicker();
-  String? _selectedPhotoPath;
-  String? _originalPhotoPath;
-  final Set<String> _newPhotoPaths = <String>{};
-  bool _didSavePill = false;
+  String? _photoPath;
+  final Set<String> _newPhotos = {};
+  bool _saved = false;
+  bool _saving = false;
 
-  List<TimeOfDay> _selectedTimes = [];
-
-  List<int> _selectedDaysOfWeek = [
-    DateTime.monday,
-    DateTime.tuesday,
-    DateTime.wednesday,
-    DateTime.thursday,
-    DateTime.friday,
-    DateTime.saturday,
-    DateTime.sunday,
-  ];
-
-  int _intervalDays = 2;
-
-  TreatmentDurationUnit _selectedDurationUnit =
-      TreatmentDurationUnit.months;
-
-  final StorageService _storageService = StorageService();
-  final NotificationService _notificationService = NotificationService();
-  final LanguageService _languageService =
-      LanguageService();
-
-  String _t(
-    String key, {
-    Map<String, Object?> params =
-        const <String, Object?>{},
-  }) {
-    return _languageService.tr(
-      key,
-      params: params,
-    );
-  }
-
-  bool get _isDarkMode =>
-      Theme.of(context).brightness == Brightness.dark;
-
-  Color get _pageBackgroundColor =>
-      _isDarkMode
-          ? const Color(0xFF0B1220)
-          : const Color(0xFFF8FAFC);
-
-  Color get _surfaceColor =>
-      _isDarkMode
-          ? const Color(0xFF172033)
-          : Colors.white;
-
-  Color get _innerSurfaceColor =>
-      _isDarkMode
-          ? const Color(0xFF0F172A)
-          : const Color(0xFFF8FAFC);
-
-  Color get _primaryTextColor =>
-      _isDarkMode
-          ? const Color(0xFFF8FAFC)
-          : const Color(0xFF0F172A);
-
-  Color get _secondaryTextColor =>
-      _isDarkMode
-          ? const Color(0xFFCBD5E1)
-          : const Color(0xFF64748B);
-
-  Color get _mutedTextColor =>
-      _isDarkMode
-          ? const Color(0xFF94A3B8)
-          : const Color(0xFF94A3B8);
-
-  Color get _borderColor =>
-      _isDarkMode
-          ? const Color(0xFF334155)
-          : const Color(0xFFE2E8F0);
-
-  Color get _accentColor =>
-      _isDarkMode
-          ? const Color(0xFF818CF8)
-          : const Color(0xFF6366F1);
-
-  Color get _softAccentColor =>
-      _isDarkMode
-          ? const Color(0xFF252C52)
-          : const Color(0xFFEEF2FF);
-
-  final List<int> _colorOptions = [
-    0xFF6366F1, // Indigo
-    0xFF10B981, // Green
-    0xFFFACC15, // Yellow
-    0xFFF59E0B, // Amber
-    0xFFEF4444, // Red
-    0xFF9CA3AF, // Gray
-    0xFFFFFFFF, // White
-  ];
-
-  Map<int, String> get _dayLabels => {
-    DateTime.monday: _t('mon'),
-    DateTime.tuesday: _t('tue'),
-    DateTime.wednesday: _t('wed'),
-    DateTime.thursday: _t('thu'),
-    DateTime.friday: _t('fri'),
-    DateTime.saturday: _t('sat'),
-    DateTime.sunday: _t('sun'),
-  };
+  PillModel? get _editing => widget.pillToEdit;
 
   @override
   void initState() {
     super.initState();
+    final pill = _editing;
 
-    final pill = widget.pillToEdit;
-
-    _selectedPhotoPath = pill?.photoPath;
-    _originalPhotoPath = pill?.photoPath;
-
-    _nameController = TextEditingController(
-      text: pill?.name ?? '',
+    _name = TextEditingController(text: pill?.name ?? '');
+    _dosage = TextEditingController(text: pill?.dosage ?? '');
+    _pillCount = TextEditingController(text: '${pill?.pillCount ?? 1}');
+    _instructions = TextEditingController(text: pill?.instructions ?? '');
+    _duration = TextEditingController(
+      text: '${pill?.treatmentDurationValue ?? 1}',
     );
-
-    _dosageController = TextEditingController(
-      text: pill?.dosage ?? '',
+    _stock = TextEditingController(
+      text: pill?.stockCount == null ? '' : '${pill!.stockCount}',
     );
+    _threshold = TextEditingController(text: '${pill?.refillThreshold ?? 10}');
 
-    _pillCountController = TextEditingController(
-      text: (pill?.pillCount ?? 1).toString(),
-    );
+    _shape = pill?.shape ?? PillShape.capsule;
+    _colorHex = pill?.colorHex ?? _colorOptions.first.value;
+    _frequency = pill?.frequencyType ?? FrequencyType.daily;
+    _times = (pill?.scheduleTimes ?? const [])
+        .map(_parseTime)
+        .whereType<TimeOfDay>()
+        .toList();
+    _days = pill != null && pill.daysOfWeek.isNotEmpty
+        ? List.of(pill.daysOfWeek)
+        : [1, 2, 3, 4, 5, 6, 7];
+    _intervalDays = (pill?.intervalDays ?? 2).clamp(2, 30);
+    _ongoing = pill == null || pill.treatmentEndDate == null;
+    _durationUnit = pill?.treatmentDurationUnit ?? TreatmentDurationUnit.days;
+    _trackStock = pill?.tracksStock ?? false;
+    _photoPath = pill?.photoPath;
 
-    _selectedDurationUnit =
-        pill?.treatmentDurationUnit ??
-            TreatmentDurationUnit.months;
-
-    _durationController = TextEditingController(
-      text: (pill?.treatmentDurationValue ??
-              (pill == null ? 1 : 12))
-          .toString(),
-    );
-
-    _instructionsController = TextEditingController(
-      text: pill?.instructions ?? '',
-    );
-
-    _selectedShape =
-        pill?.shape ?? PillShape.capsule;
-
-    _selectedColorHex =
-        pill?.colorHex ?? 0xFF6366F1;
-
-    _selectedFrequency =
-        pill?.frequencyType ?? FrequencyType.daily;
-
-    if (pill != null) {
-      _selectedTimes = pill.scheduleTimes
-          .map(_parseTime)
-          .whereType<TimeOfDay>()
-          .toList();
-
-      if (pill.daysOfWeek.isNotEmpty) {
-        _selectedDaysOfWeek =
-            List<int>.from(pill.daysOfWeek);
-      }
-
-      if (pill.intervalDays >= 2 &&
-          pill.intervalDays <= 15) {
-        _intervalDays = pill.intervalDays;
-      }
+    for (final c in [_name, _dosage, _pillCount, _duration]) {
+      c.addListener(_refresh);
     }
-
-    _nameController.addListener(_refreshPreview);
-    _dosageController.addListener(_refreshPreview);
-    _pillCountController.addListener(_refreshPreview);
-
     _sortTimes();
   }
 
-  void _refreshPreview() {
-    if (mounted) {
-      setState(() {});
-    }
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _nameController.removeListener(_refreshPreview);
-    _dosageController.removeListener(_refreshPreview);
-    _pillCountController.removeListener(_refreshPreview);
-
-    _nameController.dispose();
-    _dosageController.dispose();
-    _pillCountController.dispose();
-    _durationController.dispose();
-    _instructionsController.dispose();
-
-    if (!_didSavePill) {
-      for (final path in _newPhotoPaths) {
-        _deleteFileQuietly(path);
+    for (final c in [
+      _name,
+      _dosage,
+      _pillCount,
+      _duration,
+      _instructions,
+      _stock,
+      _threshold,
+    ]) {
+      c.dispose();
+    }
+    if (!_saved) {
+      for (final path in _newPhotos) {
+        _deleteQuietly(path);
       }
     }
-
     super.dispose();
   }
 
-  TimeOfDay? _parseTime(String value) {
-    final parts = value.trim().split(':');
+  AppLocalizations get _l => AppLocalizations.of(context);
 
-    if (parts.length != 2) {
-      return null;
-    }
+  // ============================================================
+  // HELPERS
+  // ============================================================
 
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-
-    if (hour == null ||
-        minute == null ||
-        hour < 0 ||
-        hour > 23 ||
-        minute < 0 ||
-        minute > 59) {
-      return null;
-    }
-
-    return TimeOfDay(
-      hour: hour,
-      minute: minute,
-    );
+  static TimeOfDay? _parseTime(String value) {
+    final parts = value.split(':');
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null || h > 23 || m > 59) return null;
+    return TimeOfDay(hour: h, minute: m);
   }
 
-  void _sortTimes() {
-    _selectedTimes.sort((a, b) {
-      final aMinutes =
-          (a.hour * 60) + a.minute;
+  static String _formatTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-      final bMinutes =
-          (b.hour * 60) + b.minute;
+  void _sortTimes() => _times.sort(
+        (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
+      );
 
-      return aMinutes.compareTo(bMinutes);
-    });
+  bool _hasTime(TimeOfDay t) =>
+      _times.any((e) => e.hour == t.hour && e.minute == t.minute);
+
+  int get _durationMax => switch (_durationUnit) {
+        TreatmentDurationUnit.days => 365,
+        TreatmentDurationUnit.weeks => 104,
+        TreatmentDurationUnit.months => 24,
+      };
+
+  /// Fixed durations count from the original start, unless the medication
+  /// was ongoing before (then from today).
+  DateTime get _durationBase {
+    final pill = _editing;
+    if (pill != null && pill.treatmentEndDate != null) return pill.startDate;
+    return DateTime.now();
   }
 
-  bool _containsTime(TimeOfDay time) {
-    return _selectedTimes.any(
-      (existing) =>
-          existing.hour == time.hour &&
-          existing.minute == time.minute,
-    );
+  DateTime _endDate(int value) {
+    final base = _durationBase;
+    final start = DateTime(base.year, base.month, base.day);
+    return switch (_durationUnit) {
+      TreatmentDurationUnit.days =>
+        DateTime(start.year, start.month, start.day + value - 1),
+      TreatmentDurationUnit.weeks =>
+        DateTime(start.year, start.month, start.day + value * 7 - 1),
+      TreatmentDurationUnit.months => () {
+          final lastDay = DateTime(start.year, start.month + value + 1, 0).day;
+          final day = start.day > lastDay ? lastDay : start.day;
+          return DateTime(start.year, start.month + value, day - 1);
+        }(),
+    };
   }
 
-  String _pillShapeLabel(PillShape shape) {
-    switch (shape) {
-      case PillShape.capsule:
-        return _t('capsule');
-
-      case PillShape.tablet:
-        return _t('tablet');
-
-      case PillShape.caplet:
-        return _t('caplet');
-
-      case PillShape.softgel:
-        return _t('softgel');
-    }
-  }
-
-  int get _durationMax {
-    switch (_selectedDurationUnit) {
-      case TreatmentDurationUnit.days:
-        return 365;
-      case TreatmentDurationUnit.weeks:
-        return 52;
-      case TreatmentDurationUnit.months:
-        return 12;
-    }
-  }
-
-  String get _durationUnitLabel {
-    switch (_selectedDurationUnit) {
-      case TreatmentDurationUnit.days:
-        return _t('dayUnit');
-      case TreatmentDurationUnit.weeks:
-        return _t('weekUnit');
-      case TreatmentDurationUnit.months:
-        return _t('monthUnit');
-    }
-  }
-
-  DateTime _addMonthsClamped(
-    DateTime date,
-    int months,
-  ) {
-    final zeroBasedMonth =
-        (date.month - 1) + months;
-
-    final targetYear =
-        date.year + (zeroBasedMonth ~/ 12);
-
-    final targetMonth =
-        (zeroBasedMonth % 12) + 1;
-
-    final lastDayOfTargetMonth =
-        DateTime(
-      targetYear,
-      targetMonth + 1,
-      0,
-    ).day;
-
-    final targetDay =
-        date.day > lastDayOfTargetMonth
-            ? lastDayOfTargetMonth
-            : date.day;
-
-    return DateTime(
-      targetYear,
-      targetMonth,
-      targetDay,
-    );
-  }
-
-  DateTime _calculateTreatmentEndDate(
-    DateTime baseDate,
-    int value,
-  ) {
-    final normalizedBase = DateTime(
-      baseDate.year,
-      baseDate.month,
-      baseDate.day,
-    );
-
-    switch (_selectedDurationUnit) {
-      case TreatmentDurationUnit.days:
-        return normalizedBase.add(
-          Duration(days: value - 1),
-        );
-
-      case TreatmentDurationUnit.weeks:
-        return normalizedBase.add(
-          Duration(days: (value * 7) - 1),
-        );
-
-      case TreatmentDurationUnit.months:
-        return _addMonthsClamped(
-          normalizedBase,
-          value,
-        ).subtract(
-          const Duration(days: 1),
-        );
-    }
-  }
-
-  String _formatTreatmentDate(
-    DateTime date,
-  ) {
-    final months = [
-      _t('jan'),
-      _t('feb'),
-      _t('mar'),
-      _t('apr'),
-      _t('may'),
-      _t('jun'),
-      _t('jul'),
-      _t('aug'),
-      _t('sep'),
-      _t('oct'),
-      _t('nov'),
-      _t('dec'),
-    ];
-
-    return '${months[date.month - 1]} '
-        '${date.day}, ${date.year}';
-  }
-
-  void _setDurationUnit(
-    TreatmentDurationUnit unit,
-  ) {
-    setState(() {
-      _selectedDurationUnit = unit;
-
-      final current =
-          int.tryParse(
-            _durationController.text.trim(),
-          ) ??
-          1;
-
-      if (current > _durationMax) {
-        _durationController.text =
-            _durationMax.toString();
-      } else if (current < 1) {
-        _durationController.text = '1';
-      }
-    });
-  }
-
-  Future<void> _deleteFileQuietly(
-    String path,
-  ) async {
+  Future<void> _deleteQuietly(String path) async {
     try {
       final file = File(path);
-
-      if (await file.exists()) {
-        await file.delete();
-      }
-    } catch (_) {
-      // Photo cleanup should never block medication actions.
-    }
-  }
-
-  Future<void> _takePillPhoto() async {
-    try {
-      final picked = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 90,
-        maxWidth: 1600,
-        maxHeight: 1600,
-      );
-
-      if (picked == null) {
-        return;
-      }
-
-      final documentsDirectory =
-          await getApplicationDocumentsDirectory();
-
-      final photosDirectory = Directory(
-        '${documentsDirectory.path}/pill_photos',
-      );
-
-      if (!await photosDirectory.exists()) {
-        await photosDirectory.create(
-          recursive: true,
-        );
-      }
-
-      final sourceName = picked.name;
-      final dotIndex = sourceName.lastIndexOf('.');
-      final extension =
-          dotIndex >= 0 ? sourceName.substring(dotIndex) : '.jpg';
-
-      final savedPath =
-          '${photosDirectory.path}/pill_${DateTime.now().microsecondsSinceEpoch}$extension';
-
-      await File(picked.path).copy(savedPath);
-
-      final previousPath = _selectedPhotoPath;
-
-      if (previousPath != null &&
-          _newPhotoPaths.contains(previousPath)) {
-        await _deleteFileQuietly(previousPath);
-        _newPhotoPaths.remove(previousPath);
-      }
-
-      if (!mounted) {
-        await _deleteFileQuietly(savedPath);
-        return;
-      }
-
-      setState(() {
-        _selectedPhotoPath = savedPath;
-        _newPhotoPaths.add(savedPath);
-      });
-    } catch (_) {
-      _showMessage(
-        _t('cameraError'),
-      );
-    }
-  }
-
-  Future<void> _removePillPhoto() async {
-    final currentPath = _selectedPhotoPath;
-
-    if (currentPath != null &&
-        _newPhotoPaths.contains(currentPath)) {
-      await _deleteFileQuietly(currentPath);
-      _newPhotoPaths.remove(currentPath);
-    }
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _selectedPhotoPath = null;
-    });
-  }
-
-  Widget _buildPillPhotoSection() {
-    final photoPath = _selectedPhotoPath;
-    final hasPhoto =
-        photoPath != null && File(photoPath).existsSync();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _t('pillPhotoOptional'),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: _secondaryTextColor,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          _t('pillPhotoHelp'),
-          style: TextStyle(
-            fontSize: 12,
-            height: 1.35,
-            color: _mutedTextColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 14),
-        if (hasPhoto)
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _innerSurfaceColor,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: _borderColor,
-              ),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.file(
-                    File(photoPath),
-                    width: 76,
-                    height: 76,
-                    fit: BoxFit.cover,
-                    errorBuilder: (
-                      context,
-                      error,
-                      stackTrace,
-                    ) {
-                      return Container(
-                        width: 76,
-                        height: 76,
-                        alignment: Alignment.center,
-                        color: _softAccentColor,
-                        child: Icon(
-                          Icons.medication_rounded,
-                          color: _accentColor,
-                          size: 30,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _t('pillPhotoAdded'),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: _primaryTextColor,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        _t('shownInsideAppOnly'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: _mutedTextColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: _takePillPhoto,
-                            icon: const Icon(
-                              Icons.photo_camera_rounded,
-                              size: 17,
-                            ),
-                            label: Text(_t('retake')),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: _accentColor,
-                              side: BorderSide(
-                                color: _accentColor.withValues(
-                                  alpha: 0.45,
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 9,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          TextButton.icon(
-                            onPressed: _removePillPhoto,
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 17,
-                            ),
-                            label: Text(_t('remove')),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFE11D48),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 9,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: _takePillPhoto,
-              icon: const Icon(
-                Icons.photo_camera_rounded,
-                size: 21,
-              ),
-              label: Text(
-                _t('addPillPhoto'),
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _accentColor,
-                backgroundColor: _softAccentColor,
-                side: BorderSide(
-                  color: _accentColor.withValues(
-                    alpha: 0.35,
-                  ),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Future<void> _addTimePicker() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-      initialEntryMode:
-          TimePickerEntryMode.input,
-      builder: (context, child) {
-        final baseTheme = Theme.of(context);
-
-        final colorScheme = _isDarkMode
-            ? const ColorScheme.dark(
-                primary: Color(0xFF818CF8),
-                onPrimary: Color(0xFF0B1220),
-                surface: Color(0xFF172033),
-                onSurface: Color(0xFFF8FAFC),
-              )
-            : const ColorScheme.light(
-                primary: Color(0xFF6366F1),
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Color(0xFF0F172A),
-              );
-
-        return Theme(
-          data: baseTheme.copyWith(
-            colorScheme: colorScheme,
-          ),
-          child:
-              child ?? const SizedBox.shrink(),
-        );
-      },
-    );
-
-    if (!mounted || picked == null) {
-      return;
-    }
-
-    if (_containsTime(picked)) {
-      _showMessage(
-        _t('duplicateDoseTime'),
-      );
-      return;
-    }
-
-    setState(() {
-      _selectedTimes.add(picked);
-      _sortTimes();
-    });
+      if (await file.exists()) await file.delete();
+    } catch (_) {}
   }
 
   void _showMessage(String message) {
     if (!mounted) return;
-
     ScaffoldMessenger.of(context)
-        .hideCurrentSnackBar();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(12),
-        ),
-      ),
-    );
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _savePill() async {
-    final isValid =
-        _formKey.currentState?.validate() ??
-            false;
+  // ============================================================
+  // PHOTO
+  // ============================================================
 
-    if (!isValid) {
-      return;
-    }
-
-    if (_selectedTimes.isEmpty) {
-      _showMessage(
-        _t('needDoseTime'),
-      );
-      return;
-    }
-
-    if (_selectedFrequency ==
-            FrequencyType.specificDays &&
-        _selectedDaysOfWeek.isEmpty) {
-      _showMessage(
-        _t('needWeekday'),
-      );
-      return;
-    }
-
-    final formattedTimes =
-        _selectedTimes.map((time) {
-      return '${time.hour.toString().padLeft(2, '0')}:'
-          '${time.minute.toString().padLeft(2, '0')}';
-    }).toList();
-
-    final treatmentDurationValue =
-        int.parse(
-      _durationController.text.trim(),
-    );
-
-    final existingPill =
-        widget.pillToEdit;
-
-    final startDate =
-        existingPill?.startDate ??
-            DateTime.now();
-
-    // Older saved medications did not have a treatment end date.
-    // When one of those is edited, start the newly chosen duration
-    // from today so it cannot immediately expire because of an old
-    // original start date.
-    final durationBaseDate =
-        existingPill != null &&
-                existingPill.treatmentEndDate == null
-            ? DateTime.now()
-            : startDate;
-
-    final treatmentEndDate =
-        _calculateTreatmentEndDate(
-      durationBaseDate,
-      treatmentDurationValue,
-    );
-
+  Future<void> _pickPhoto(ImageSource source) async {
     try {
-      if (widget.pillToEdit != null) {
-        await _notificationService
-            .cancelPillReminders(
-          widget.pillToEdit!,
-        );
-      }
-
-      final instructions =
-          _instructionsController.text.trim();
-
-      final pill = PillModel(
-        id: widget.pillToEdit?.id ??
-            DateTime.now()
-                .millisecondsSinceEpoch
-                .toString(),
-        name: _nameController.text.trim(),
-        dosage:
-            _dosageController.text.trim(),
-        pillCount:
-            int.parse(_pillCountController.text.trim()),
-        colorHex: _selectedColorHex,
-        shape: _selectedShape,
-        frequencyType:
-            _selectedFrequency,
-        scheduleTimes: formattedTimes,
-        daysOfWeek:
-            _selectedFrequency ==
-                    FrequencyType.specificDays
-                ? List<int>.from(
-                    _selectedDaysOfWeek,
-                  )
-                : [],
-        intervalDays:
-            _selectedFrequency ==
-                    FrequencyType.interval
-                ? _intervalDays
-                : 1,
-        startDate:
-            startDate,
-        treatmentDurationUnit:
-            _selectedDurationUnit,
-        treatmentDurationValue:
-            treatmentDurationValue,
-        treatmentEndDate:
-            treatmentEndDate,
-        photoPath:
-            _selectedPhotoPath,
-        instructions:
-            instructions.isEmpty
-                ? null
-                : instructions,
-        isActive:
-            widget.pillToEdit?.isActive ??
-                true,
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1200,
       );
+      if (picked == null) return;
 
-      await _storageService.savePill(pill);
+      final docs = await getApplicationDocumentsDirectory();
+      final folder = Directory('${docs.path}/pill_photos');
+      if (!await folder.exists()) await folder.create(recursive: true);
+      final dot = picked.name.lastIndexOf('.');
+      final ext = dot >= 0 ? picked.name.substring(dot) : '.jpg';
+      final saved =
+          '${folder.path}/pill_${DateTime.now().microsecondsSinceEpoch}$ext';
+      await File(picked.path).copy(saved);
 
-      if (_originalPhotoPath != null &&
-          _originalPhotoPath != _selectedPhotoPath) {
-        await _deleteFileQuietly(_originalPhotoPath!);
+      final previous = _photoPath;
+      if (previous != null && _newPhotos.remove(previous)) {
+        await _deleteQuietly(previous);
       }
-
-      _didSavePill = true;
-
-      if (pill.isActive) {
-        await _notificationService
-            .schedulePillReminder(pill);
+      if (!mounted) {
+        await _deleteQuietly(saved);
+        return;
       }
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop(true);
+      setState(() {
+        _photoPath = saved;
+        _newPhotos.add(saved);
+      });
     } catch (e) {
-      _showMessage(
-        _t(
-        'saveMedicationError',
-        params: {'error': e},
-      ),
-      );
+      debugPrint('PHOTO ERROR: $e');
+      _showMessage(_l.cameraError);
     }
   }
 
-  Widget _buildModernCard({
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _surfaceColor,
-        borderRadius:
-            BorderRadius.circular(24),
-        border: _isDarkMode
-            ? Border.all(
-                color: _borderColor,
-              )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(
-              0xFF0F172A,
-            ).withValues(
-              alpha: _isDarkMode ? 0.12 : 0.04,
-            ),
-            blurRadius:
-                _isDarkMode ? 10 : 20,
-            offset:
-                const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: child,
-    );
+  Future<void> _removePhoto() async {
+    final current = _photoPath;
+    if (current != null && _newPhotos.remove(current)) {
+      await _deleteQuietly(current);
+    }
+    if (mounted) setState(() => _photoPath = null);
   }
 
-  Widget _buildSectionTitle(
-    String title,
-    IconData icon,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: 4,
-        bottom: 12,
-        top: 20,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color:
-                _accentColor,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight:
-                  FontWeight.w800,
-              color:
-                  _primaryTextColor,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
-      ),
-    );
+  // ============================================================
+  // TIMES
+  // ============================================================
+
+  void _addTime(TimeOfDay time) {
+    if (_hasTime(time)) {
+      _showMessage(_l.duplicateDoseTime);
+      return;
+    }
+    setState(() {
+      _times.add(time);
+      _sortTimes();
+    });
   }
 
-  InputDecoration _buildInputDecoration(
-    String label,
-    String hint,
-    IconData icon,
-  ) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      prefixIcon: Icon(
-        icon,
-        color: _mutedTextColor,
-        size: 22,
-      ),
-      filled: true,
-      fillColor: _innerSurfaceColor,
-      labelStyle: TextStyle(
-        color: _secondaryTextColor,
-        fontWeight: FontWeight.w500,
-      ),
-      hintStyle: TextStyle(
-        color: _mutedTextColor,
-        fontWeight: FontWeight.w500,
-      ),
-      errorStyle: TextStyle(
-        color: _isDarkMode
-            ? const Color(0xFFFCA5A5)
-            : Colors.redAccent,
-        fontWeight: FontWeight.w500,
-      ),
-      border: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: _borderColor,
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: _isDarkMode
-              ? _borderColor
-              : Colors.transparent,
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: _accentColor,
-          width: 1.5,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-        ),
-      ),
-      focusedErrorBorder:
-          OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-          width: 1.5,
-        ),
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 8, minute: 0),
+      initialEntryMode: TimePickerEntryMode.dial,
     );
+    if (picked != null && mounted) _addTime(picked);
   }
 
-  Widget _buildNotificationPreview() {
-    final medicationName = _nameController.text.trim();
-    final dosage = _dosageController.text.trim();
-    final pillCount = int.tryParse(
-          _pillCountController.text.trim(),
-        ) ??
-        1;
+  // ============================================================
+  // SAVE
+  // ============================================================
 
-    final displayName =
-        medicationName.isEmpty ? _t('medication') : medicationName;
+  Future<void> _save() async {
+    if (_saving) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_times.isEmpty) {
+      _showMessage(_l.needDoseTime);
+      return;
+    }
+    if (_frequency == FrequencyType.specificDays && _days.isEmpty) {
+      _showMessage(_l.needWeekday);
+      return;
+    }
 
-    final displayDosage =
-        dosage.isEmpty ? _t('yourDose') : dosage;
+    setState(() => _saving = true);
+    try {
+      final existing = _editing;
+      final now = DateTime.now();
+      final times = _times.map(_formatTime).toList();
+      final days = _frequency == FrequencyType.specificDays
+          ? (List.of(_days)..sort())
+          : <int>[];
+      final interval =
+          _frequency == FrequencyType.interval ? _intervalDays : 1;
+      final durationValue =
+          _ongoing ? null : int.parse(_duration.text.trim());
 
-    final pillLabel =
-        pillCount == 1 ? _t('onePill') : _t(
-        'pillsCount',
-        params: {'count': pillCount},
+      // If the dose times changed, past days under the old times must not
+      // be reported as "missed".
+      final scheduleChanged = existing != null &&
+          (existing.frequencyType != _frequency ||
+              !listEquals(existing.scheduleTimes, times) ||
+              !listEquals(existing.daysOfWeek, days) ||
+              existing.intervalDays != interval);
+
+      final instructions = _instructions.text.trim();
+      final pill = PillModel(
+        id: existing?.id ?? now.millisecondsSinceEpoch.toString(),
+        name: _name.text.trim(),
+        dosage: _dosage.text.trim(),
+        pillCount: int.parse(_pillCount.text.trim()),
+        colorHex: _colorHex,
+        shape: _shape,
+        frequencyType: _frequency,
+        scheduleTimes: times,
+        daysOfWeek: days,
+        intervalDays: interval,
+        startDate: existing?.startDate ?? now,
+        treatmentDurationUnit: _ongoing ? null : _durationUnit,
+        treatmentDurationValue: durationValue,
+        treatmentEndDate: durationValue == null ? null : _endDate(durationValue),
+        photoPath: _photoPath,
+        instructions: instructions.isEmpty ? null : instructions,
+        isActive: existing?.isActive ?? true,
+        pausePeriods: existing?.pausePeriods ?? const [],
+        scheduleUpdatedAt: scheduleChanged ? now : existing?.scheduleUpdatedAt,
+        stockCount: _trackStock ? int.parse(_stock.text.trim()) : null,
+        refillThreshold:
+            _trackStock ? int.parse(_threshold.text.trim()) : 10,
       );
 
-    final pillColor = Color(_selectedColorHex);
+      await DoseActions().savePill(pill);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _innerSurfaceColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: _borderColor,
+      final original = existing?.photoPath;
+      if (original != null && original != _photoPath) {
+        await _deleteQuietly(original);
+      }
+      _saved = true;
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      _showMessage(_l.saveMedicationError('$e'));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
+
+  @override
+  Widget build(BuildContext context) {
+    final l = _l;
+    final palette = context.palette;
+    final fmt = Formatters(l);
+    final color = Color(_colorHex);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_editing != null ? l.editMedication : l.addMedication),
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+          children: [
+            _section(l.medicationInfo, Icons.medication_rounded, [
+              TextFormField(
+                controller: _name,
+                textInputAction: TextInputAction.next,
+                textCapitalization: TextCapitalization.words,
+                style: _inputStyle,
+                decoration: InputDecoration(
+                  labelText: l.medicationName,
+                  hintText: l.medicationNameHint,
+                  prefixIcon: const Icon(Icons.edit_note_rounded),
+                ),
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? l.enterMedicationName : null,
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _dosage,
+                      textInputAction: TextInputAction.next,
+                      style: _inputStyle,
+                      decoration: InputDecoration(
+                        labelText: l.dosage,
+                        hintText: l.dosageHint,
+                      ),
+                      validator: (v) =>
+                          v == null || v.trim().isEmpty ? l.enterDosage : null,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _pillCount,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      style: _inputStyle,
+                      decoration: InputDecoration(
+                        labelText: l.numberOfPills,
+                        hintText: l.pillCountHint,
+                      ),
+                      validator: (v) {
+                        final n = int.tryParse(v?.trim() ?? '');
+                        return n == null || n < 1 || n > 99
+                            ? l.invalidPillCount
+                            : null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _instructions,
+                textInputAction: TextInputAction.done,
+                style: _inputStyle,
+                decoration: InputDecoration(
+                  labelText: l.instructionsOptional,
+                  hintText: l.instructionsHint,
+                  prefixIcon: const Icon(Icons.chat_bubble_outline_rounded),
+                ),
+              ),
+            ]),
+            _section(l.pillAppearance, Icons.palette_rounded, [
+              _label(l.medicationType),
+              Row(
+                children: [
+                  for (final shape in PillShape.values)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: _SelectableTile(
+                          selected: _shape == shape,
+                          label: fmt.shapeName(shape),
+                          onTap: () => setState(() => _shape = shape),
+                          child: PillShapeWidget(
+                            shape: shape,
+                            color: color,
+                            size: 34,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _label(l.pillColor),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final option in _colorOptions)
+                    _ColorDot(
+                      color: Color(option.value),
+                      name: option.name(l),
+                      selected: _colorHex == option.value,
+                      onTap: () => setState(() => _colorHex = option.value),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _photoSection(),
+            ]),
+            _section(l.notificationPreview, Icons.notifications_rounded, [
+              _preview(),
+            ]),
+            _section(l.frequency, Icons.event_repeat_rounded, [
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<FrequencyType>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: FrequencyType.daily,
+                      label: Text(l.everyDay, textAlign: TextAlign.center),
+                    ),
+                    ButtonSegment(
+                      value: FrequencyType.specificDays,
+                      label: Text(l.specificDays, textAlign: TextAlign.center),
+                    ),
+                    ButtonSegment(
+                      value: FrequencyType.interval,
+                      label: Text(l.interval, textAlign: TextAlign.center),
+                    ),
+                  ],
+                  selected: {_frequency},
+                  onSelectionChanged: (s) =>
+                      setState(() => _frequency = s.first),
+                ),
+              ),
+              if (_frequency == FrequencyType.specificDays) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (var day = 1; day <= 7; day++)
+                      FilterChip(
+                        label: Text(
+                          fmt.weekdayNames[day - 1],
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        selected: _days.contains(day),
+                        selectedColor: palette.softAccent,
+                        checkmarkColor: palette.accent,
+                        onSelected: (on) => setState(() {
+                          on ? _days.add(day) : _days.remove(day);
+                        }),
+                      ),
+                  ],
+                ),
+              ],
+              if (_frequency == FrequencyType.interval) ...[
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  initialValue: _intervalDays,
+                  decoration: InputDecoration(labelText: l.repeatEvery),
+                  style: _inputStyle,
+                  dropdownColor: palette.surface,
+                  items: [
+                    for (var d = 2; d <= 30; d++)
+                      DropdownMenuItem(value: d, child: Text(l.everyNDays(d))),
+                  ],
+                  onChanged: (v) =>
+                      v == null ? null : setState(() => _intervalDays = v),
+                ),
+              ],
+            ]),
+            _section(l.doseTimings, Icons.alarm_rounded, [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final time in _quickTimes)
+                    if (!_hasTime(time))
+                      ActionChip(
+                        avatar: Icon(Icons.add_rounded, color: palette.accent),
+                        label: Text(
+                          fmt.time(time.hour, time.minute),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        onPressed: () => _addTime(time),
+                      ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _pickTime,
+                  icon: const Icon(Icons.access_time_rounded),
+                  label: Text(l.addTime),
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (_times.isEmpty)
+                Text(
+                  l.noTimes,
+                  style: TextStyle(fontSize: 15, color: palette.textMuted),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final time in _times)
+                      InputChip(
+                        backgroundColor: palette.softAccent,
+                        label: Text(
+                          fmt.time(time.hour, time.minute),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: palette.textPrimary,
+                          ),
+                        ),
+                        deleteIcon: const Icon(Icons.close_rounded, size: 22),
+                        onDeleted: () => setState(
+                          () => _times.removeWhere(
+                            (e) => e.hour == time.hour && e.minute == time.minute,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+            ]),
+            _section(l.scheduleEnd, Icons.flag_rounded, [
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<bool>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: true, label: Text(l.ongoingOption)),
+                    ButtonSegment(value: false, label: Text(l.fixedDuration)),
+                  ],
+                  selected: {_ongoing},
+                  onSelectionChanged: (s) => setState(() => _ongoing = s.first),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_ongoing)
+                Text(
+                  l.ongoingHelp,
+                  style: TextStyle(fontSize: 15, color: palette.textSecondary),
+                )
+              else ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _duration,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        style: _inputStyle,
+                        decoration: InputDecoration(labelText: l.duration),
+                        validator: (v) {
+                          if (_ongoing) return null;
+                          final n = int.tryParse(v?.trim() ?? '');
+                          return n == null || n < 1 || n > _durationMax
+                              ? l.enterValueRange(_durationMax)
+                              : null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonFormField<TreatmentDurationUnit>(
+                        initialValue: _durationUnit,
+                        style: _inputStyle,
+                        dropdownColor: palette.surface,
+                        items: [
+                          DropdownMenuItem(
+                            value: TreatmentDurationUnit.days,
+                            child: Text(l.days),
+                          ),
+                          DropdownMenuItem(
+                            value: TreatmentDurationUnit.weeks,
+                            child: Text(l.weeks),
+                          ),
+                          DropdownMenuItem(
+                            value: TreatmentDurationUnit.months,
+                            child: Text(l.months),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) setState(() => _durationUnit = v);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Builder(builder: (context) {
+                  final value = int.tryParse(_duration.text.trim());
+                  if (value == null || value < 1 || value > _durationMax) {
+                    return const SizedBox.shrink();
+                  }
+                  return Row(
+                    children: [
+                      Icon(Icons.event_available_rounded,
+                          color: palette.accent),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l.scheduleEndsDate(fmt.date(_endDate(value))),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: palette.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ]),
+            _section(l.stockSection, Icons.inventory_2_outlined, [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.trackStock),
+                subtitle: Text(l.stockHelp),
+                value: _trackStock,
+                onChanged: (v) => setState(() => _trackStock = v),
+              ),
+              if (_trackStock) ...[
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _numberField(_stock, l.pillsInBox)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _numberField(_threshold, l.refillThreshold),
+                    ),
+                  ],
+                ),
+              ],
+            ]),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 60,
+              child: ElevatedButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.check_rounded, size: 26),
+                label: Text(
+                  l.saveMedication,
+                  style: const TextStyle(fontSize: 19),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: pillColor.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: PillShapeWidget(
-              shape: _selectedShape,
-              color: pillColor,
-              size: 30,
-            ),
+    );
+  }
+
+  TextStyle get _inputStyle => TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: context.palette.textPrimary,
+      );
+
+  Widget _numberField(TextEditingController controller, String label) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(4),
+      ],
+      style: _inputStyle,
+      decoration: InputDecoration(labelText: label, helperMaxLines: 2),
+      validator: (v) {
+        if (!_trackStock) return null;
+        return int.tryParse(v?.trim() ?? '') == null
+            ? _l.enterWholeNumber
+            : null;
+      },
+    );
+  }
+
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: context.palette.textSecondary,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _t(
-      'timeFor',
-      params: {'name': displayName},
-    ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+        ),
+      );
+
+  Widget _section(String title, IconData icon, List<Widget> children) {
+    final palette = context.palette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(4, 22, 4, 10),
+          child: Row(
+            children: [
+              Icon(icon, color: palette.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _primaryTextColor,
+                    color: palette.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 3),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: palette.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: palette.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _photoSection() {
+    final l = _l;
+    final palette = context.palette;
+    final path = _photoPath;
+    final hasPhoto = path != null && !kIsWeb && File(path).existsSync();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(l.pillPhotoOptional),
+        Text(
+          l.pillPhotoHelp,
+          style: TextStyle(fontSize: 14, color: palette.textMuted),
+        ),
+        const SizedBox(height: 12),
+        if (hasPhoto) ...[
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.file(
+                  File(path),
+                  width: 84,
+                  height: 84,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l.pillPhotoAdded,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      l.shownInsideAppOnly,
+                      style: TextStyle(fontSize: 14, color: palette.textMuted),
+                    ),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: palette.danger,
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: _removePhoto,
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      label: Text(l.remove),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickPhoto(ImageSource.camera),
+                icon: const Icon(Icons.photo_camera_rounded),
+                label: Text(l.takePhoto, textAlign: TextAlign.center),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickPhoto(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_rounded),
+                label: Text(l.chooseFromGallery, textAlign: TextAlign.center),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _preview() {
+    final l = _l;
+    final palette = context.palette;
+    final fmt = Formatters(l);
+    final name = _name.text.trim().isEmpty ? l.medication : _name.text.trim();
+    final dosage = _dosage.text.trim().isEmpty ? l.yourDose : _dosage.text.trim();
+    final count = int.tryParse(_pillCount.text.trim()) ?? 1;
+
+    return Row(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: palette.pillTray,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: PillShapeWidget(
+            shape: _shape,
+            color: Color(_colorHex),
+            size: 30,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.timeFor(name),
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: palette.textPrimary,
+                ),
+              ),
+              Text(
+                l.takeDoseBody(fmt.pills(count < 1 ? 1 : count), dosage),
+                style: TextStyle(fontSize: 15, color: palette.textSecondary),
+              ),
+            ],
+          ),
+        ),
+        Text(l.now, style: TextStyle(fontSize: 13, color: palette.textMuted)),
+      ],
+    );
+  }
+}
+
+class _SelectableTile extends StatelessWidget {
+  final bool selected;
+  final String label;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _SelectableTile({
+    required this.selected,
+    required this.label,
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: selected ? palette.softAccent : palette.innerSurface,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? palette.accent : palette.border,
+                width: selected ? 2.5 : 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                SizedBox(height: 44, child: Center(child: child)),
+                const SizedBox(height: 8),
                 Text(
-                  _t(
-      'takeDoseBody',
-      params: {
-        'pillLabel': pillLabel,
-        'dosage': displayDosage,
-      },
-    ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: _secondaryTextColor,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: selected ? palette.accent : palette.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            _t('now'),
-            style: TextStyle(
-              fontSize: 10,
-              color: _mutedTextColor,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+}
+
+class _ColorDot extends StatelessWidget {
+  final Color color;
+  final String name;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ColorDot({
+    required this.color,
+    required this.name,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isEditing =
-        widget.pillToEdit != null;
-
-    final activeThemeColor =
-        Color(_selectedColorHex);
-
-    return Scaffold(
-      backgroundColor:
-          _pageBackgroundColor,
-      appBar: AppBar(
-        backgroundColor:
-            _pageBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor:
-            Colors.transparent,
-        systemOverlayStyle: _isDarkMode
-            ? SystemUiOverlayStyle.light.copyWith(
-                statusBarColor:
-                    Colors.transparent,
-                systemNavigationBarColor:
-                    _pageBackgroundColor,
-                systemNavigationBarIconBrightness:
-                    Brightness.light,
-              )
-            : SystemUiOverlayStyle.dark.copyWith(
-                statusBarColor:
-                    Colors.transparent,
-                systemNavigationBarColor:
-                    _pageBackgroundColor,
-                systemNavigationBarIconBrightness:
-                    Brightness.dark,
+    final palette = context.palette;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: name,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: name,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected ? palette.accent : Colors.transparent,
+                width: 3,
               ),
-        leading: IconButton(
-          icon: Icon(
-            Icons
-                .arrow_back_ios_new_rounded,
-            color:
-                _primaryTextColor,
-            size: 20,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        title: Text(
-          isEditing
-              ? _t('editMedication')
-              : _t('addMedication'),
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color:
-                _primaryTextColor,
-            fontSize: 22,
-            letterSpacing: -0.5,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding:
-            const EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          40,
-        ),
-        physics:
-            const BouncingScrollPhysics(),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              // --------------------------------------------------
-              // MEDICATION INFO
-              // --------------------------------------------------
-
-              _buildSectionTitle(
-                _t('medicationInfo'),
-                Icons.medication_rounded,
-              ),
-
-              _buildModernCard(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller:
-                          _nameController,
-                      textInputAction:
-                          TextInputAction.next,
-                      style:
-                          TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w600,
-                        color:
-                            _primaryTextColor,
-                      ),
-                      cursorColor:
-                          _accentColor,
-                      decoration:
-                          _buildInputDecoration(
-                        _t('medicationName'),
-                        _t('medicationNameHint'),
-                        Icons
-                            .edit_note_rounded,
-                      ),
-                      validator: (value) {
-                        if (value == null ||
-                            value
-                                .trim()
-                                .isEmpty) {
-                          return _t('enterMedicationName');
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
-                    TextFormField(
-                      controller:
-                          _dosageController,
-                      textInputAction:
-                          TextInputAction.next,
-                      style:
-                          TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w600,
-                        color:
-                            _primaryTextColor,
-                      ),
-                      cursorColor:
-                          _accentColor,
-                      decoration:
-                          _buildInputDecoration(
-                        _t('dosage'),
-                        _t('dosageHint'),
-                        Icons
-                            .numbers_rounded,
-                      ),
-                      validator: (value) {
-                        if (value == null ||
-                            value
-                                .trim()
-                                .isEmpty) {
-                          return _t('enterDosage');
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
-                    TextFormField(
-                      controller:
-                          _pillCountController,
-                      keyboardType:
-                          TextInputType.number,
-                      textInputAction:
-                          TextInputAction.next,
-                      style:
-                          TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w600,
-                        color:
-                            _primaryTextColor,
-                      ),
-                      cursorColor:
-                          _accentColor,
-                      decoration:
-                          _buildInputDecoration(
-                        _t('numberOfPills'),
-                        _t('pillCountHint'),
-                        Icons.medication_rounded,
-                      ),
-                      validator: (value) {
-                        final count = int.tryParse(
-                          value?.trim() ?? '',
-                        );
-
-                        if (count == null || count < 1) {
-                          return _t('invalidPillCount');
-                        }
-
-                        if (count > 99) {
-                          return _t('max99Pills');
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
-                    TextFormField(
-                      controller:
-                          _instructionsController,
-                      textInputAction:
-                          TextInputAction.done,
-                      style:
-                          TextStyle(
-                        fontSize: 15,
-                        color:
-                            _primaryTextColor,
-                      ),
-                      cursorColor:
-                          _accentColor,
-                      decoration:
-                          _buildInputDecoration(
-                        _t('instructionsOptional'),
-                        _t('instructionsHint'),
-                        Icons
-                            .chat_bubble_outline_rounded,
-                      ),
-                    ),
-                  ],
+            ),
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: palette.textMuted.withValues(alpha: 0.6),
+                  width: 1.4,
                 ),
               ),
-
-              // --------------------------------------------------
-              // PILL APPEARANCE
-              // --------------------------------------------------
-
-              _buildSectionTitle(
-                _t('pillAppearance'),
-                Icons.palette_rounded,
-              ),
-
-              _buildModernCard(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                  children: [
-                    Text(
-                      _t('medicationType'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            FontWeight.bold,
-                        color:
-                            _secondaryTextColor,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
-                    Row(
-                      children:
-                          PillShape.values
-                              .map((shape) {
-                        final isSelected =
-                            _selectedShape ==
-                                shape;
-
-                        return Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets
-                                    .symmetric(
-                              horizontal: 4,
-                            ),
-                            child:
-                                GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedShape =
-                                      shape;
-                                });
-                              },
-                              child:
-                                  AnimatedContainer(
-                                duration:
-                                    const Duration(
-                                  milliseconds:
-                                      180,
-                                ),
-                                height: 100,
-                                padding:
-                                    const EdgeInsets
-                                        .symmetric(
-                                  horizontal: 5,
-                                  vertical: 10,
-                                ),
-                                decoration:
-                                    BoxDecoration(
-                                  color: isSelected
-                                      ? activeThemeColor
-                                          .withValues(
-                                          alpha:
-                                              0.10,
-                                        )
-                                      : _innerSurfaceColor,
-                                  borderRadius:
-                                      BorderRadius
-                                          .circular(
-                                    18,
-                                  ),
-                                  border:
-                                      Border.all(
-                                    color: isSelected
-                                        ? _accentColor
-                                        : _isDarkMode
-                                            ? _borderColor
-                                            : Colors
-                                                .transparent,
-                                    width: isSelected ? 2 : 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .center,
-                                  children: [
-                                    Expanded(
-                                      child:
-                                          Center(
-                                        child:
-                                            PillShapeWidget(
-                                          shape:
-                                              shape,
-                                          color:
-                                              activeThemeColor,
-                                          size:
-                                              40,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height:
-                                          7,
-                                    ),
-                                    Text(
-                                      _pillShapeLabel(
-                                        shape,
-                                      ),
-                                      maxLines: 1,
-                                      overflow:
-                                          TextOverflow
-                                              .ellipsis,
-                                      style:
-                                          TextStyle(
-                                        fontSize:
-                                            10,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w800
-                                                : FontWeight.w600,
-                                        color: isSelected
-                                            ? _accentColor
-                                            : _secondaryTextColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                    const SizedBox(
-                      height: 24,
-                    ),
-
-                    Text(
-                      _t('pillColor'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            FontWeight.bold,
-                        color:
-                            _secondaryTextColor,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
-                    Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .spaceBetween,
-                      children:
-                          _colorOptions
-                              .map(
-                        (colorValue) {
-                          final isSelected =
-                              _selectedColorHex ==
-                                  colorValue;
-
-                          final swatchColor =
-                              Color(colorValue);
-
-                          final useDarkCheck =
-                              swatchColor.computeLuminance() >
-                                  0.62;
-
-                          return Semantics(
-                            button: true,
-                            selected:
-                                isSelected,
-                            label:
-                                _t('selectPillColor'),
-                            child:
-                                GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedColorHex =
-                                      colorValue;
-                                });
-                              },
-                              child:
-                                  AnimatedContainer(
-                                duration:
-                                    const Duration(
-                                  milliseconds:
-                                      180,
-                                ),
-                                padding:
-                                    const EdgeInsets
-                                        .all(3),
-                                decoration:
-                                    BoxDecoration(
-                                  shape:
-                                      BoxShape.circle,
-                                  border:
-                                      Border.all(
-                                    color: isSelected
-                                        ? _accentColor
-                                        : Colors
-                                            .transparent,
-                                    width: 3,
-                                  ),
-                                ),
-                                child:
-                                    Container(
-                                  width: 36,
-                                  height: 36,
-                                  alignment:
-                                      Alignment.center,
-                                  decoration:
-                                      BoxDecoration(
-                                    color:
-                                        swatchColor,
-                                    shape:
-                                        BoxShape.circle,
-                                    border:
-                                        Border.all(
-                                      color: _isDarkMode
-                                          ? const Color(
-                                              0xFFCBD5E1,
-                                            ).withValues(
-                                              alpha: 0.55,
-                                            )
-                                          : const Color(
-                                              0xFF64748B,
-                                            ).withValues(
-                                              alpha: 0.55,
-                                            ),
-                                      width: 1.4,
-                                    ),
-                                  ),
-                                  child: isSelected
-                                      ? Icon(
-                                          Icons
-                                              .check_rounded,
-                                          color: useDarkCheck
-                                              ? const Color(
-                                                  0xFF0F172A,
-                                                )
-                                              : Colors
-                                                  .white,
-                                          size:
-                                              20,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ).toList(),
-                    ),
-
-                    const SizedBox(
-                      height: 24,
-                    ),
-
-                    _buildPillPhotoSection(),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: Text(
-                  _t('notificationPreview'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: _secondaryTextColor,
-                  ),
-                ),
-              ),
-
-              _buildNotificationPreview(),
-
-              // --------------------------------------------------
-              // FREQUENCY
-              // --------------------------------------------------
-
-              _buildSectionTitle(
-                _t('frequency'),
-                Icons
-                    .event_repeat_rounded,
-              ),
-
-              _buildModernCard(
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width:
-                          double.infinity,
-                      child:
-                          SingleChildScrollView(
-                        scrollDirection:
-                            Axis.horizontal,
-                        child:
-                            SegmentedButton<
-                                FrequencyType>(
-                          style:
-                              SegmentedButton
-                                  .styleFrom(
-                            selectedBackgroundColor:
-                                _accentColor,
-                            selectedForegroundColor:
-                                Colors.white,
-                            foregroundColor:
-                                _secondaryTextColor,
-                            backgroundColor:
-                                _innerSurfaceColor,
-                            side:
-                                BorderSide(
-                              color:
-                                  _borderColor,
-                            ),
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                16,
-                              ),
-                            ),
-                          ),
-                          segments:
-                              [
-                            ButtonSegment<
-                                FrequencyType>(
-                              value:
-                                  FrequencyType
-                                      .daily,
-                              label:
-                                  Text(
-                                _t('everyDay'),
-                              ),
-                            ),
-                            ButtonSegment<
-                                FrequencyType>(
-                              value:
-                                  FrequencyType
-                                      .specificDays,
-                              label:
-                                  Text(
-                                _t('specificDays'),
-                              ),
-                            ),
-                            ButtonSegment<
-                                FrequencyType>(
-                              value:
-                                  FrequencyType
-                                      .interval,
-                              label:
-                                  Text(
-                                _t('interval'),
-                              ),
-                            ),
-                          ],
-                          selected: {
-                            _selectedFrequency,
-                          },
-                          onSelectionChanged:
-                              (selected) {
-                            if (selected
-                                .isEmpty) {
-                              return;
-                            }
-
-                            setState(() {
-                              _selectedFrequency =
-                                  selected
-                                      .first;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-
-                    if (_selectedFrequency ==
-                        FrequencyType
-                            .specificDays) ...[
-                      const SizedBox(
-                        height: 18,
-                      ),
-
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        alignment:
-                            WrapAlignment
-                                .center,
-                        children: _dayLabels
-                            .entries
-                            .map(
-                          (entry) {
-                            final isSelected =
-                                _selectedDaysOfWeek
-                                    .contains(
-                              entry.key,
-                            );
-
-                            return FilterChip(
-                              label:
-                                  Text(
-                                entry.value,
-                              ),
-                              selected:
-                                  isSelected,
-                              selectedColor:
-                                  _softAccentColor,
-                              checkmarkColor:
-                                  _accentColor,
-                              backgroundColor:
-                                  _innerSurfaceColor,
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                  12,
-                                ),
-                              ),
-                              side:
-                                  BorderSide(
-                                color:
-                                    _borderColor,
-                              ),
-                              labelStyle:
-                                  TextStyle(
-                                color: isSelected
-                                    ? _accentColor
-                                    : _secondaryTextColor,
-                                fontWeight:
-                                    isSelected
-                                        ? FontWeight
-                                            .bold
-                                        : FontWeight
-                                            .w500,
-                              ),
-                              onSelected:
-                                  (selected) {
-                                setState(() {
-                                  if (selected) {
-                                    if (!_selectedDaysOfWeek
-                                        .contains(
-                                      entry.key,
-                                    )) {
-                                      _selectedDaysOfWeek
-                                          .add(
-                                        entry
-                                            .key,
-                                      );
-                                    }
-                                  } else {
-                                    _selectedDaysOfWeek
-                                        .remove(
-                                      entry.key,
-                                    );
-                                  }
-
-                                  _selectedDaysOfWeek
-                                      .sort();
-                                });
-                              },
-                            );
-                          },
-                        ).toList(),
-                      ),
-                    ],
-
-                    if (_selectedFrequency ==
-                        FrequencyType
-                            .interval) ...[
-                      const SizedBox(
-                        height: 18,
-                      ),
-
-                      Wrap(
-                        crossAxisAlignment:
-                            WrapCrossAlignment
-                                .center,
-                        alignment:
-                            WrapAlignment
-                                .center,
-                        spacing: 8,
-                        children: [
-                          Text(
-                            _t('repeatEvery'),
-                            style:
-                                TextStyle(
-                              fontSize:
-                                  15,
-                              fontWeight:
-                                  FontWeight
-                                      .w600,
-                              color:
-                                  _primaryTextColor,
-                            ),
-                          ),
-                          Container(
-                            padding:
-                                const EdgeInsets
-                                    .symmetric(
-                              horizontal:
-                                  14,
-                            ),
-                            decoration:
-                                BoxDecoration(
-                              color:
-                                  _innerSurfaceColor,
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                14,
-                              ),
-                            ),
-                            child:
-                                DropdownButton<
-                                    int>(
-                              value:
-                                  _intervalDays,
-                              dropdownColor:
-                                  _surfaceColor,
-                              iconEnabledColor:
-                                  _accentColor,
-                              underline:
-                                  const SizedBox
-                                      .shrink(),
-                              items: List
-                                      .generate(
-                                14,
-                                (index) =>
-                                    index +
-                                    2,
-                              )
-                                  .map(
-                                (value) {
-                                  return DropdownMenuItem<
-                                      int>(
-                                    value:
-                                        value,
-                                    child:
-                                        Text(
-                                      _t(
-                                  'valueDays',
-                                  params: {'value': value},
-                                ),
-                                      style:
-                                          TextStyle(
-                                        fontSize:
-                                            15,
-                                        fontWeight:
-                                            FontWeight.bold,
-                                        color:
-                                            _accentColor,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ).toList(),
-                              onChanged:
-                                  (value) {
-                                if (value ==
-                                    null) {
-                                  return;
-                                }
-
-                                setState(() {
-                                  _intervalDays =
-                                      value;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              // --------------------------------------------------
-              // TREATMENT DURATION
-              // --------------------------------------------------
-
-              _buildSectionTitle(
-                _t('scheduleEnd'),
-                Icons.flag_rounded,
-              ),
-
-              _buildModernCard(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _t('treatmentDuration'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: _secondaryTextColor,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Text(
-                      _t('durationHelp'),
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.35,
-                        color: _mutedTextColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<
-                          TreatmentDurationUnit>(
-                        style:
-                            SegmentedButton.styleFrom(
-                          selectedBackgroundColor:
-                              _accentColor,
-                          selectedForegroundColor:
-                              Colors.white,
-                          foregroundColor:
-                              _secondaryTextColor,
-                          backgroundColor:
-                              _innerSurfaceColor,
-                          side: BorderSide(
-                            color: _borderColor,
-                          ),
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(16),
-                          ),
-                        ),
-                        segments: [
-                          ButtonSegment<
-                              TreatmentDurationUnit>(
-                            value:
-                                TreatmentDurationUnit.days,
-                            label: Text(_t('days')),
-                          ),
-                          ButtonSegment<
-                              TreatmentDurationUnit>(
-                            value:
-                                TreatmentDurationUnit.weeks,
-                            label: Text(_t('weeks')),
-                          ),
-                          ButtonSegment<
-                              TreatmentDurationUnit>(
-                            value:
-                                TreatmentDurationUnit.months,
-                            label: Text(_t('months')),
-                          ),
-                        ],
-                        selected: {
-                          _selectedDurationUnit,
-                        },
-                        onSelectionChanged:
-                            (selected) {
-                          if (selected.isEmpty) {
-                            return;
-                          }
-
-                          _setDurationUnit(
-                            selected.first,
-                          );
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller:
-                          _durationController,
-                      keyboardType:
-                          TextInputType.number,
-                      textInputAction:
-                          TextInputAction.done,
-                      inputFormatters: [
-                        FilteringTextInputFormatter
-                            .digitsOnly,
-                        LengthLimitingTextInputFormatter(
-                          3,
-                        ),
-                      ],
-                      onChanged: (value) {
-                        final parsed =
-                            int.tryParse(value);
-
-                        if (parsed != null &&
-                            parsed > _durationMax) {
-                          final clamped =
-                              _durationMax
-                                  .toString();
-
-                          _durationController.value =
-                              TextEditingValue(
-                            text: clamped,
-                            selection:
-                                TextSelection.collapsed(
-                              offset:
-                                  clamped.length,
-                            ),
-                          );
-                        }
-
-                        setState(() {});
-                      },
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w700,
-                        color:
-                            _primaryTextColor,
-                      ),
-                      cursorColor:
-                          _accentColor,
-                      decoration:
-                          _buildInputDecoration(
-                        _t('duration'),
-                        _t(
-                          'enterDurationRange',
-                          params: {'max': _durationMax},
-                        ),
-                        Icons
-                            .hourglass_bottom_rounded,
-                      ).copyWith(
-                        suffixText:
-                            _durationUnitLabel,
-                        suffixStyle:
-                            TextStyle(
-                          color:
-                              _secondaryTextColor,
-                          fontWeight:
-                              FontWeight.w700,
-                        ),
-                        helperText:
-                            _t(
-                      'maximumDuration',
-                      params: {
-                        'max': _durationMax,
-                        'unit': _durationUnitLabel,
-                      },
-                    ),
-                        helperStyle:
-                            TextStyle(
-                          color:
-                              _mutedTextColor,
-                          fontSize: 12,
-                        ),
-                      ),
-                      validator: (value) {
-                        final duration =
-                            int.tryParse(
-                          value?.trim() ?? '',
-                        );
-
-                        if (duration == null ||
-                            duration < 1) {
-                          return _t(
-                                'enterValueRange',
-                                params: {'max': _durationMax},
-                              );
-                        }
-
-                        if (duration >
-                            _durationMax) {
-                          return _t(
-                                'maximumIs',
-                                params: {
-                                  'max': _durationMax,
-                                  'unit': _durationUnitLabel,
-                                },
-                              );
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Builder(
-                      builder: (context) {
-                        final enteredValue =
-                            int.tryParse(
-                                  _durationController
-                                      .text
-                                      .trim(),
-                                ) ??
-                                1;
-
-                        final safeValue =
-                            enteredValue
-                                .clamp(
-                                  1,
-                                  _durationMax,
-                                )
-                                .toInt();
-
-                        final existingPill =
-                            widget.pillToEdit;
-
-                        final baseDate =
-                            existingPill != null &&
-                                    existingPill
-                                            .treatmentEndDate ==
-                                        null
-                                ? DateTime.now()
-                                : existingPill
-                                        ?.startDate ??
-                                    DateTime.now();
-
-                        final endDate =
-                            _calculateTreatmentEndDate(
-                          baseDate,
-                          safeValue,
-                        );
-
-                        return Container(
-                          width:
-                              double.infinity,
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration:
-                              BoxDecoration(
-                            color:
-                                _softAccentColor,
-                            borderRadius:
-                                BorderRadius
-                                    .circular(14),
-                            border:
-                                Border.all(
-                              color:
-                                  _borderColor,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons
-                                    .event_available_rounded,
-                                size: 20,
-                                color:
-                                    _accentColor,
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  _t(
-                          'scheduleEndsDate',
-                          params: {
-                            'date': _formatTreatmentDate(endDate),
-                          },
-                        ),
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        13,
-                                    fontWeight:
-                                        FontWeight.w700,
-                                    color:
-                                        _primaryTextColor,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // --------------------------------------------------
-              // DOSE TIMES
-              // --------------------------------------------------
-
-              _buildSectionTitle(
-                _t('doseTimings'),
-                Icons.alarm_rounded,
-              ),
-
-              _buildModernCard(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _t('scheduledTimes'),
-                            style:
-                                TextStyle(
-                              fontSize:
-                                  14,
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                              color:
-                                  _secondaryTextColor,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton
-                            .icon(
-                          style:
-                              ElevatedButton
-                                  .styleFrom(
-                            backgroundColor:
-                                _softAccentColor,
-                            foregroundColor:
-                                _accentColor,
-                            elevation: 0,
-                            padding:
-                                const EdgeInsets
-                                    .symmetric(
-                              horizontal:
-                                  14,
-                              vertical:
-                                  10,
-                            ),
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                14,
-                              ),
-                            ),
-                          ),
-                          onPressed:
-                              _addTimePicker,
-                          icon:
-                              const Icon(
-                            Icons
-                                .access_time_rounded,
-                            size: 18,
-                          ),
-                          label:
-                              Text(
-                            _t('addTime'),
-                            style:
-                                TextStyle(
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(
-                      height: 14,
-                    ),
-
-                    if (_selectedTimes
-                        .isEmpty)
-                      Text(
-                        _t('noTimes'),
-                        style:
-                            TextStyle(
-                          fontSize: 13,
-                          color:
-                              _mutedTextColor,
-                        ),
-                      )
-                    else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children:
-                            _selectedTimes
-                                .map(
-                          (time) {
-                            return Chip(
-                              backgroundColor:
-                                  _innerSurfaceColor,
-                              padding:
-                                  const EdgeInsets
-                                      .symmetric(
-                                horizontal:
-                                    8,
-                                vertical:
-                                    6,
-                              ),
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                  14,
-                                ),
-                              ),
-                              side:
-                                  BorderSide(
-                                color:
-                                    _borderColor,
-                              ),
-                              label:
-                                  Text(
-                                time.format(
-                                  context,
-                                ),
-                                style:
-                                    TextStyle(
-                                  fontSize:
-                                      14,
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
-                                  color:
-                                      _primaryTextColor,
-                                ),
-                              ),
-                              deleteIcon:
-                                  Icon(
-                                Icons
-                                    .close_rounded,
-                                size: 18,
-                                color:
-                                    _secondaryTextColor,
-                              ),
-                              onDeleted:
-                                  () {
-                                setState(() {
-                                  _selectedTimes
-                                      .removeWhere(
-                                    (existing) =>
-                                        existing
-                                                .hour ==
-                                            time
-                                                .hour &&
-                                        existing
-                                                .minute ==
-                                            time
-                                                .minute,
-                                  );
-                                });
-                              },
-                            );
-                          },
-                        ).toList(),
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(
-                height: 32,
-              ),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  style:
-                      ElevatedButton
-                          .styleFrom(
-                    backgroundColor:
-                        const Color(
-                            0xFF6366F1),
-                    foregroundColor:
-                        Colors.white,
-                    elevation: 4,
-                    shadowColor:
-                        const Color(
-                      0xFF6366F1,
-                    ).withValues(
-                      alpha:
-                          _isDarkMode ? 0.18 : 0.35,
-                    ),
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        20,
-                      ),
-                    ),
-                  ),
-                  onPressed: _savePill,
-                  child: Text(
-                    isEditing
-                        ? _t('updateSchedule')
-                        : _t('saveMedicationSchedule'),
-                    style:
-                        const TextStyle(
-                      fontSize: 17,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              child: selected
+                  ? Icon(
+                      Icons.check_rounded,
+                      color: color.computeLuminance() > 0.6
+                          ? const Color(0xFF0F172A)
+                          : Colors.white,
+                    )
+                  : null,
+            ),
           ),
         ),
       ),

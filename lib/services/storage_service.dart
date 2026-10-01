@@ -1,687 +1,347 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/dose.dart';
 import '../models/pill_model.dart';
 
+/// Local storage on top of SharedPreferences.
+///
+/// Layout (version 2):
+/// - `user_pills`          JSON list of medications (written by the UI only)
+/// - `dose.<doseKey>`      one JSON [DoseRecord] per dose
+/// - `stock.<pillId>`      pills left (int), separate so a notification
+///                         action can decrement it without rewriting the list
+/// - `stockAlerted.<id>`   whether the low-stock warning was already sent
+///
+/// Every dose lives under its own key, so two writes for different doses
+/// (e.g. the app and a notification button at the same moment, even from
+/// different isolates) can never overwrite each other. Version 1 kept all
+/// doses in one big JSON map, which lost data under concurrent writes.
 class StorageService {
   static const String _pillsKey = 'user_pills';
-  static const String _logsKey = 'pill_logs';
-  static const String _snoozesKey = 'pill_snoozes';
-  static const String _takenTimesKey = 'pill_taken_times';
+  static const String _dosePrefix = 'dose.';
+  static const String _stockPrefix = 'stock.';
+  static const String _stockAlertPrefix = 'stockAlerted.';
+  static const String _versionKey = 'storage_version';
+  static const int _currentVersion = 2;
 
-  String _dateString(DateTime date) {
-    final normalized = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+  // Legacy (version 1) keys.
+  static const String _legacyLogsKey = 'pill_logs';
+  static const String _legacySnoozesKey = 'pill_snoozes';
+  static const String _legacyTakenTimesKey = 'pill_taken_times';
 
-    return normalized.toIso8601String().split('T')[0];
+  /// Serializes read-modify-write operations within this isolate.
+  static Future<void> _lock = Future.value();
+
+  Future<T> _synchronized<T>(Future<T> Function() action) {
+    final completer = Completer<T>();
+    final previous = _lock;
+    _lock = completer.future.then((_) {}, onError: (_) {});
+    previous.whenComplete(() async {
+      try {
+        completer.complete(await action());
+      } catch (e, s) {
+        completer.completeError(e, s);
+      }
+    });
+    return completer.future;
   }
 
-  String _todayString() {
-    return _dateString(
-      DateTime.now(),
-    );
-  }
-
-  String _doseKey({
-    required String pillId,
-    required String scheduledTime,
-    String? date,
-  }) {
-    final doseDate =
-        date ?? _todayString();
-
-    return '${doseDate}_${pillId}_$scheduledTime';
+  Future<SharedPreferences> _prefs({bool reload = true}) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Another isolate (notification actions) may have written meanwhile.
+    if (reload) await prefs.reload();
+    await _migrateIfNeeded(prefs);
+    return prefs;
   }
 
   // ============================================================
-  // SCHEDULE CHECK
+  // MIGRATION
   // ============================================================
 
-  bool isPillScheduledForDate(
-    PillModel pill,
-    DateTime date,
-  ) {
-    final targetDate = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+  Future<void> _migrateIfNeeded(SharedPreferences prefs) async {
+    if ((prefs.getInt(_versionKey) ?? 1) >= _currentVersion) return;
 
-    final startDate = DateTime(
-      pill.startDate.year,
-      pill.startDate.month,
-      pill.startDate.day,
-    );
-
-    if (targetDate.isBefore(startDate)) {
-      return false;
-    }
-
-    final treatmentEndDate = pill.treatmentEndDate;
-
-    if (treatmentEndDate != null) {
-      final normalizedEndDate = DateTime(
-        treatmentEndDate.year,
-        treatmentEndDate.month,
-        treatmentEndDate.day,
-      );
-
-      if (targetDate.isAfter(normalizedEndDate)) {
-        return false;
+    Map<String, String> readLegacy(String key) {
+      try {
+        final decoded = json.decode(prefs.getString(key) ?? '{}');
+        if (decoded is! Map) return {};
+        return decoded.map((k, v) => MapEntry('$k', '$v'));
+      } catch (_) {
+        return {};
       }
     }
 
-    switch (pill.frequencyType) {
-      case FrequencyType.daily:
-        return true;
+    final logs = readLegacy(_legacyLogsKey);
+    final snoozes = readLegacy(_legacySnoozesKey);
+    final takenTimes = readLegacy(_legacyTakenTimesKey);
 
-      case FrequencyType.specificDays:
-        return pill.daysOfWeek.contains(
-          targetDate.weekday,
-        );
-
-      case FrequencyType.interval:
-        if (pill.intervalDays < 1) {
-          return false;
-        }
-
-        final differenceInDays =
-            targetDate
-                .difference(startDate)
-                .inDays;
-
-        return differenceInDays %
-                pill.intervalDays ==
-            0;
+    for (final entry in logs.entries) {
+      final ref = DoseRef.fromKey(entry.key);
+      if (ref == null) continue;
+      DoseStatus? status;
+      for (final s in DoseStatus.values) {
+        if (s.name == entry.value) status = s;
+      }
+      if (status == null || status == DoseStatus.pending) continue;
+      final record = DoseRecord(
+        status: status,
+        takenAt: DateTime.tryParse(takenTimes[entry.key] ?? ''),
+        snoozedUntil: status == DoseStatus.snoozed
+            ? DateTime.tryParse(snoozes[entry.key] ?? '')
+            : null,
+      );
+      await prefs.setString(
+        '$_dosePrefix${ref.key}',
+        json.encode(record.toMap()),
+      );
     }
+
+    await prefs.remove(_legacyLogsKey);
+    await prefs.remove(_legacySnoozesKey);
+    await prefs.remove(_legacyTakenTimesKey);
+    await prefs.setInt(_versionKey, _currentVersion);
+    debugPrint('STORAGE MIGRATED TO v$_currentVersion (${logs.length} doses)');
   }
 
   // ============================================================
   // PILLS
   // ============================================================
 
-  Future<void> savePill(
-    PillModel pill,
-  ) async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    final pills =
-        await getPills();
-
-    final index =
-        pills.indexWhere(
-      (existingPill) =>
-          existingPill.id == pill.id,
-    );
-
-    if (index >= 0) {
-      pills[index] = pill;
-    } else {
-      pills.add(pill);
-    }
-
-    final encodedData = json.encode(
-      pills
-          .map(
-            (savedPill) =>
-                savedPill.toMap(),
-          )
-          .toList(),
-    );
-
-    await prefs.setString(
-      _pillsKey,
-      encodedData,
-    );
-  }
-
-  Future<List<PillModel>>
-      getPills() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    await prefs.reload();
-
-    final pillsString =
-        prefs.getString(
-      _pillsKey,
-    );
-
-    if (pillsString == null ||
-        pillsString.trim().isEmpty) {
-      return [];
-    }
-
+  List<PillModel> _decodePills(SharedPreferences prefs) {
+    final raw = prefs.getString(_pillsKey);
+    if (raw == null || raw.trim().isEmpty) return [];
     try {
-      final decoded =
-          json.decode(
-        pillsString,
-      );
-
-      if (decoded is! List) {
-        return [];
-      }
-
-      final pills =
-          <PillModel>[];
-
+      final decoded = json.decode(raw);
+      if (decoded is! List) return [];
+      final pills = <PillModel>[];
       for (final item in decoded) {
-        if (item is Map) {
-          try {
-            pills.add(
-              PillModel.fromMap(
-                Map<String, dynamic>.from(
-                  item,
-                ),
-              ),
-            );
-          } catch (_) {
-            // Ignore one damaged medication
-            // instead of failing the whole list.
-          }
+        if (item is! Map) continue;
+        try {
+          final pill = PillModel.fromMap(Map<String, dynamic>.from(item));
+          if (pill.id.isEmpty) continue;
+          final stock = prefs.getInt('$_stockPrefix${pill.id}');
+          pills.add(
+            pill.tracksStock && stock != null
+                ? pill.copyWith(stockCount: () => stock)
+                : pill,
+          );
+        } catch (_) {
+          // Skip one damaged medication instead of failing the whole list.
         }
       }
-
       return pills;
     } catch (_) {
       return [];
     }
   }
 
-  Future<void> deletePill(
-    String pillId,
-  ) async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    final pills =
-        await getPills();
-
-    String? photoPathToDelete;
-
-    for (final pill in pills) {
-      if (pill.id == pillId) {
-        photoPathToDelete = pill.photoPath;
-        break;
-      }
-    }
-
-    pills.removeWhere(
-      (pill) => pill.id == pillId,
-    );
-
-    final encodedData = json.encode(
-      pills
-          .map(
-            (pill) => pill.toMap(),
-          )
-          .toList(),
-    );
-
-    await prefs.setString(
+  Future<void> _writePills(SharedPreferences prefs, List<PillModel> pills) {
+    return prefs.setString(
       _pillsKey,
-      encodedData,
-    );
-
-    final logs =
-        await getDoseLogs();
-
-    logs.removeWhere(
-      (key, value) =>
-          key.contains(
-        '_${pillId}_',
-      ),
-    );
-
-    await prefs.setString(
-      _logsKey,
-      json.encode(logs),
-    );
-
-    final snoozes =
-        await getSnoozeTimes();
-
-    snoozes.removeWhere(
-      (key, value) =>
-          key.contains(
-        '_${pillId}_',
-      ),
-    );
-
-    await prefs.setString(
-      _snoozesKey,
-      json.encode(snoozes),
-    );
-
-    final takenTimes =
-        await getTakenTimes();
-
-    takenTimes.removeWhere(
-      (key, value) =>
-          key.contains(
-        '_${pillId}_',
-      ),
-    );
-
-    await prefs.setString(
-      _takenTimesKey,
-      json.encode(takenTimes),
-    );
-
-    if (photoPathToDelete != null) {
-      try {
-        final photoFile = File(photoPathToDelete);
-
-        if (await photoFile.exists()) {
-          await photoFile.delete();
-        }
-      } catch (_) {
-        // A missing/unreadable photo must not prevent medication deletion.
-      }
-    }
-  }
-
-  // ============================================================
-  // DOSE LOGS
-  // ============================================================
-
-  Future<void> logDoseStatus({
-    required String pillId,
-    required String scheduledTime,
-    required DoseStatus status,
-    DateTime? date,
-  }) async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    final String logKey =
-        _doseKey(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date != null
-          ? _dateString(date)
-          : null,
-    );
-
-    final logs =
-        await getDoseLogs();
-    
-    // Important:
-    // This is an overwrite, not an append.
-    //
-    // So pressing "Taken" twice still produces
-    // only one dose record for this:
-    //
-    // date + pill + scheduled time.
-    logs[logKey] =
-        status.name;
-
-    await prefs.setString(
-      _logsKey,
-      json.encode(logs),
-    );
-
-    final takenTimes =
-        await getTakenTimes();
-
-    if (status == DoseStatus.taken) {
-      takenTimes[logKey] =
-          DateTime.now().toIso8601String();
-    } else {
-      takenTimes.remove(logKey);
-    }
-
-    await prefs.setString(
-      _takenTimesKey,
-      json.encode(takenTimes),
-    );
-
-    if (status == DoseStatus.taken ||
-        status ==
-            DoseStatus.skipped) {
-      await clearSnooze(
-        pillId: pillId,
-        scheduledTime:
-            scheduledTime,
-        date: date,
-      );
-    }
-  }
-
-  Future<Map<String, String>>
-      getDoseLogs() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    await prefs.reload();
-
-    final logsString =
-        prefs.getString(
-      _logsKey,
-    );
-
-    if (logsString == null ||
-        logsString.trim().isEmpty) {
-      return {};
-    }
-
-    try {
-      final decoded =
-          json.decode(
-        logsString,
-      );
-
-      if (decoded is! Map) {
-        return {};
-      }
-
-      return decoded.map(
-        (
-          key,
-          value,
-        ) =>
-            MapEntry(
-          key.toString(),
-          value.toString(),
-        ),
-      );
-    } catch (_) {
-      return {};
-    }
-  }
-
-  // ============================================================
-  // TAKEN TIMES
-  // ============================================================
-
-  Future<Map<String, String>>
-      getTakenTimes() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    await prefs.reload();
-
-    final takenTimesString =
-        prefs.getString(
-      _takenTimesKey,
-    );
-
-    if (takenTimesString == null ||
-        takenTimesString.trim().isEmpty) {
-      return {};
-    }
-
-    try {
-      final decoded =
-          json.decode(
-        takenTimesString,
-      );
-
-      if (decoded is! Map) {
-        return {};
-      }
-
-      return decoded.map(
-        (
-          key,
-          value,
-        ) =>
-            MapEntry(
-          key.toString(),
-          value.toString(),
-        ),
-      );
-    } catch (_) {
-      return {};
-    }
-  }
-
-  Future<DateTime?> getTakenAt({
-    required String pillId,
-    required String scheduledTime,
-    DateTime? date,
-  }) async {
-    final takenTimes =
-        await getTakenTimes();
-
-    final key =
-        _doseKey(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date != null
-          ? _dateString(date)
-          : null,
-    );
-
-    final value =
-        takenTimes[key];
-
-    if (value == null) {
-      return null;
-    }
-
-    return DateTime.tryParse(value);
-  }
-
-  // ============================================================
-  // SNOOZE
-  // ============================================================
-
-  Future<void> setSnoozedUntil({
-    required String pillId,
-    required String scheduledTime,
-    required DateTime snoozedUntil,
-    DateTime? date,
-  }) async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    final String key =
-        _doseKey(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date != null
-          ? _dateString(date)
-          : null,
-    );
-
-    final snoozes =
-        await getSnoozeTimes();
-
-    snoozes[key] =
-        snoozedUntil
-            .toIso8601String();
-
-    await prefs.setString(
-      _snoozesKey,
-      json.encode(snoozes),
-    );
-
-    final logs =
-        await getDoseLogs();
-
-    logs[key] =
-        DoseStatus.snoozed.name;
-
-    await prefs.setString(
-      _logsKey,
-      json.encode(logs),
+      json.encode(pills.map((p) => p.toMap()).toList()),
     );
   }
 
-  Future<DateTime?>
-      getSnoozedUntil({
-    required String pillId,
-    required String scheduledTime,
-    DateTime? date,
-  }) async {
-    final snoozes =
-        await getSnoozeTimes();
+  Future<List<PillModel>> getPills() async => _decodePills(await _prefs());
 
-    final String key =
-        _doseKey(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date != null
-          ? _dateString(date)
-          : null,
-    );
-
-    final String? storedValue =
-        snoozes[key];
-
-    if (storedValue == null) {
-      return null;
+  Future<PillModel?> getPill(String id) async {
+    for (final pill in await getPills()) {
+      if (pill.id == id) return pill;
     }
-
-    return DateTime.tryParse(
-      storedValue,
-    );
-  }
-
-  Future<Map<String, String>>
-      getSnoozeTimes() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    await prefs.reload();
-
-    final snoozeString =
-        prefs.getString(
-      _snoozesKey,
-    );
-
-    if (snoozeString == null ||
-        snoozeString
-            .trim()
-            .isEmpty) {
-      return {};
-    }
-
-    try {
-      final decoded =
-          json.decode(
-        snoozeString,
-      );
-
-      if (decoded is! Map) {
-        return {};
-      }
-
-      return decoded.map(
-        (
-          key,
-          value,
-        ) =>
-            MapEntry(
-          key.toString(),
-          value.toString(),
-        ),
-      );
-    } catch (_) {
-      return {};
-    }
-  }
-
-  Future<void> clearSnooze({
-    required String pillId,
-    required String scheduledTime,
-    DateTime? date,
-  }) async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    final snoozes =
-        await getSnoozeTimes();
-
-    final String key =
-        _doseKey(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date != null
-          ? _dateString(date)
-          : null,
-    );
-
-    if (!snoozes.containsKey(key)) {
-      return;
-    }
-
-    snoozes.remove(key);
-
-    await prefs.setString(
-      _snoozesKey,
-      json.encode(snoozes),
-    );
-  }
-
-  // ============================================================
-  // SIMPLE STATUS HELPERS
-  // ============================================================
-
-  Future<DoseStatus?> getDoseStatus({
-    required String pillId,
-    required String scheduledTime,
-    DateTime? date,
-  }) async {
-    final logs =
-        await getDoseLogs();
-
-    final key =
-        _doseKey(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date != null
-          ? _dateString(date)
-          : null,
-    );
-
-    final statusName =
-        logs[key];
-
-    if (statusName == null) {
-      return null;
-    }
-
-    for (final status
-        in DoseStatus.values) {
-      if (status.name ==
-          statusName) {
-        return status;
-      }
-    }
-
     return null;
   }
 
-  Future<bool> isDoseCompleted({
-    required String pillId,
-    required String scheduledTime,
-    DateTime? date,
-  }) async {
-    final status =
-        await getDoseStatus(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      date: date,
-    );
+  Future<void> savePill(PillModel pill) {
+    return _synchronized(() async {
+      final prefs = await _prefs();
+      final pills = _decodePills(prefs);
+      final index = pills.indexWhere((p) => p.id == pill.id);
+      if (index >= 0) {
+        pills[index] = pill;
+      } else {
+        pills.add(pill);
+      }
+      await _writePills(prefs, pills);
 
-    return status ==
-            DoseStatus.taken ||
-        status ==
-            DoseStatus.skipped;
+      final stockKey = '$_stockPrefix${pill.id}';
+      if (pill.stockCount == null) {
+        await prefs.remove(stockKey);
+        await prefs.remove('$_stockAlertPrefix${pill.id}');
+      } else {
+        await prefs.setInt(stockKey, pill.stockCount!);
+        if (!pill.isLowOnStock) {
+          await prefs.remove('$_stockAlertPrefix${pill.id}');
+        }
+      }
+    });
+  }
+
+  Future<void> deletePill(String pillId) {
+    return _synchronized(() async {
+      final prefs = await _prefs();
+      final pills = _decodePills(prefs);
+      String? photoPath;
+      for (final pill in pills) {
+        if (pill.id == pillId) photoPath = pill.photoPath;
+      }
+      pills.removeWhere((p) => p.id == pillId);
+      await _writePills(prefs, pills);
+
+      for (final key in prefs.getKeys().toList()) {
+        if (key.startsWith(_dosePrefix) &&
+            DoseRef.fromKey(key.substring(_dosePrefix.length))?.pillId ==
+                pillId) {
+          await prefs.remove(key);
+        }
+      }
+      await prefs.remove('$_stockPrefix$pillId');
+      await prefs.remove('$_stockAlertPrefix$pillId');
+
+      if (photoPath != null && !kIsWeb) {
+        try {
+          final file = File(photoPath);
+          if (await file.exists()) await file.delete();
+        } catch (_) {
+          // A missing photo must not prevent deleting the medication.
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // DOSES
+  // ============================================================
+
+  Future<Map<String, DoseRecord>> getDoseRecords() async {
+    final prefs = await _prefs();
+    final records = <String, DoseRecord>{};
+    for (final key in prefs.getKeys()) {
+      if (!key.startsWith(_dosePrefix)) continue;
+      final raw = prefs.getString(key);
+      if (raw == null) continue;
+      try {
+        final record = DoseRecord.fromMap(json.decode(raw));
+        if (record != null) {
+          records[key.substring(_dosePrefix.length)] = record;
+        }
+      } catch (_) {
+        // Ignore one unreadable record.
+      }
+    }
+    return records;
+  }
+
+  Future<DoseRecord?> getDoseRecord(DoseRef ref) async {
+    final raw = (await _prefs()).getString('$_dosePrefix${ref.key}');
+    if (raw == null) return null;
+    try {
+      return DoseRecord.fromMap(json.decode(raw));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> setDoseRecord(DoseRef ref, DoseRecord record) async {
+    final prefs = await _prefs(reload: false);
+    await prefs.setString(
+      '$_dosePrefix${ref.key}',
+      json.encode(record.toMap()),
+    );
+  }
+
+  Future<void> clearDoseRecord(DoseRef ref) async {
+    final prefs = await _prefs(reload: false);
+    await prefs.remove('$_dosePrefix${ref.key}');
+  }
+
+  // ============================================================
+  // STOCK
+  // ============================================================
+
+  /// Adds [delta] to a pill's stock (never below zero). Returns the new
+  /// value, or null if stock is not tracked for this pill.
+  Future<int?> adjustStock(String pillId, int delta) {
+    return _synchronized(() async {
+      final prefs = await _prefs();
+      final current = prefs.getInt('$_stockPrefix$pillId');
+      if (current == null) return null;
+      final next = (current + delta) < 0 ? 0 : current + delta;
+      await prefs.setInt('$_stockPrefix$pillId', next);
+      return next;
+    });
+  }
+
+  Future<bool> wasStockAlertSent(String pillId) async =>
+      (await _prefs()).getBool('$_stockAlertPrefix$pillId') ?? false;
+
+  Future<void> setStockAlertSent(String pillId, bool sent) async {
+    final prefs = await _prefs(reload: false);
+    if (sent) {
+      await prefs.setBool('$_stockAlertPrefix$pillId', true);
+    } else {
+      await prefs.remove('$_stockAlertPrefix$pillId');
+    }
+  }
+
+  // ============================================================
+  // BACKUP
+  // ============================================================
+
+  Future<Map<String, dynamic>> exportData() async {
+    final pills = await getPills();
+    final records = await getDoseRecords();
+    return {
+      'app': 'dawaii',
+      'version': _currentVersion,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'pills': pills.map((p) => p.toMap()).toList(),
+      'doses': records.map((k, v) => MapEntry(k, v.toMap())),
+    };
+  }
+
+  /// Replaces all medications and history with a backup. Throws
+  /// [FormatException] if the data is not a Dawaii backup.
+  Future<int> importData(Map<String, dynamic> data) {
+    if (data['app'] != 'dawaii' || data['pills'] is! List) {
+      throw const FormatException('Not a Dawaii backup file.');
+    }
+    final pills = (data['pills'] as List)
+        .whereType<Map>()
+        .map((m) => PillModel.fromMap(Map<String, dynamic>.from(m)))
+        .where((p) => p.id.isNotEmpty)
+        .toList();
+    final rawDoses = data['doses'] is Map ? data['doses'] as Map : const {};
+
+    return _synchronized(() async {
+      final prefs = await _prefs();
+      for (final key in prefs.getKeys().toList()) {
+        if (key.startsWith(_dosePrefix) ||
+            key.startsWith(_stockPrefix) ||
+            key.startsWith(_stockAlertPrefix)) {
+          await prefs.remove(key);
+        }
+      }
+      await _writePills(prefs, pills);
+      for (final pill in pills) {
+        if (pill.stockCount != null) {
+          await prefs.setInt('$_stockPrefix${pill.id}', pill.stockCount!);
+        }
+      }
+      for (final entry in rawDoses.entries) {
+        final ref = DoseRef.fromKey('${entry.key}');
+        final record = DoseRecord.fromMap(entry.value);
+        if (ref == null || record == null) continue;
+        await prefs.setString(
+          '$_dosePrefix${ref.key}',
+          json.encode(record.toMap()),
+        );
+      }
+      return pills.length;
+    });
   }
 }

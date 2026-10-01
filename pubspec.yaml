@@ -6,7 +6,7 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
   remove_alpha_ios: true
 
-description: "A new Flutter project."
+description: "Dawaii - medication reminders for older adults, in English and Arabic."
 
 publish_to: 'none'
 
@@ -24,14 +24,16 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_local_notifications: ^22.3.0
   timezone: ^0.11.1
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  flutter_riverpod: ^2.6.1
-  provider: ^6.1.5+1
   shared_preferences: ^2.5.5
   flutter_timezone: ^5.1.0
   path_provider: ^2.1.5
   image_picker: ^1.1.2
+  intl: any
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  share_plus: ^13.3.1
+  file_picker: ^13.1.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +43,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
 
 flutter:
+  generate: true
   uses-material-design: true
 
   assets:

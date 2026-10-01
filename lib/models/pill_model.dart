@@ -1,39 +1,46 @@
 import 'dart:convert';
 
 /// Frequency types for pill scheduling.
-enum FrequencyType {
-  daily,
-  specificDays,
-  interval,
-}
+enum FrequencyType { daily, specificDays, interval }
 
 /// Pill appearances used for visual recognition.
-///
-/// New values:
-/// - capsule
-/// - tablet
-/// - caplet
-/// - softgel
-enum PillShape {
-  capsule,
-  tablet,
-  caplet,
-  softgel,
-}
+enum PillShape { capsule, tablet, caplet, softgel }
 
 /// Unit used for a medication treatment duration.
-enum TreatmentDurationUnit {
-  days,
-  weeks,
-  months,
-}
+enum TreatmentDurationUnit { days, weeks, months }
 
-/// Status of the medication for a given dose.
-enum DoseStatus {
-  pending,
-  taken,
-  skipped,
-  snoozed,
+/// Status stored for a single dose.
+///
+/// "Missed" is never stored: it is derived from the schedule (a due dose on a
+/// past day with no record), see `ScheduleService`.
+enum DoseStatus { pending, taken, skipped, snoozed }
+
+/// A time span during which a medication was paused.
+/// [end] is null while the pause is still ongoing.
+class PausePeriod {
+  final DateTime start;
+  final DateTime? end;
+
+  const PausePeriod({required this.start, this.end});
+
+  bool contains(DateTime moment) =>
+      !moment.isBefore(start) && (end == null || moment.isBefore(end!));
+
+  Map<String, dynamic> toMap() => {
+        'start': start.toIso8601String(),
+        'end': end?.toIso8601String(),
+      };
+
+  static PausePeriod? fromMap(dynamic value) {
+    if (value is! Map) return null;
+    final start = DateTime.tryParse('${value['start']}');
+    if (start == null) return null;
+    final rawEnd = value['end'];
+    return PausePeriod(
+      start: start,
+      end: rawEnd == null ? null : DateTime.tryParse('$rawEnd'),
+    );
+  }
 }
 
 class PillModel {
@@ -48,12 +55,27 @@ class PillModel {
   final List<int> daysOfWeek;
   final int intervalDays;
   final DateTime startDate;
+
+  /// Null means the medication is ongoing (no end date).
   final TreatmentDurationUnit? treatmentDurationUnit;
   final int? treatmentDurationValue;
   final DateTime? treatmentEndDate;
+
   final String? photoPath;
   final String? instructions;
   final bool isActive;
+  final List<PausePeriod> pausePeriods;
+
+  /// When the dose times / frequency were last changed. Doses before this
+  /// moment are never reported as "missed", because the old schedule is
+  /// unknown.
+  final DateTime? scheduleUpdatedAt;
+
+  /// Pills left in the box. Null means stock is not tracked.
+  final int? stockCount;
+
+  /// Warn when [stockCount] drops to this number or below.
+  final int refillThreshold;
 
   PillModel({
     required this.id,
@@ -73,8 +95,20 @@ class PillModel {
     this.photoPath,
     this.instructions,
     this.isActive = true,
+    this.pausePeriods = const [],
+    this.scheduleUpdatedAt,
+    this.stockCount,
+    this.refillThreshold = 10,
   }) : startDate = startDate ?? DateTime.now();
 
+  bool get isOngoing => treatmentEndDate == null;
+
+  bool get tracksStock => stockCount != null;
+
+  bool get isLowOnStock => stockCount != null && stockCount! <= refillThreshold;
+
+  /// Nullable fields are passed as a function so they can be cleared:
+  /// `copyWith(instructions: () => null)`.
   PillModel copyWith({
     String? id,
     String? name,
@@ -87,13 +121,16 @@ class PillModel {
     List<int>? daysOfWeek,
     int? intervalDays,
     DateTime? startDate,
-    TreatmentDurationUnit? treatmentDurationUnit,
-    int? treatmentDurationValue,
-    DateTime? treatmentEndDate,
-    String? photoPath,
-    bool clearPhotoPath = false,
-    String? instructions,
+    TreatmentDurationUnit? Function()? treatmentDurationUnit,
+    int? Function()? treatmentDurationValue,
+    DateTime? Function()? treatmentEndDate,
+    String? Function()? photoPath,
+    String? Function()? instructions,
     bool? isActive,
+    List<PausePeriod>? pausePeriods,
+    DateTime? Function()? scheduleUpdatedAt,
+    int? Function()? stockCount,
+    int? refillThreshold,
   }) {
     return PillModel(
       id: id ?? this.id,
@@ -103,27 +140,41 @@ class PillModel {
       colorHex: colorHex ?? this.colorHex,
       shape: shape ?? this.shape,
       frequencyType: frequencyType ?? this.frequencyType,
-      scheduleTimes:
-          scheduleTimes != null
-              ? List<String>.from(scheduleTimes)
-              : List<String>.from(this.scheduleTimes),
-      daysOfWeek:
-          daysOfWeek != null
-              ? List<int>.from(daysOfWeek)
-              : List<int>.from(this.daysOfWeek),
+      scheduleTimes: List<String>.from(scheduleTimes ?? this.scheduleTimes),
+      daysOfWeek: List<int>.from(daysOfWeek ?? this.daysOfWeek),
       intervalDays: intervalDays ?? this.intervalDays,
       startDate: startDate ?? this.startDate,
-      treatmentDurationUnit:
-          treatmentDurationUnit ?? this.treatmentDurationUnit,
-      treatmentDurationValue:
-          treatmentDurationValue ?? this.treatmentDurationValue,
+      treatmentDurationUnit: treatmentDurationUnit != null
+          ? treatmentDurationUnit()
+          : this.treatmentDurationUnit,
+      treatmentDurationValue: treatmentDurationValue != null
+          ? treatmentDurationValue()
+          : this.treatmentDurationValue,
       treatmentEndDate:
-          treatmentEndDate ?? this.treatmentEndDate,
-      photoPath:
-          clearPhotoPath ? null : (photoPath ?? this.photoPath),
-      instructions: instructions ?? this.instructions,
+          treatmentEndDate != null ? treatmentEndDate() : this.treatmentEndDate,
+      photoPath: photoPath != null ? photoPath() : this.photoPath,
+      instructions: instructions != null ? instructions() : this.instructions,
       isActive: isActive ?? this.isActive,
+      pausePeriods: List<PausePeriod>.from(pausePeriods ?? this.pausePeriods),
+      scheduleUpdatedAt: scheduleUpdatedAt != null
+          ? scheduleUpdatedAt()
+          : this.scheduleUpdatedAt,
+      stockCount: stockCount != null ? stockCount() : this.stockCount,
+      refillThreshold: refillThreshold ?? this.refillThreshold,
     );
+  }
+
+  /// Returns a copy that is paused from [now] (or resumed at [now]).
+  PillModel withActive(bool active, DateTime now) {
+    if (active == isActive) return this;
+    final periods = List<PausePeriod>.from(pausePeriods);
+    if (!active) {
+      periods.add(PausePeriod(start: now));
+    } else if (periods.isNotEmpty && periods.last.end == null) {
+      periods[periods.length - 1] =
+          PausePeriod(start: periods.last.start, end: now);
+    }
+    return copyWith(isActive: active, pausePeriods: periods);
   }
 
   Map<String, dynamic> toMap() {
@@ -145,402 +196,169 @@ class PillModel {
       'photoPath': photoPath,
       'instructions': instructions,
       'isActive': isActive,
+      'pausePeriods': pausePeriods.map((p) => p.toMap()).toList(),
+      'scheduleUpdatedAt': scheduleUpdatedAt?.toIso8601String(),
+      'stockCount': stockCount,
+      'refillThreshold': refillThreshold,
     };
   }
 
-  /// Converts saved shape values into the current PillShape enum.
-  ///
-  /// This also supports older saved app data:
-  ///
-  /// old "round"  -> tablet
-  /// old "oval"   -> softgel
-  /// old "square" -> tablet
+  // ------------------------------------------------------------------
+  // Tolerant parsers: saved data may come from older app versions or a
+  // hand-edited backup file, so nothing here is allowed to throw.
+  // ------------------------------------------------------------------
+
+  static int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value == null) return null;
+    return int.tryParse(value.toString().trim());
+  }
+
+  static DateTime? _toDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+
+  static String? _toNonEmpty(dynamic value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
+  }
+
+  /// Older versions saved "round", "oval" and "square" shapes.
   static PillShape _parseShape(dynamic value) {
-    final shapeName =
-        value?.toString().trim().toLowerCase();
-
-    switch (shapeName) {
-      // Current values
-      case 'capsule':
-        return PillShape.capsule;
-
+    switch (value?.toString().trim().toLowerCase()) {
       case 'tablet':
-        return PillShape.tablet;
-
-      case 'caplet':
-        return PillShape.caplet;
-
-      case 'softgel':
-        return PillShape.softgel;
-
-      // --------------------------------------------------
-      // OLD SAVED VALUES
-      // --------------------------------------------------
-
       case 'round':
-        return PillShape.tablet;
-
-      case 'oval':
-        return PillShape.softgel;
-
       case 'square':
         return PillShape.tablet;
-
+      case 'caplet':
+        return PillShape.caplet;
+      case 'softgel':
+      case 'oval':
+        return PillShape.softgel;
       default:
         return PillShape.capsule;
     }
   }
 
-  static FrequencyType _parseFrequencyType(
-    dynamic value,
-  ) {
-    final frequencyName =
-        value?.toString().trim();
-
-    for (final frequency
-        in FrequencyType.values) {
-      if (frequency.name == frequencyName) {
-        return frequency;
-      }
+  static T? _parseEnum<T extends Enum>(List<T> values, dynamic value) {
+    final name = value?.toString().trim();
+    for (final v in values) {
+      if (v.name == name) return v;
     }
-
-    return FrequencyType.daily;
+    return null;
   }
 
   static int _parseColorHex(dynamic value) {
-    if (value is int) {
-      return value;
-    }
-
-    if (value is num) {
-      return value.toInt();
-    }
-
+    if (value is num) return value.toInt();
     if (value is String) {
-      final cleaned =
-          value
-              .replaceAll('#', '')
-              .replaceAll('0x', '')
-              .replaceAll('0X', '')
-              .trim();
-
-      final parsed =
-          int.tryParse(cleaned, radix: 16);
-
+      final cleaned = value
+          .replaceAll('#', '')
+          .replaceAll(RegExp('^0[xX]'), '')
+          .trim();
+      final parsed = int.tryParse(cleaned, radix: 16);
       if (parsed != null) {
-        // If RGB was stored without alpha, add full opacity.
-        if (cleaned.length <= 6) {
-          return 0xFF000000 | parsed;
-        }
-
-        return parsed;
+        // RGB stored without alpha gets full opacity.
+        return cleaned.length <= 6 ? 0xFF000000 | parsed : parsed;
       }
     }
-
     return 0xFF6366F1;
   }
 
-  static List<String> _parseScheduleTimes(
-    dynamic value,
-  ) {
-    if (value is! List) {
-      return [];
-    }
-
-    final times = <String>[];
-
-    for (final item in value) {
-      if (item == null) {
-        continue;
-      }
-
-      final time = item.toString().trim();
-
-      if (_isValidTime(time)) {
-        times.add(time);
-      }
-    }
-
-    return times;
-  }
-
-  static bool _isValidTime(String value) {
+  static bool isValidTime(String value) {
     final parts = value.split(':');
-
-    if (parts.length != 2) {
-      return false;
-    }
-
+    if (parts.length != 2) return false;
     final hour = int.tryParse(parts[0]);
     final minute = int.tryParse(parts[1]);
-
-    if (hour == null || minute == null) {
-      return false;
-    }
-
-    return hour >= 0 &&
+    return hour != null &&
+        minute != null &&
+        hour >= 0 &&
         hour <= 23 &&
         minute >= 0 &&
         minute <= 59;
   }
 
-  static List<int> _parseDaysOfWeek(
-    dynamic value,
-  ) {
-    if (value is! List) {
-      return [];
-    }
-
-    final result = <int>{};
-
+  static List<String> _parseScheduleTimes(dynamic value) {
+    if (value is! List) return [];
+    final times = <String>{};
     for (final item in value) {
-      int? day;
-
-      if (item is int) {
-        day = item;
-      } else if (item is num) {
-        day = item.toInt();
-      } else {
-        day = int.tryParse(
-          item.toString(),
-        );
-      }
-
-      if (day != null &&
-          day >= DateTime.monday &&
-          day <= DateTime.sunday) {
-        result.add(day);
-      }
+      if (item == null) continue;
+      final parts = item.toString().trim().split(':');
+      if (parts.length != 2) continue;
+      final hour = int.tryParse(parts[0]);
+      final minute = int.tryParse(parts[1]);
+      if (hour == null || minute == null) continue;
+      final normalized =
+          '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+      if (isValidTime(normalized)) times.add(normalized);
     }
-
-    final sorted = result.toList()
-      ..sort();
-
-    return sorted;
+    return times.toList()..sort();
   }
 
-  static int _parsePillCount(dynamic value) {
-    int? parsed;
-
-    if (value is int) {
-      parsed = value;
-    } else if (value is num) {
-      parsed = value.toInt();
-    } else if (value != null) {
-      parsed = int.tryParse(value.toString());
-    }
-
-    // Backwards compatibility: medications saved before pillCount
-    // existed are treated as one pill per scheduled dose.
-    if (parsed == null || parsed < 1) {
-      return 1;
-    }
-
-    return parsed;
-  }
-
-  static int _parseIntervalDays(
-    dynamic value,
-  ) {
-    int? parsed;
-
-    if (value is int) {
-      parsed = value;
-    } else if (value is num) {
-      parsed = value.toInt();
-    } else if (value != null) {
-      parsed =
-          int.tryParse(value.toString());
-    }
-
-    if (parsed == null || parsed < 1) {
-      return 1;
-    }
-
-    return parsed;
-  }
-
-  static DateTime _parseStartDate(
-    dynamic value,
-  ) {
-    if (value == null) {
-      return DateTime.now();
-    }
-
-    if (value is DateTime) {
-      return value;
-    }
-
-    return DateTime.tryParse(
-          value.toString(),
-        ) ??
-        DateTime.now();
-  }
-
-
-  static TreatmentDurationUnit? _parseTreatmentDurationUnit(
-    dynamic value,
-  ) {
-    final name = value?.toString().trim();
-
-    if (name == null || name.isEmpty) {
-      return null;
-    }
-
-    for (final unit in TreatmentDurationUnit.values) {
-      if (unit.name == name) {
-        return unit;
+  static List<int> _parseDaysOfWeek(dynamic value) {
+    if (value is! List) return [];
+    final days = <int>{};
+    for (final item in value) {
+      final day = _toInt(item);
+      if (day != null && day >= DateTime.monday && day <= DateTime.sunday) {
+        days.add(day);
       }
     }
-
-    return null;
+    return days.toList()..sort();
   }
 
-  static int? _parseTreatmentDurationValue(
-    dynamic value,
-  ) {
-    int? parsed;
-
-    if (value is int) {
-      parsed = value;
-    } else if (value is num) {
-      parsed = value.toInt();
-    } else if (value != null) {
-      parsed = int.tryParse(value.toString());
-    }
-
-    if (parsed == null || parsed < 1) {
-      return null;
-    }
-
-    return parsed;
+  static int _atLeastOne(dynamic value) {
+    final parsed = _toInt(value);
+    return parsed == null || parsed < 1 ? 1 : parsed;
   }
 
-  static DateTime? _parseOptionalDateTime(
-    dynamic value,
-  ) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value is DateTime) {
-      return value;
-    }
-
-    return DateTime.tryParse(value.toString());
-  }
-
-  static String? _parsePhotoPath(
-    dynamic value,
-  ) {
-    if (value == null) {
-      return null;
-    }
-
-    final path = value.toString().trim();
-
-    return path.isEmpty ? null : path;
-  }
-
-  factory PillModel.fromMap(
-    Map<String, dynamic> map,
-  ) {
-    final rawInstructions =
-        map['instructions'];
-
-    final String? instructions =
-        rawInstructions == null ||
-                rawInstructions
-                    .toString()
-                    .trim()
-                    .isEmpty
-            ? null
-            : rawInstructions
-                .toString()
-                .trim();
+  factory PillModel.fromMap(Map<String, dynamic> map) {
+    final durationValue = _toInt(map['treatmentDurationValue']);
+    final rawStock = _toInt(map['stockCount']);
+    final rawThreshold = _toInt(map['refillThreshold']);
+    final rawPauses = map['pausePeriods'];
 
     return PillModel(
       id: map['id']?.toString() ?? '',
-      name:
-          map['name']?.toString() ?? '',
-      dosage:
-          map['dosage']?.toString() ?? '',
-      pillCount:
-          _parsePillCount(
-        map['pillCount'],
-      ),
-      colorHex:
-          _parseColorHex(
-        map['colorHex'],
-      ),
-      shape:
-          _parseShape(
-        map['shape'],
-      ),
-      frequencyType:
-          _parseFrequencyType(
-        map['frequencyType'],
-      ),
-      scheduleTimes:
-          _parseScheduleTimes(
-        map['scheduleTimes'],
-      ),
-      daysOfWeek:
-          _parseDaysOfWeek(
-        map['daysOfWeek'],
-      ),
-      intervalDays:
-          _parseIntervalDays(
-        map['intervalDays'],
-      ),
-      startDate:
-          _parseStartDate(
-        map['startDate'],
-      ),
+      name: map['name']?.toString() ?? '',
+      dosage: map['dosage']?.toString() ?? '',
+      // Medications saved before pillCount existed mean one pill per dose.
+      pillCount: _atLeastOne(map['pillCount']),
+      colorHex: _parseColorHex(map['colorHex']),
+      shape: _parseShape(map['shape']),
+      frequencyType: _parseEnum(FrequencyType.values, map['frequencyType']) ??
+          FrequencyType.daily,
+      scheduleTimes: _parseScheduleTimes(map['scheduleTimes']),
+      daysOfWeek: _parseDaysOfWeek(map['daysOfWeek']),
+      intervalDays: _atLeastOne(map['intervalDays']),
+      startDate: _toDate(map['startDate']) ?? DateTime.now(),
       treatmentDurationUnit:
-          _parseTreatmentDurationUnit(
-        map['treatmentDurationUnit'],
-      ),
+          _parseEnum(TreatmentDurationUnit.values, map['treatmentDurationUnit']),
       treatmentDurationValue:
-          _parseTreatmentDurationValue(
-        map['treatmentDurationValue'],
-      ),
-      treatmentEndDate:
-          _parseOptionalDateTime(
-        map['treatmentEndDate'],
-      ),
-      photoPath:
-          _parsePhotoPath(
-        map['photoPath'],
-      ),
-      instructions: instructions,
-      isActive:
-          map['isActive'] is bool
-              ? map['isActive'] as bool
-              : true,
+          durationValue == null || durationValue < 1 ? null : durationValue,
+      treatmentEndDate: _toDate(map['treatmentEndDate']),
+      photoPath: _toNonEmpty(map['photoPath']),
+      instructions: _toNonEmpty(map['instructions']),
+      isActive: map['isActive'] is bool ? map['isActive'] as bool : true,
+      pausePeriods: rawPauses is List
+          ? rawPauses.map(PausePeriod.fromMap).whereType<PausePeriod>().toList()
+          : const [],
+      scheduleUpdatedAt: _toDate(map['scheduleUpdatedAt']),
+      stockCount: rawStock == null || rawStock < 0 ? null : rawStock,
+      refillThreshold:
+          rawThreshold == null || rawThreshold < 0 ? 10 : rawThreshold,
     );
   }
 
-  String toJson() {
-    return json.encode(toMap());
-  }
+  String toJson() => json.encode(toMap());
 
-  factory PillModel.fromJson(
-    String source,
-  ) {
-    final decoded =
-        json.decode(source);
-
+  factory PillModel.fromJson(String source) {
+    final decoded = json.decode(source);
     if (decoded is! Map) {
-      throw const FormatException(
-        'Invalid PillModel JSON.',
-      );
+      throw const FormatException('Invalid PillModel JSON.');
     }
-
-    return PillModel.fromMap(
-      Map<String, dynamic>.from(
-        decoded,
-      ),
-    );
+    return PillModel.fromMap(Map<String, dynamic>.from(decoded));
   }
 }

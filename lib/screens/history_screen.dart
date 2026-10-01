@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
+import '../models/dose.dart';
 import '../models/pill_model.dart';
-import '../services/storage_service.dart';
-import '../services/language_service.dart';
+import '../services/app_data.dart';
+import '../services/report_service.dart';
+import '../services/schedule_service.dart';
+import '../theme/app_theme.dart';
+import '../utils/formatters.dart';
+import '../widgets/pill_shape_widget.dart';
 
-enum AnalyticsTimeframe {
-  last7Days,
-  last30Days,
-  thisYear,
-  allTime,
-}
+enum AnalyticsTimeframe { last7Days, last30Days, thisYear, allTime }
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -19,1141 +19,431 @@ class HistoryScreen extends StatefulWidget {
   State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen>
-    with WidgetsBindingObserver {
-  final StorageService _storageService = StorageService();
-  final LanguageService _languageService =
-      LanguageService();
-
-  String _t(
-    String key, {
-    Map<String, Object?> params =
-        const <String, Object?>{},
-  }) {
-    return _languageService.tr(
-      key,
-      params: params,
-    );
-  }
-
-  List<PillModel> _pills = [];
-  Map<String, String> _doseLogs = {};
-  Map<String, String> _takenTimes = {};
-
-  bool _isLoading = true;
-
-  AnalyticsTimeframe _selectedTimeframe =
-      AnalyticsTimeframe.last30Days;
-
-  int _totalDosesCount = 0;
-  int _takenDosesCount = 0;
-  int _skippedDosesCount = 0;
-  int _streakDays = 0;
-
-  bool get _isDark =>
-      Theme.of(context).brightness == Brightness.dark;
-
-  Color get _pageBackground =>
-      _isDark
-          ? const Color(0xFF0B1220)
-          : const Color(0xFFF8FAFC);
-
-  Color get _surface =>
-      _isDark
-          ? const Color(0xFF172033)
-          : Colors.white;
-
-  Color get _innerSurface =>
-      _isDark
-          ? const Color(0xFF0F172A)
-          : const Color(0xFFF8FAFC);
-
-  Color get _primaryText =>
-      _isDark
-          ? const Color(0xFFF8FAFC)
-          : const Color(0xFF0F172A);
-
-  Color get _secondaryText =>
-      _isDark
-          ? const Color(0xFFCBD5E1)
-          : const Color(0xFF64748B);
-
-  Color get _mutedText =>
-      _isDark
-          ? const Color(0xFF94A3B8)
-          : const Color(0xFF94A3B8);
-
-  Color get _border =>
-      _isDark
-          ? const Color(0xFF283548)
-          : const Color(0xFFE2E8F0);
-
-  Color get _accent =>
-      _isDark
-          ? const Color(0xFF818CF8)
-          : const Color(0xFF4F46E5);
-
-  List<BoxShadow> get _cardShadow {
-    if (_isDark) {
-      return const [];
-    }
-
-    return [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.03),
-        blurRadius: 10,
-        offset: const Offset(0, 4),
-      ),
-    ];
-  }
+class _HistoryScreenState extends State<HistoryScreen> {
+  final AppData _data = AppData();
+  final ScheduleService _schedule = const ScheduleService();
+  AnalyticsTimeframe _timeframe = AnalyticsTimeframe.last30Days;
+  bool _exporting = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _loadHistoryData();
+    _data.addListener(_onData);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _data.removeListener(_onData);
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(
-    AppLifecycleState state,
-  ) {
-    if (state == AppLifecycleState.resumed) {
-      _loadHistoryData();
-    }
+  void _onData() {
+    if (mounted) setState(() {});
   }
 
-  bool _isDateInTimeframe(
-    DateTime date,
-  ) {
-    final now = DateTime.now();
-    final today =
-        DateTime(now.year, now.month, now.day);
-
-    final targetDate =
-        DateTime(date.year, date.month, date.day);
-
-    switch (_selectedTimeframe) {
-      case AnalyticsTimeframe.last7Days:
-        final start =
-            today.subtract(const Duration(days: 6));
-
-        return targetDate.isAfter(
-              start.subtract(const Duration(days: 1)),
-            ) &&
-            targetDate.isBefore(
-              today.add(const Duration(days: 1)),
-            );
-
-      case AnalyticsTimeframe.last30Days:
-        final start =
-            today.subtract(const Duration(days: 29));
-
-        return targetDate.isAfter(
-              start.subtract(const Duration(days: 1)),
-            ) &&
-            targetDate.isBefore(
-              today.add(const Duration(days: 1)),
-            );
-
-      case AnalyticsTimeframe.thisYear:
-        return targetDate.year == now.year;
-
-      case AnalyticsTimeframe.allTime:
-        return true;
-    }
+  DateTime _from(DateTime now) {
+    final today = ScheduleService.dayOf(now);
+    return switch (_timeframe) {
+      AnalyticsTimeframe.last7Days =>
+        DateTime(today.year, today.month, today.day - 6),
+      AnalyticsTimeframe.last30Days =>
+        DateTime(today.year, today.month, today.day - 29),
+      AnalyticsTimeframe.thisYear => DateTime(today.year),
+      AnalyticsTimeframe.allTime => _schedule.earliestStart(_data.pills, now),
+    };
   }
 
-  Future<void> _loadHistoryData() async {
-    if (!mounted) {
-      return;
-    }
+  String _label(AppLocalizations l, AnalyticsTimeframe t) => switch (t) {
+        AnalyticsTimeframe.last7Days => l.last7Days,
+        AnalyticsTimeframe.last30Days => l.last30Days,
+        AnalyticsTimeframe.thisYear => l.thisYear,
+        AnalyticsTimeframe.allTime => l.allTime,
+      };
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final pills =
-          await _storageService.getPills();
-
-      final logs =
-          await _storageService.getDoseLogs();
-
-      final takenTimes =
-          await _storageService.getTakenTimes();
-
-      int total = 0;
-      int taken = 0;
-      int skipped = 0;
-
-      logs.forEach(
-        (key, status) {
-          final parts = key.split('_');
-
-          if (parts.isEmpty) {
-            return;
-          }
-
-          final date =
-              DateTime.tryParse(parts[0]);
-
-          if (date == null ||
-              !_isDateInTimeframe(date)) {
-            return;
-          }
-
-          if (status == 'taken') {
-            taken++;
-            total++;
-          } else if (status == 'skipped') {
-            skipped++;
-            total++;
-          }
-        },
-      );
-
-      int streak = 0;
-
-      final now = DateTime.now();
-
-      for (int i = 0; i < 365; i++) {
-        final checkDate =
-            DateTime(
-          now.year,
-          now.month,
-          now.day - i,
-        );
-
-        final dateStr =
-            checkDate.toIso8601String().split('T')[0];
-
-        bool dayHasLogs = false;
-        bool dayAllTaken = true;
-
-        for (final pill in pills) {
-          if (!_storageService
-              .isPillScheduledForDate(
-            pill,
-            checkDate,
-          )) {
-            continue;
-          }
-
-          for (final time
-              in pill.scheduleTimes) {
-            final key =
-                '${dateStr}_${pill.id}_$time';
-
-            final status = logs[key];
-
-            if (status != null) {
-              dayHasLogs = true;
-
-              if (status != 'taken') {
-                dayAllTaken = false;
-              }
-            } else {
-              dayAllTaken = false;
-            }
-          }
-        }
-
-        if (dayHasLogs && dayAllTaken) {
-          streak++;
-        } else if (i > 0 && dayHasLogs) {
-          break;
-        }
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _pills = pills;
-        _doseLogs = logs;
-        _takenTimes = takenTimes;
-        _totalDosesCount = total;
-        _takenDosesCount = taken;
-        _skippedDosesCount = skipped;
-        _streakDays = streak;
-        _isLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  DateTime? _getLatestTakenForPill(
-    PillModel pill,
-  ) {
+  DateTime? _lastTaken(PillModel pill) {
     DateTime? latest;
-
-    _takenTimes.forEach(
-      (key, value) {
-        if (!key.contains(
-          '_${pill.id}_',
-        )) {
-          return;
-        }
-
-        final parts =
-            key.split('_');
-
-        if (parts.isEmpty) {
-          return;
-        }
-
-        final doseDate =
-            DateTime.tryParse(
-          parts.first,
-        );
-
-        if (doseDate == null ||
-            !_isDateInTimeframe(
-              doseDate,
-            )) {
-          return;
-        }
-
-        final takenAt =
-            DateTime.tryParse(value);
-
-        if (takenAt == null) {
-          return;
-        }
-
-        if (latest == null ||
-            takenAt.isAfter(latest!)) {
-          latest = takenAt;
-        }
-      },
-    );
-
+    _data.records.forEach((key, record) {
+      final takenAt = record.takenAt;
+      if (record.status != DoseStatus.taken || takenAt == null) return;
+      if (DoseRef.fromKey(key)?.pillId != pill.id) return;
+      if (latest == null || takenAt.isAfter(latest!)) latest = takenAt;
+    });
     return latest;
   }
 
-  String _formatTakenDateTime(
-    DateTime dateTime,
-  ) {
-    final months = [
-      _t('jan'),
-      _t('feb'),
-      _t('mar'),
-      _t('apr'),
-      _t('may'),
-      _t('jun'),
-      _t('jul'),
-      _t('aug'),
-      _t('sep'),
-      _t('oct'),
-      _t('nov'),
-      _t('dec'),
-    ];
-
-    final local =
-        dateTime.toLocal();
-
-    final hour12 =
-        local.hour % 12 == 0
-            ? 12
-            : local.hour % 12;
-
-    final minute =
-        local.minute
-            .toString()
-            .padLeft(2, '0');
-
-    final period =
-        local.hour >= 12
-            ? _t('pm')
-            : _t('am');
-
-    return '${months[local.month - 1]} '
-        '${local.day} • '
-        '$hour12:$minute $period';
-  }
-
-  double _getPillAdherence(
-    PillModel pill,
-  ) {
-    int pillTaken = 0;
-    int pillTotal = 0;
-
-    _doseLogs.forEach(
-      (key, status) {
-        final parts = key.split('_');
-
-        if (parts.isEmpty) {
-          return;
-        }
-
-        final date =
-            DateTime.tryParse(parts[0]);
-
-        if (date == null ||
-            !_isDateInTimeframe(date)) {
-          return;
-        }
-
-        if (!key.contains('_${pill.id}_')) {
-          return;
-        }
-
-        if (status == 'taken') {
-          pillTaken++;
-        }
-
-        if (status == 'taken' ||
-            status == 'skipped') {
-          pillTotal++;
-        }
-      },
-    );
-
-    return pillTotal == 0
-        ? 1.0
-        : pillTaken / pillTotal;
-  }
-
-  String _getTimeframeLabel(
-    AnalyticsTimeframe timeframe,
-  ) {
-    switch (timeframe) {
-      case AnalyticsTimeframe.last7Days:
-        return _t('last7Days');
-
-      case AnalyticsTimeframe.last30Days:
-        return _t('last30Days');
-
-      case AnalyticsTimeframe.thisYear:
-        return _t('thisYear');
-
-      case AnalyticsTimeframe.allTime:
-        return _t('allTime');
+  Future<void> _exportReport() async {
+    final l = AppLocalizations.of(context);
+    setState(() => _exporting = true);
+    try {
+      await ReportService().shareDoctorReport();
+    } catch (e) {
+      debugPrint('REPORT ERROR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l.reportError)));
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
     }
   }
 
-  Widget _buildMetricCard({
-    required IconData icon,
-    required Color iconColor,
-    required String value,
-    required String label,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _border,
-        ),
-        boxShadow: _cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: 28,
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final palette = context.palette;
+    final fmt = Formatters(l);
+    final now = DateTime.now();
+    final from = _from(now);
+
+    final overall = _schedule.stats(
+      pills: _data.pills,
+      records: _data.records,
+      from: from,
+      now: now,
+    );
+    final streak = _schedule.streak(
+      pills: _data.pills,
+      records: _data.records,
+      now: now,
+    );
+
+    String percent(double? value) =>
+        value == null ? '—' : '${(value * 100).round()}%';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l.analyticsHistory),
+        actions: [
+          IconButton(
+            tooltip: l.doctorReport,
+            iconSize: 28,
+            onPressed: _exporting || _data.pills.isEmpty ? null : _exportReport,
+            icon: _exporting
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  )
+                : const Icon(Icons.picture_as_pdf_rounded),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: _data.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _data.reload,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                children: [
+                  DropdownButtonFormField<AnalyticsTimeframe>(
+                    initialValue: _timeframe,
+                    decoration: InputDecoration(
+                      labelText: l.timeframe,
+                      prefixIcon: const Icon(Icons.date_range_rounded),
+                    ),
+                    dropdownColor: palette.surface,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: palette.textPrimary,
+                    ),
+                    items: [
+                      for (final t in AnalyticsTimeframe.values)
+                        DropdownMenuItem(value: t, child: Text(_label(l, t))),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) setState(() => _timeframe = v);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _MetricCard(
+                          icon: Icons.local_fire_department_rounded,
+                          iconColor: const Color(0xFFF97316),
+                          value: l.streakDays(streak),
+                          label: l.activeStreak,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _MetricCard(
+                          icon: Icons.pie_chart_rounded,
+                          iconColor: palette.accent,
+                          value: percent(overall.adherence),
+                          label: l.adherenceRate,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _Panel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.doseBreakdown,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: palette.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _Stat(l.taken, overall.taken, palette.success),
+                            _Stat(l.skipped, overall.skipped, palette.danger),
+                            _Stat(l.missed, overall.missed, palette.warning),
+                            _Stat(l.totalDue, overall.total, palette.accent),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          l.adherenceExplanation,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: palette.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    l.perMedication,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: palette.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_data.pills.isEmpty)
+                    _Panel(
+                      child: Center(
+                        child: Text(
+                          l.noSavedMedications,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: palette.textSecondary,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    for (final pill in _data.pills)
+                      _PillAdherence(
+                        pill: pill,
+                        stats: _schedule.stats(
+                          pills: [pill],
+                          records: _data.records,
+                          from: from,
+                          now: now,
+                        ),
+                        lastTaken: _lastTaken(pill),
+                        fmt: fmt,
+                      ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class _Panel extends StatelessWidget {
+  final Widget child;
+
+  const _Panel({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: palette.border),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+
+  const _MetricCard({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 32),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: _primaryText,
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: palette.textPrimary,
             ),
           ),
-          const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
-              color: _secondaryText,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 15, color: palette.textSecondary),
           ),
         ],
       ),
     );
   }
+}
+
+class _Stat extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+
+  const _Stat(this.label, this.value, this.color);
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final double adherenceRate =
-        _totalDosesCount == 0
-            ? 0.0
-            : _takenDosesCount /
-                _totalDosesCount;
-
-    final overlayStyle =
-        _isDark
-            ? SystemUiOverlayStyle.light.copyWith(
-                statusBarColor:
-                    Colors.transparent,
-                systemNavigationBarColor:
-                    _pageBackground,
-                systemNavigationBarIconBrightness:
-                    Brightness.light,
-              )
-            : SystemUiOverlayStyle.dark.copyWith(
-                statusBarColor:
-                    Colors.transparent,
-                systemNavigationBarColor:
-                    _pageBackground,
-                systemNavigationBarIconBrightness:
-                    Brightness.dark,
-              );
-
-    return AnnotatedRegion<
-        SystemUiOverlayStyle>(
-      value: overlayStyle,
-      child: Scaffold(
-        backgroundColor:
-            _pageBackground,
-        appBar: AppBar(
-          backgroundColor:
-              _pageBackground,
-          foregroundColor:
-              _primaryText,
-          surfaceTintColor:
-              Colors.transparent,
-          systemOverlayStyle:
-              overlayStyle,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: Text(
-            _t('analyticsHistory'),
-            style: TextStyle(
-              fontWeight:
-                  FontWeight.bold,
-              color: _primaryText,
-              fontSize: 22,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: _accent,
-              ),
-              onPressed:
-                  _loadHistoryData,
-              tooltip: _t('syncData'),
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? Center(
-                child:
-                    CircularProgressIndicator(
-                  color: _accent,
-                ),
-              )
-            : RefreshIndicator(
-                color: _accent,
-                onRefresh:
-                    _loadHistoryData,
-                child:
-                    SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.all(
-                    16,
-                  ),
-                  physics:
-                      const AlwaysScrollableScrollPhysics(
-                    parent:
-                        BouncingScrollPhysics(),
-                  ),
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
-                    children: [
-                      Container(
-                        padding:
-                            const EdgeInsets
-                                .symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration:
-                            BoxDecoration(
-                          color: _surface,
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            16,
-                          ),
-                          border:
-                              Border.all(
-                            color: _border,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment
-                                  .spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons
-                                      .filter_alt_rounded,
-                                  size: 20,
-                                  color:
-                                      _accent,
-                                ),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Text(
-                                  _t('timeframe'),
-                                  style:
-                                      TextStyle(
-                                    fontWeight:
-                                        FontWeight
-                                            .bold,
-                                    color:
-                                        _primaryText,
-                                    fontSize:
-                                        14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            DropdownButton<
-                                AnalyticsTimeframe>(
-                              value:
-                                  _selectedTimeframe,
-                              dropdownColor:
-                                  _surface,
-                              underline:
-                                  const SizedBox
-                                      .shrink(),
-                              icon: Icon(
-                                Icons
-                                    .keyboard_arrow_down_rounded,
-                                color:
-                                    _accent,
-                              ),
-                              style:
-                                  TextStyle(
-                                color:
-                                    _accent,
-                                fontSize:
-                                    14,
-                                fontWeight:
-                                    FontWeight
-                                        .w600,
-                              ),
-                              items:
-                                  AnalyticsTimeframe
-                                      .values
-                                      .map(
-                                (timeframe) {
-                                  return DropdownMenuItem<
-                                      AnalyticsTimeframe>(
-                                    value:
-                                        timeframe,
-                                    child:
-                                        Text(
-                                      _getTimeframeLabel(
-                                        timeframe,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ).toList(),
-                              onChanged:
-                                  (value) {
-                                if (value ==
-                                    null) {
-                                  return;
-                                }
-
-                                setState(
-                                  () {
-                                    _selectedTimeframe =
-                                        value;
-                                  },
-                                );
-
-                                _loadHistoryData();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 16,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child:
-                                _buildMetricCard(
-                              icon: Icons
-                                  .local_fire_department_rounded,
-                              iconColor:
-                                  const Color(
-                                0xFFFF9100,
-                              ),
-                              value:
-                                  _t(
-                  'streakDays',
-                  params: {'count': _streakDays},
-                ),
-                              label:
-                                  _t('activeStreak'),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 12,
-                          ),
-                          Expanded(
-                            child:
-                                _buildMetricCard(
-                              icon: Icons
-                                  .pie_chart_rounded,
-                              iconColor:
-                                  _accent,
-                              value:
-                                  '${(adherenceRate * 100).round()}%',
-                              label:
-                                  _t('adherenceRate'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Container(
-                        padding:
-                            const EdgeInsets.all(
-                          20,
-                        ),
-                        decoration:
-                            BoxDecoration(
-                          color: _surface,
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            20,
-                          ),
-                          border:
-                              Border.all(
-                            color: _border,
-                          ),
-                          boxShadow:
-                              _cardShadow,
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-                          children: [
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .spaceBetween,
-                              children: [
-                                Text(
-                                  _t('doseBreakdown'),
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        16,
-                                    fontWeight:
-                                        FontWeight
-                                            .bold,
-                                    color:
-                                        _primaryText,
-                                  ),
-                                ),
-                                Text(
-                                  _getTimeframeLabel(
-                                    _selectedTimeframe,
-                                  ),
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        12,
-                                    color:
-                                        _mutedText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(
-                              height: 16,
-                            ),
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .spaceAround,
-                              children: [
-                                _buildStatItem(
-                                  _t('taken'),
-                                  '$_takenDosesCount',
-                                  const Color(
-                                    0xFF22C55E,
-                                  ),
-                                ),
-                                _buildStatItem(
-                                  _t('skipped'),
-                                  '$_skippedDosesCount',
-                                  const Color(
-                                    0xFFEF4444,
-                                  ),
-                                ),
-                                _buildStatItem(
-                                  _t('totalLogged'),
-                                  '$_totalDosesCount',
-                                  const Color(
-                                    0xFF3B82F6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Text(
-                        _t('medicationsAdherence'),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight:
-                              FontWeight.bold,
-                          color:
-                              _primaryText,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      if (_pills.isEmpty)
-                        Container(
-                          width:
-                              double.infinity,
-                          padding:
-                              const EdgeInsets.all(
-                            24,
-                          ),
-                          decoration:
-                              BoxDecoration(
-                            color:
-                                _surface,
-                            borderRadius:
-                                BorderRadius
-                                    .circular(
-                              20,
-                            ),
-                            border:
-                                Border.all(
-                              color:
-                                  _border,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons
-                                    .medication_outlined,
-                                size: 48,
-                                color:
-                                    _mutedText,
-                              ),
-                              const SizedBox(
-                                height: 12,
-                              ),
-                              Text(
-                                _t('noSavedMedications'),
-                                style:
-                                    TextStyle(
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
-                                  color:
-                                      _secondaryText,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics:
-                              const NeverScrollableScrollPhysics(),
-                          itemCount:
-                              _pills.length,
-                          itemBuilder:
-                              (
-                            context,
-                            index,
-                          ) {
-                            final pill =
-                                _pills[
-                                    index];
-
-                            final progress =
-                                _getPillAdherence(
-                              pill,
-                            );
-
-                            final color =
-                                Color(
-                              pill.colorHex,
-                            );
-
-                            final latestTaken =
-                                _getLatestTakenForPill(
-                              pill,
-                            );
-
-                            return Container(
-                              margin:
-                                  const EdgeInsets
-                                      .only(
-                                bottom: 12,
-                              ),
-                              padding:
-                                  const EdgeInsets
-                                      .all(
-                                16,
-                              ),
-                              decoration:
-                                  BoxDecoration(
-                                color:
-                                    _surface,
-                                borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                  20,
-                                ),
-                                border:
-                                    Border.all(
-                                  color:
-                                      _border,
-                                ),
-                                boxShadow:
-                                    _cardShadow,
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor:
-                                            color
-                                                .withValues(
-                                          alpha:
-                                              _isDark
-                                                  ? 0.20
-                                                  : 0.15,
-                                        ),
-                                        child:
-                                            Icon(
-                                          Icons
-                                              .medication,
-                                          color:
-                                              color,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width:
-                                            12,
-                                      ),
-                                      Expanded(
-                                        child:
-                                            Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment
-                                                  .start,
-                                          children: [
-                                            Text(
-                                              pill.name,
-                                              maxLines:
-                                                  1,
-                                              overflow:
-                                                  TextOverflow
-                                                      .ellipsis,
-                                              style:
-                                                  TextStyle(
-                                                fontWeight:
-                                                    FontWeight.bold,
-                                                fontSize:
-                                                    16,
-                                                color:
-                                                    _primaryText,
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height:
-                                                  2,
-                                            ),
-                                            Text(
-                                              _t(
-                          'dosePerDay',
-                          params: {
-                            'dosage': pill.dosage,
-                            'count': pill.scheduleTimes.length,
-                          },
-                        ),
-                                              maxLines:
-                                                  1,
-                                              overflow:
-                                                  TextOverflow
-                                                      .ellipsis,
-                                              style:
-                                                  TextStyle(
-                                                fontSize:
-                                                    12,
-                                                color:
-                                                    _secondaryText,
-                                              ),
-                                            ),
-                                            if (latestTaken !=
-                                                null) ...[
-                                              const SizedBox(
-                                                height:
-                                                    3,
-                                              ),
-                                              Text(
-                                                _t(
-                                  'lastTaken',
-                                  params: {
-                                    'time': _formatTakenDateTime(latestTaken),
-                                  },
-                                ),
-                                                maxLines:
-                                                    1,
-                                                overflow:
-                                                    TextOverflow
-                                                        .ellipsis,
-                                                style:
-                                                    TextStyle(
-                                                  fontSize:
-                                                      11,
-                                                  color:
-                                                      _mutedText,
-                                                  fontWeight:
-                                                      FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: 8,
-                                      ),
-                                      Text(
-                                        '${(progress * 100).round()}%',
-                                        style:
-                                            TextStyle(
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
-                                          fontSize:
-                                              16,
-                                          color:
-                                              color,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(
-                                    height: 12,
-                                  ),
-                                  ClipRRect(
-                                    borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                      8,
-                                    ),
-                                    child:
-                                        LinearProgressIndicator(
-                                      value:
-                                          progress,
-                                      minHeight:
-                                          8,
-                                      backgroundColor:
-                                          _isDark
-                                              ? _innerSurface
-                                              : color
-                                                  .withValues(
-                                                  alpha:
-                                                      0.12,
-                                                ),
-                                      valueColor:
-                                          AlwaysStoppedAnimation<
-                                              Color>(
-                                        color,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-    String label,
-    String value,
-    Color color,
-  ) {
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Text(
-          value,
+          '$value',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
             color: color,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: _secondaryText,
-          ),
+          style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
         ),
       ],
+    );
+  }
+}
+
+class _PillAdherence extends StatelessWidget {
+  final PillModel pill;
+  final DoseStats stats;
+  final DateTime? lastTaken;
+  final Formatters fmt;
+
+  const _PillAdherence({
+    required this.pill,
+    required this.stats,
+    required this.lastTaken,
+    required this.fmt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = fmt.l;
+    final palette = context.palette;
+    final adherence = stats.adherence;
+    final color = Color(pill.colorHex).computeLuminance() > 0.7
+        ? palette.accent
+        : Color(pill.colorHex);
+
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              PillVisual(pill: pill, width: 56, height: 52, shapeSize: 30),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pill.name,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      l.dosePerDay(pill.dosage, pill.scheduleTimes.length),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                    if (lastTaken != null)
+                      Text(
+                        l.lastTaken(
+                          '${fmt.shortDate(lastTaken!)} • ${fmt.timeOf(lastTaken!)}',
+                        ),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: palette.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Text(
+                adherence == null ? '—' : '${(adherence * 100).round()}%',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: adherence == null ? palette.textMuted : color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: adherence ?? 0,
+              minHeight: 10,
+              backgroundColor: palette.innerSurface,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+          if (stats.total > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              '${l.taken}: ${stats.taken}   •   ${l.skipped}: ${stats.skipped}'
+              '   •   ${l.missed}: ${stats.missed}',
+              style: TextStyle(fontSize: 14, color: palette.textSecondary),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              l.noDataYet,
+              style: TextStyle(fontSize: 14, color: palette.textMuted),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

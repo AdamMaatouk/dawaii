@@ -1,2291 +1,544 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../models/dose.dart';
 import '../models/pill_model.dart';
+import '../utils/formatters.dart';
+import 'dose_actions.dart';
 import 'pill_notification_image_service.dart';
+import 'reminder_planner.dart';
+import 'settings_service.dart';
 import 'storage_service.dart';
-import 'language_service.dart';
 
-const int _intervalNotificationCount = 30;
+const String _actionTake = 'ACTION_TAKE';
+const String _actionSnooze = 'ACTION_SNOOZE';
+const String _actionSkip = 'ACTION_SKIP';
+const String _darwinCategory = 'PILL_ACTIONS';
 
-// Android devices commonly impose a hard limit on the number of exact
-// alarms an app can keep registered at once. Finite treatment schedules
-// therefore use a rolling window instead of registering an entire year.
-const int _finiteTreatmentHorizonDays = 30;
-const int _maxFiniteNotificationsPerPill = 120;
+const String _reminderChannel = 'dawaii_reminders';
+const String _alarmChannel = 'dawaii_alarms';
+const String _infoChannel = 'dawaii_info';
+const List<String> _oldChannels = ['pill_reminders_v2'];
 
-const String _fallbackTimezone = 'Asia/Beirut';
-
+/// Android: FLAG_INSISTENT — the sound repeats until the user reacts.
+const int _flagInsistent = 4;
 
 class NotificationHealth {
   final bool notificationsEnabled;
   final bool exactAlarmsEnabled;
   final bool soundEnabled;
   final bool canCheckExactAlarms;
-  final String? message;
 
   const NotificationHealth({
-    required this.notificationsEnabled,
-    required this.exactAlarmsEnabled,
-    required this.soundEnabled,
-    required this.canCheckExactAlarms,
-    this.message,
+    this.notificationsEnabled = true,
+    this.exactAlarmsEnabled = true,
+    this.soundEnabled = true,
+    this.canCheckExactAlarms = false,
   });
 
   bool get isHealthy =>
-      notificationsEnabled &&
-      (!canCheckExactAlarms || exactAlarmsEnabled);
+      notificationsEnabled && (!canCheckExactAlarms || exactAlarmsEnabled);
 
   bool get hasWarning => !isHealthy || !soundEnabled;
 }
 
-
+/// Handles notification buttons while the app is closed or in the
+/// background. Runs in a separate isolate on Android.
 @pragma('vm:entry-point')
-void notificationTapBackground(
-  NotificationResponse response,
-) async {
+Future<void> notificationTapBackground(NotificationResponse response) async {
+  WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
-
-  final String? actionId = response.actionId;
-  final String? payload = response.payload;
-
-  if (payload == null || payload.trim().isEmpty) {
-    debugPrint(
-      'NOTIFICATION ACTION ERROR: payload is null or empty',
-    );
-    return;
-  }
-
-  // Payload format:
-  // pillId|originalScheduledTime
-  //
-  // Example:
-  // 123456789|15:30
-
-  final parts = payload.split('|');
-
-  if (parts.length < 2) {
-    debugPrint(
-      'INVALID NOTIFICATION PAYLOAD: $payload',
-    );
-    return;
-  }
-
-  final String pillId = parts[0].trim();
-  final String originalScheduledTime =
-      parts[1].trim();
-
-  if (pillId.isEmpty ||
-      originalScheduledTime.isEmpty) {
-    debugPrint(
-      'INVALID NOTIFICATION PAYLOAD VALUES: $payload',
-    );
-    return;
-  }
-
-  final StorageService storage =
-      StorageService();
-
-  final NotificationService
-      notificationService =
-      NotificationService();
-
   try {
-    if (actionId == 'ACTION_TAKE') {
-      await notificationService
-          .initializeForBackground();
-
-      await storage.logDoseStatus(
-        pillId: pillId,
-        scheduledTime:
-            originalScheduledTime,
-        status: DoseStatus.taken,
-      );
-
-      await notificationService
-          .cancelSnoozedNotification(
-        pillId: pillId,
-        scheduledTime:
-            originalScheduledTime,
-      );
-
-      await notificationService
-          ._refreshFiniteTreatmentWindow(
-        pillId,
-      );
-
-      debugPrint(
-        'BACKGROUND TAKE: '
-        '$pillId / $originalScheduledTime',
-      );
-    } else if (actionId ==
-        'ACTION_SKIP') {
-      await notificationService
-          .initializeForBackground();
-
-      await storage.logDoseStatus(
-        pillId: pillId,
-        scheduledTime:
-            originalScheduledTime,
-        status: DoseStatus.skipped,
-      );
-
-      await notificationService
-          .cancelSnoozedNotification(
-        pillId: pillId,
-        scheduledTime:
-            originalScheduledTime,
-      );
-
-      await notificationService
-          ._refreshFiniteTreatmentWindow(
-        pillId,
-      );
-
-      debugPrint(
-        'BACKGROUND SKIP: '
-        '$pillId / $originalScheduledTime',
-      );
-    } else if (actionId ==
-        'ACTION_SNOOZE') {
-      await notificationService
-          .initializeForBackground();
-
-      await notificationService
-          .snoozeNotification(
-        pillId: pillId,
-        scheduledTime:
-            originalScheduledTime,
-      );
-
-      await notificationService
-          ._refreshFiniteTreatmentWindow(
-        pillId,
-      );
-
-      debugPrint(
-        'BACKGROUND SNOOZE: '
-        '$pillId / $originalScheduledTime',
-      );
-    } else {
-      debugPrint(
-        'NOTIFICATION TAP: '
-        'action=$actionId '
-        'payload=$payload',
-      );
-    }
-  } catch (e, stackTrace) {
-    debugPrint(
-      'BACKGROUND NOTIFICATION ACTION ERROR: $e',
-    );
-
-    debugPrintStack(
-      stackTrace: stackTrace,
-    );
+    await SettingsService().load();
+    await NotificationService().initialize(requestPermissions: false);
+    await NotificationService()._handleAction(response);
+  } catch (e, s) {
+    debugPrint('BACKGROUND NOTIFICATION ACTION ERROR: $e');
+    debugPrintStack(stackTrace: s);
   }
 }
 
 class NotificationService {
-  static final NotificationService
-      _instance =
-      NotificationService._internal();
-
-  String _doseBody(PillModel pill) {
-    final pillLabel = pill.pillCount == 1
-        ? _t('onePill')
-        : _t(
-            'pillsCount',
-            params: {'count': pill.pillCount},
-          );
-
-    return _t(
-      'takeDoseBody',
-      params: {
-        'pillLabel': pillLabel,
-        'dosage': pill.dosage,
-      },
-    );
-  }
-
-  factory NotificationService() =>
-      _instance;
-
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin
-      _notifications =
+  final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final StorageService _storage = StorageService();
+  final SettingsService _settings = SettingsService();
+  final PillNotificationImageService _images = PillNotificationImageService();
+  final ReminderPlanner _planner = const ReminderPlanner();
 
-  final StorageService _storageService =
-      StorageService();
+  bool _initialized = false;
+  Future<void>? _syncInFlight;
+  bool _syncAgain = false;
+  bool _forceNext = false;
 
-  final LanguageService _languageService =
-      LanguageService();
+  /// Emits the dose whose notification body the user tapped.
+  final StreamController<DoseRef?> _taps = StreamController.broadcast();
+  Stream<DoseRef?> get taps => _taps.stream;
 
-  String _t(
-    String key, {
-    Map<String, Object?> params =
-        const <String, Object?>{},
-  }) {
-    return _languageService.tr(
-      key,
-      params: params,
-    );
-  }
+  /// Emits after a notification button changed data while the app is open.
+  final StreamController<void> _changes = StreamController.broadcast();
+  Stream<void> get changes => _changes.stream;
 
-  String _titleFor(PillModel pill) {
-    return _t(
-      'timeFor',
-      params: {'name': pill.name},
-    );
-  }
+  /// Tests set this to false: the plugin has no platform side there.
+  @visibleForTesting
+  static bool? supportedOverride;
 
-  List<AndroidNotificationAction> _androidNotificationActions() {
-    if (_languageService.isArabic) {
-      return <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'ACTION_SKIP',
-          _t('notificationSkip'),
-        ),
-        AndroidNotificationAction(
-          'ACTION_SNOOZE',
-          _t('notificationSnooze15'),
-        ),
-        AndroidNotificationAction(
-          'ACTION_TAKE',
-          _t('notificationTake'),
-        ),
-      ];
-    }
+  static bool get isSupported =>
+      supportedOverride ??
+      (!kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS));
 
-    return <AndroidNotificationAction>[
-      AndroidNotificationAction(
-        'ACTION_TAKE',
-        _t('notificationTake'),
-      ),
-      AndroidNotificationAction(
-        'ACTION_SNOOZE',
-        _t('notificationSnooze15'),
-      ),
-      AndroidNotificationAction(
-        'ACTION_SKIP',
-        _t('notificationSkip'),
-      ),
-    ];
-  }
+  static bool get _isIOS => !kIsWeb && Platform.isIOS;
 
-  List<DarwinNotificationAction> _darwinNotificationActions() {
-    if (_languageService.isArabic) {
-      return <DarwinNotificationAction>[
-        DarwinNotificationAction.plain(
-          'ACTION_SKIP',
-          _t('notificationSkip'),
-        ),
-        DarwinNotificationAction.plain(
-          'ACTION_SNOOZE',
-          _t('notificationSnooze15'),
-        ),
-        DarwinNotificationAction.plain(
-          'ACTION_TAKE',
-          _t('notificationTake'),
-        ),
-      ];
-    }
+  /// iOS keeps at most 64 pending notifications per app. Android allows
+  /// ~500 alarms; stay well below so other apps' limits are never an issue.
+  static int get maxPending => _isIOS ? 60 : 250;
 
-    return <DarwinNotificationAction>[
-      DarwinNotificationAction.plain(
-        'ACTION_TAKE',
-        _t('notificationTake'),
-      ),
-      DarwinNotificationAction.plain(
-        'ACTION_SNOOZE',
-        _t('notificationSnooze15'),
-      ),
-      DarwinNotificationAction.plain(
-        'ACTION_SKIP',
-        _t('notificationSkip'),
-      ),
-    ];
-  }
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
 
-  // Generates the tiny visual pill image.
-  final PillNotificationImageService
-      _pillImageService =
-      PillNotificationImageService();
+  IOSFlutterLocalNotificationsPlugin? get _ios =>
+      _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
+
+  Formatters get _fmt => Formatters(_settings.strings);
 
   // ============================================================
-  // NORMAL APP INITIALIZATION
+  // INITIALIZATION
   // ============================================================
 
-  Future<void> initialize() async {
-    await _languageService.loadLanguage();
+  Future<void> initialize({bool requestPermissions = true}) async {
+    if (!isSupported || _initialized) return;
+    _initialized = true;
+
     await _initializeTimezone();
+    final l = _settings.strings;
 
-    const androidSettings =
-        AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
-
-    final iosSettings =
-        DarwinInitializationSettings(
-      notificationCategories: [
-        DarwinNotificationCategory(
-          'PILL_ACTIONS',
-          actions:
-              _darwinNotificationActions(),
+    await _plugin.initialize(
+      settings: InitializationSettings(
+        android: const AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: requestPermissions,
+          requestBadgePermission: false,
+          requestSoundPermission: requestPermissions,
+          notificationCategories: [
+            DarwinNotificationCategory(
+              _darwinCategory,
+              actions: [
+                DarwinNotificationAction.plain(_actionTake, l.notificationTake),
+                DarwinNotificationAction.plain(
+                  _actionSnooze,
+                  l.notificationSnooze15,
+                ),
+                DarwinNotificationAction.plain(
+                  _actionSkip,
+                  l.notificationSkip,
+                  options: {DarwinNotificationActionOption.destructive},
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
+      onDidReceiveNotificationResponse: _onForegroundResponse,
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    final initializationSettings =
-        InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-
-    await _notifications.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse:
-          notificationTapBackground,
-      onDidReceiveBackgroundNotificationResponse:
-          notificationTapBackground,
-    );
-
-    final AndroidFlutterLocalNotificationsPlugin?
-        androidImplementation =
-        _notifications
-            .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>();
-
-    if (androidImplementation != null) {
-      try {
-        await androidImplementation
-            .requestNotificationsPermission();
-      } catch (e) {
-        debugPrint(
-          'NOTIFICATION PERMISSION ERROR: $e',
-        );
+    final android = _android;
+    if (android != null) {
+      for (final id in _oldChannels) {
+        try {
+          await android.deleteNotificationChannel(channelId: id);
+        } catch (_) {}
       }
-
-      try {
-        await androidImplementation
-            .requestExactAlarmsPermission();
-      } catch (e) {
-        debugPrint(
-          'EXACT ALARM PERMISSION ERROR: $e',
-        );
+      await android.createNotificationChannel(AndroidNotificationChannel(
+        _reminderChannel,
+        l.notificationChannelName,
+        description: l.notificationChannelDescription,
+        importance: Importance.max,
+      ));
+      await android.createNotificationChannel(AndroidNotificationChannel(
+        _alarmChannel,
+        l.alarmChannelName,
+        description: l.alarmChannelDescription,
+        importance: Importance.max,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      ));
+      await android.createNotificationChannel(AndroidNotificationChannel(
+        _infoChannel,
+        l.infoChannelName,
+        description: l.infoChannelDescription,
+        importance: Importance.defaultImportance,
+      ));
+      if (requestPermissions) {
+        try {
+          await android.requestNotificationsPermission();
+          await android.requestExactAlarmsPermission();
+        } catch (e) {
+          debugPrint('PERMISSION REQUEST ERROR: $e');
+        }
       }
     }
+  }
 
-    final AndroidNotificationChannel
-        channel =
-        AndroidNotificationChannel(
-      'pill_reminders_v2',
-      _t('notificationChannelName'),
-      description:
-          _t('notificationChannelDescription'),
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-    );
+  Future<void> _initializeTimezone() async {
+    tz_data.initializeTimeZones();
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(info.identifier));
+    } catch (e) {
+      debugPrint('TIMEZONE ERROR, using Asia/Beirut: $e');
+      try {
+        tz.setLocalLocation(tz.getLocation('Asia/Beirut'));
+      } catch (_) {
+        tz.setLocalLocation(tz.UTC);
+      }
+    }
+  }
 
-    await androidImplementation
-        ?.createNotificationChannel(
-      channel,
-    );
-
-    debugPrint(
-      'NOTIFICATION SERVICE INITIALIZED',
-    );
+  /// The dose that launched the app from a notification tap, if any.
+  Future<DoseRef?> launchDose() async {
+    if (!isSupported) return null;
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details == null || !details.didNotificationLaunchApp) return null;
+    final response = details.notificationResponse;
+    if (response == null || response.actionId != null) return null;
+    return parsePayload(response.payload);
   }
 
   // ============================================================
-  // BACKGROUND INITIALIZATION
+  // RESPONSES
   // ============================================================
 
-  Future<void>
-      initializeForBackground() async {
-    await _languageService.loadLanguage();
-    await _initializeTimezone();
-
-    const androidSettings =
-        AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
-
-    final iosSettings =
-        DarwinInitializationSettings(
-      notificationCategories: [
-        DarwinNotificationCategory(
-          'PILL_ACTIONS',
-          actions:
-              _darwinNotificationActions(),
-        ),
-      ],
-    );
-
-    final initializationSettings =
-        InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-
-    await _notifications.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse:
-          notificationTapBackground,
-      onDidReceiveBackgroundNotificationResponse:
-          notificationTapBackground,
-    );
-
-    debugPrint(
-      'BACKGROUND NOTIFICATION SERVICE INITIALIZED',
-    );
+  Future<void> _onForegroundResponse(NotificationResponse response) async {
+    if (response.actionId == null) {
+      _taps.add(parsePayload(response.payload));
+      return;
+    }
+    await _handleAction(response);
+    _changes.add(null);
   }
 
+  Future<void> _handleAction(NotificationResponse response) async {
+    final ref = parsePayload(response.payload);
+    if (ref == null) return;
+    final actions = DoseActions();
+    switch (response.actionId) {
+      case _actionTake:
+        await actions.take(ref);
+      case _actionSkip:
+        await actions.skip(ref);
+      case _actionSnooze:
+        await actions.snooze(ref, 15);
+    }
+  }
+
+  /// Payload format: `v2|<pillId>|<yyyy-MM-dd>|<HH:mm>`.
+  /// Version 1 payloads were `<pillId>|<HH:mm>` (date = today).
+  static String payloadFor(DoseRef ref) =>
+      'v2|${ref.pillId}|${DoseRef.dateKey(ref.date)}|${ref.time}';
+
+  static DoseRef? parsePayload(String? payload) {
+    if (payload == null) return null;
+    final parts = payload.split('|');
+    if (parts.length == 4 && parts[0] == 'v2') {
+      final date = DateTime.tryParse(parts[2]);
+      if (date == null || !PillModel.isValidTime(parts[3])) return null;
+      return DoseRef(pillId: parts[1], date: date, time: parts[3]);
+    }
+    if (parts.length == 2 && PillModel.isValidTime(parts[1].trim())) {
+      return DoseRef(
+        pillId: parts[0].trim(),
+        date: DateTime.now(),
+        time: parts[1].trim(),
+      );
+    }
+    return null;
+  }
 
   // ============================================================
-  // REMINDER HEALTH / SETTINGS
+  // HEALTH / PERMISSIONS
   // ============================================================
 
-  /// Checks whether the operating system currently allows this app
-  /// to deliver medication reminders.
-  ///
-  /// Android:
-  /// - checks normal notification permission
-  /// - checks exact-alarm permission because this app uses
-  ///   AndroidScheduleMode.exactAllowWhileIdle
-  ///
-  /// iOS:
-  /// - checks whether notifications/alerts are enabled
-  /// - reports whether notification sound is enabled
-  ///
-  /// If the platform cannot be checked, this returns a neutral
-  /// healthy result so the UI does not show a false warning.
   Future<NotificationHealth> checkReminderHealth() async {
+    if (!isSupported) return const NotificationHealth();
     try {
-      final androidImplementation =
-          _notifications.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      if (androidImplementation != null) {
-        final bool notificationsEnabled =
-            await androidImplementation.areNotificationsEnabled() ?? true;
-
-        final bool exactAlarmsEnabled =
-            await androidImplementation.canScheduleExactNotifications() ?? true;
-
-        String? message;
-
-        if (!notificationsEnabled && !exactAlarmsEnabled) {
-          message =
-              _t('notificationsAndAlarmDisabled');
-        } else if (!notificationsEnabled) {
-          message =
-              _t('notificationsDisabled');
-        } else if (!exactAlarmsEnabled) {
-          message =
-              _t('exactAlarmDisabled');
-        }
-
+      final android = _android;
+      if (android != null) {
         return NotificationHealth(
-          notificationsEnabled: notificationsEnabled,
-          exactAlarmsEnabled: exactAlarmsEnabled,
-          soundEnabled: true,
+          notificationsEnabled:
+              await android.areNotificationsEnabled() ?? true,
+          exactAlarmsEnabled:
+              await android.canScheduleExactNotifications() ?? true,
           canCheckExactAlarms: true,
-          message: message,
         );
       }
-
-      final iosImplementation =
-          _notifications.resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
-
-      if (iosImplementation != null) {
-        final permissions =
-            await iosImplementation.checkPermissions();
-
-        if (permissions == null) {
-          return const NotificationHealth(
-            notificationsEnabled: true,
-            exactAlarmsEnabled: true,
-            soundEnabled: true,
-            canCheckExactAlarms: false,
-          );
-        }
-
-        final bool notificationsEnabled =
-            permissions.isEnabled && permissions.isAlertEnabled;
-
-        final bool soundEnabled =
-            permissions.isSoundEnabled;
-
-        String? message;
-
-        if (!notificationsEnabled) {
-          message =
-              _t('notificationsDisabled');
-        } else if (!soundEnabled) {
-          message =
-              _t('soundDisabled');
-        }
-
-        return NotificationHealth(
-          notificationsEnabled: notificationsEnabled,
-          exactAlarmsEnabled: true,
-          soundEnabled: soundEnabled,
-          canCheckExactAlarms: false,
-          message: message,
-        );
-      }
-
-      return const NotificationHealth(
-        notificationsEnabled: true,
-        exactAlarmsEnabled: true,
-        soundEnabled: true,
-        canCheckExactAlarms: false,
+      final permissions = await _ios?.checkPermissions();
+      if (permissions == null) return const NotificationHealth();
+      return NotificationHealth(
+        notificationsEnabled:
+            permissions.isEnabled && permissions.isAlertEnabled,
+        soundEnabled: permissions.isSoundEnabled,
       );
     } catch (e) {
-      debugPrint(
-        'REMINDER HEALTH CHECK ERROR: $e',
-      );
-
-      // Avoid showing a scary warning merely because the check itself
-      // could not run.
-      return const NotificationHealth(
-        notificationsEnabled: true,
-        exactAlarmsEnabled: true,
-        soundEnabled: true,
-        canCheckExactAlarms: false,
-      );
+      debugPrint('REMINDER HEALTH CHECK ERROR: $e');
+      return const NotificationHealth();
     }
   }
 
-  /// Opens the app's notification settings screen on Android or iOS.
-  Future<bool> openReminderSettings() async {
-    try {
-      return await _notifications.openAppNotificationSettings() ?? false;
-    } catch (e) {
-      debugPrint(
-        'OPEN NOTIFICATION SETTINGS ERROR: $e',
-      );
+  String? healthMessage(NotificationHealth health) {
+    final l = _settings.strings;
+    if (!health.notificationsEnabled && !health.exactAlarmsEnabled) {
+      return l.notificationsAndAlarmDisabled;
+    }
+    if (!health.notificationsEnabled) return l.notificationsDisabled;
+    if (health.canCheckExactAlarms && !health.exactAlarmsEnabled) {
+      return l.exactAlarmDisabled;
+    }
+    if (!health.soundEnabled) return l.soundDisabled;
+    return null;
+  }
 
+  Future<void> requestReminderPermissions() async {
+    if (!isSupported) return;
+    try {
+      final android = _android;
+      if (android != null) {
+        await android.requestNotificationsPermission();
+        await android.requestExactAlarmsPermission();
+        return;
+      }
+      await _ios?.requestPermissions(alert: true, sound: true);
+    } catch (e) {
+      debugPrint('PERMISSION REQUEST ERROR: $e');
+    }
+  }
+
+  Future<bool> openReminderSettings() async {
+    if (!isSupported) return false;
+    try {
+      return await _plugin.openAppNotificationSettings() ?? false;
+    } catch (e) {
+      debugPrint('OPEN NOTIFICATION SETTINGS ERROR: $e');
       return false;
     }
   }
 
-  /// Re-requests permissions where the platform allows it.
+  // ============================================================
+  // SYNC — the single place that books reminders
+  // ============================================================
+
+  /// Makes the pending notifications match the current data.
   ///
-  /// This is useful before sending the user to system settings.
-  Future<void> requestReminderPermissions() async {
-    final androidImplementation =
-        _notifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+  /// [force] rebuilds everything (after edits, language or alarm-style
+  /// changes, when text or sounds changed). Otherwise only the difference
+  /// is applied, which is cheap enough to run on every app resume.
+  Future<void> syncReminders({bool force = false}) {
+    if (!isSupported) return Future.value();
+    _forceNext = _forceNext || force;
+    if (_syncInFlight != null) {
+      _syncAgain = true;
+      return _syncInFlight!;
+    }
+    _syncInFlight = _runSyncLoop().whenComplete(() => _syncInFlight = null);
+    return _syncInFlight!;
+  }
 
-    if (androidImplementation != null) {
+  Future<void> _runSyncLoop() async {
+    do {
+      _syncAgain = false;
+      final force = _forceNext;
+      _forceNext = false;
       try {
-        await androidImplementation.requestNotificationsPermission();
-      } catch (e) {
-        debugPrint(
-          'ANDROID NOTIFICATION PERMISSION REQUEST ERROR: $e',
-        );
+        await _sync(force: force);
+      } catch (e, s) {
+        debugPrint('REMINDER SYNC ERROR: $e');
+        debugPrintStack(stackTrace: s);
       }
-
-      try {
-        await androidImplementation.requestExactAlarmsPermission();
-      } catch (e) {
-        debugPrint(
-          'ANDROID EXACT ALARM PERMISSION REQUEST ERROR: $e',
-        );
-      }
-
-      return;
-    }
-
-    final iosImplementation =
-        _notifications.resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-
-    if (iosImplementation != null) {
-      try {
-        await iosImplementation.requestPermissions(
-          alert: true,
-          sound: true,
-          badge: true,
-        );
-      } catch (e) {
-        debugPrint(
-          'IOS NOTIFICATION PERMISSION REQUEST ERROR: $e',
-        );
-      }
-    }
+    } while (_syncAgain);
   }
 
-  // ============================================================
-  // TIMEZONE
-  // ============================================================
+  Future<void> _sync({required bool force}) async {
+    await initialize(requestPermissions: false);
 
-  Future<void>
-      _initializeTimezone() async {
-    tz.initializeTimeZones();
-
-    try {
-      final timezoneInfo =
-          await FlutterTimezone
-              .getLocalTimezone();
-
-      final location =
-          tz.getLocation(
-        timezoneInfo.identifier,
-      );
-
-      tz.setLocalLocation(location);
-
-      debugPrint(
-        'TIMEZONE: '
-        '${timezoneInfo.identifier}',
-      );
-    } catch (e) {
-      try {
-        tz.setLocalLocation(
-          tz.getLocation(
-            _fallbackTimezone,
-          ),
-        );
-
-        debugPrint(
-          'TIMEZONE ERROR - '
-          'FALLBACK TO '
-          '$_fallbackTimezone: $e',
-        );
-      } catch (fallbackError) {
-        tz.setLocalLocation(
-          tz.getLocation('UTC'),
-        );
-
-        debugPrint(
-          'TIMEZONE FALLBACK ERROR - '
-          'USING UTC: $fallbackError',
-        );
-      }
-    }
-  }
-
-  // ============================================================
-  // SAFE TIME PARSER
-  // ============================================================
-
-  (int, int)? _tryParseTime(
-    String value,
-  ) {
-    final parts =
-        value.trim().split(':');
-
-    if (parts.length != 2) {
-      return null;
-    }
-
-    final int? hour =
-        int.tryParse(parts[0]);
-
-    final int? minute =
-        int.tryParse(parts[1]);
-
-    if (hour == null ||
-        minute == null) {
-      return null;
-    }
-
-    if (hour < 0 || hour > 23) {
-      return null;
-    }
-
-    if (minute < 0 ||
-        minute > 59) {
-      return null;
-    }
-
-    return (
-      hour,
-      minute,
-    );
-  }
-
-  String _doseLogKey({
-    required String pillId,
-    required String scheduledTime,
-    required DateTime date,
-  }) {
-    final normalized = DateTime(
-      date.year,
-      date.month,
-      date.day,
+    final pills = await _storage.getPills();
+    final records = await _storage.getDoseRecords();
+    final now = DateTime.now();
+    final plan = _planner.plan(
+      pills: pills,
+      records: records,
+      now: now,
+      maxReminders: maxPending,
     );
 
-    final dateString =
-        normalized.toIso8601String().split('T')[0];
-
-    return '${dateString}_${pillId}_$scheduledTime';
-  }
-
-  // ============================================================
-  // FIND PILL
-  // ============================================================
-
-  Future<PillModel?> _findPill(
-    String pillId,
-  ) async {
-    try {
-      final pills =
-          await _storageService.getPills();
-
-      for (final pill in pills) {
-        if (pill.id == pillId) {
-          return pill;
-        }
-      }
-    } catch (e) {
-      debugPrint(
-        'ERROR FINDING PILL '
-        '$pillId: $e',
-      );
-    }
-
-    return null;
-  }
-
-  Future<void> _refreshFiniteTreatmentWindow(
-    String pillId,
-  ) async {
-    try {
-      final pill = await _findPill(pillId);
-
-      if (pill == null ||
-          !pill.isActive ||
-          pill.treatmentEndDate == null) {
-        return;
-      }
-
-      // Reusing the same deterministic notification IDs safely updates
-      // existing alarms while adding any newly entered dates at the end
-      // of the rolling window.
-      await _scheduleFiniteTreatmentReminders(pill);
-    } catch (e) {
-      debugPrint(
-        'FINITE WINDOW REFRESH ERROR '
-        'FOR $pillId: $e',
-      );
-    }
-  }
-
-  // ============================================================
-  // SCHEDULE PILL
-  // ============================================================
-
-  Future<void> schedulePillReminder(
-    PillModel pill,
-  ) async {
-    if (!pill.isActive) {
-      debugPrint(
-        'SKIPPING NOTIFICATION '
-        'SCHEDULING: '
-        '${pill.name} is paused.',
-      );
-      return;
-    }
-
-    await _initializeTimezone();
-
-    if (pill.treatmentEndDate != null) {
-      await _scheduleFiniteTreatmentReminders(pill);
-      return;
-    }
-
-    // Generate the pill image once.
-    //
-    // All notifications belonging to this medication
-    // can then reuse the same image file.
-    await _ensurePillImage(pill);
-
-    for (
-      int scheduleIndex = 0;
-      scheduleIndex <
-          pill.scheduleTimes.length;
-      scheduleIndex++
-    ) {
-      final String
-          originalScheduledTime =
-          pill.scheduleTimes[
-              scheduleIndex];
-
-      final parsedTime =
-          _tryParseTime(
-        originalScheduledTime,
-      );
-
-      if (parsedTime == null) {
-        debugPrint(
-          'INVALID SCHEDULE TIME: '
-          '"$originalScheduledTime" '
-          'for ${pill.name}.',
-        );
-        continue;
-      }
-
-      final int hour =
-          parsedTime.$1;
-
-      final int minute =
-          parsedTime.$2;
-
-      switch (pill.frequencyType) {
-        case FrequencyType.daily:
-          await _scheduleDailyReminder(
-            pill: pill,
-            scheduleIndex:
-                scheduleIndex,
-            originalScheduledTime:
-                originalScheduledTime,
-            hour: hour,
-            minute: minute,
-          );
-
-          break;
-
-        case FrequencyType.specificDays:
-          if (pill
-              .daysOfWeek.isEmpty) {
-            debugPrint(
-              'NO DAYS SELECTED FOR '
-              '${pill.name}',
-            );
-            break;
-          }
-
-          final validDays =
-              pill.daysOfWeek
-                  .where(
-                    (day) =>
-                        day >=
-                            DateTime
-                                .monday &&
-                        day <=
-                            DateTime
-                                .sunday,
-                  )
-                  .toSet()
-                  .toList()
-                ..sort();
-
-          for (final dayOfWeek
-              in validDays) {
-            await _scheduleSpecificDayReminder(
-              pill: pill,
-              scheduleIndex:
-                  scheduleIndex,
-              originalScheduledTime:
-                  originalScheduledTime,
-              dayOfWeek:
-                  dayOfWeek,
-              hour: hour,
-              minute: minute,
-            );
-          }
-
-          break;
-
-        case FrequencyType.interval:
-          if (pill.intervalDays <
-              1) {
-            debugPrint(
-              'INVALID INTERVAL FOR '
-              '${pill.name}: '
-              '${pill.intervalDays}',
-            );
-            break;
-          }
-
-          await _scheduleIntervalReminders(
-            pill: pill,
-            scheduleIndex:
-                scheduleIndex,
-            originalScheduledTime:
-                originalScheduledTime,
-            hour: hour,
-            minute: minute,
-          );
-
-          break;
-      }
-    }
-  }
-
-  // ============================================================
-  // FINITE TREATMENT SCHEDULE
-  // ============================================================
-
-  Future<void> _scheduleFiniteTreatmentReminders(
-    PillModel pill,
-  ) async {
-    final treatmentEndDate =
-        pill.treatmentEndDate;
-
-    if (treatmentEndDate == null) {
-      return;
-    }
-
-    await _ensurePillImage(pill);
-
-    final now =
-        tz.TZDateTime.now(tz.local);
-
-    final treatmentStart = DateTime(
-      pill.startDate.year,
-      pill.startDate.month,
-      pill.startDate.day,
-    );
-
-    final treatmentEnd = DateTime(
-      treatmentEndDate.year,
-      treatmentEndDate.month,
-      treatmentEndDate.day,
-    );
-
-    if (treatmentEnd.isBefore(treatmentStart)) {
-      debugPrint(
-        'SKIPPING FINITE SCHEDULE: '
-        '${pill.name} has an end date before its start date.',
-      );
-      return;
-    }
-
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
-
-    // Never walk through months of dates that have already passed.
-    DateTime cursor =
-        treatmentStart.isAfter(today)
-            ? treatmentStart
-            : today;
-
-    // Keep only a rolling block of upcoming reminders registered.
-    // This prevents Android's exact-alarm limit from being exhausted
-    // by long treatments (for example 365 days with several doses/day).
-    final rollingWindowEnd = today.add(
-      const Duration(
-        days: _finiteTreatmentHorizonDays - 1,
-      ),
-    );
-
-    final windowEnd =
-        treatmentEnd.isBefore(rollingWindowEnd)
-            ? treatmentEnd
-            : rollingWindowEnd;
-
-    if (windowEnd.isBefore(cursor)) {
-      debugPrint(
-        'NO FUTURE FINITE REMINDERS NEEDED: '
-        '${pill.name}',
-      );
-      return;
-    }
-
-    final notificationDetails =
-        await _buildNotificationDetails(
-      pill,
-    );
-
-    final doseLogs =
-        await _storageService.getDoseLogs();
-
-    int scheduledCount = 0;
-
-    while (!cursor.isAfter(windowEnd) &&
-        scheduledCount <
-            _maxFiniteNotificationsPerPill) {
-      if (_storageService.isPillScheduledForDate(
-        pill,
-        cursor,
-      )) {
-        for (
-          int scheduleIndex = 0;
-          scheduleIndex < pill.scheduleTimes.length;
-          scheduleIndex++
-        ) {
-          if (scheduledCount >=
-              _maxFiniteNotificationsPerPill) {
-            break;
-          }
-
-          final originalScheduledTime =
-              pill.scheduleTimes[scheduleIndex];
-
-          final parsedTime =
-              _tryParseTime(
-            originalScheduledTime,
-          );
-
-          if (parsedTime == null) {
-            continue;
-          }
-
-          final doseLogKey =
-              _doseLogKey(
-            pillId: pill.id,
-            scheduledTime:
-                originalScheduledTime,
-            date: cursor,
-          );
-
-          final doseStatus =
-              doseLogs[doseLogKey];
-
-          if (doseStatus ==
-                  DoseStatus.taken.name ||
-              doseStatus ==
-                  DoseStatus.skipped.name) {
-            continue;
-          }
-
-          final scheduledDate =
-              tz.TZDateTime(
-            tz.local,
-            cursor.year,
-            cursor.month,
-            cursor.day,
-            parsedTime.$1,
-            parsedTime.$2,
-          );
-
-          if (!scheduledDate.isAfter(now)) {
-            continue;
-          }
-
-          final notificationId =
-              _finiteNotificationId(
-            pill.id,
-            scheduleIndex,
-            cursor,
-          );
-
-          try {
-            await _notifications.zonedSchedule(
-              id: notificationId,
-              title:
-                  _titleFor(pill),
-              body:
-                  _doseBody(pill),
-              scheduledDate:
-                  scheduledDate,
-              notificationDetails:
-                  notificationDetails,
-              androidScheduleMode:
-                  AndroidScheduleMode
-                      .exactAllowWhileIdle,
-              payload:
-                  '${pill.id}|'
-                  '$originalScheduledTime',
-            );
-
-            scheduledCount++;
-          } catch (e) {
-            // Some Android builds enforce a strict concurrent alarm cap.
-            // Stop this batch cleanly rather than allowing Save Medication
-            // to fail with a platform stack trace.
-            final message =
-                e.toString().toLowerCase();
-
-            if (message.contains(
-                  'maximum limit of concurrent alarms',
-                ) ||
-                message.contains(
-                  'maximum limit',
-                )) {
-              debugPrint(
-                'ANDROID ALARM LIMIT REACHED. '
-                'Stopped scheduling ${pill.name} '
-                'after $scheduledCount reminders.',
-              );
-              return;
-            }
-
-            rethrow;
-          }
-        }
-      }
-
-      cursor =
-          cursor.add(
-        const Duration(days: 1),
-      );
-    }
-
-    debugPrint(
-      'FINITE TREATMENT WINDOW SCHEDULED: '
-      '${pill.name} through $windowEnd '
-      '($scheduledCount reminders)',
-    );
-  }
-
-  // ============================================================
-  // DAILY
-  // ============================================================
-
-  Future<void>
-      _scheduleDailyReminder({
-    required PillModel pill,
-    required int scheduleIndex,
-    required String
-        originalScheduledTime,
-    required int hour,
-    required int minute,
-  }) async {
-    final int notificationId =
-        _regularNotificationId(
-      pill.id,
-      scheduleIndex,
-    );
-
-    final scheduledDate =
-        _nextInstanceOfTime(
-      hour,
-      minute,
-    );
-
-    debugPrint(
-      'SCHEDULING DAILY '
-      '${pill.name}: '
-      '$scheduledDate '
-      '(ID $notificationId)',
-    );
-
-    final notificationDetails =
-        await _buildNotificationDetails(
-      pill,
-    );
-
-    await _notifications.zonedSchedule(
-      id: notificationId,
-
-      // Large simple text for older users.
-      title:
-          _titleFor(pill),
-
-      body:
-          _doseBody(pill),
-
-      scheduledDate:
-          scheduledDate,
-
-      notificationDetails:
-          notificationDetails,
-
-      androidScheduleMode:
-          AndroidScheduleMode
-              .exactAllowWhileIdle,
-
-      matchDateTimeComponents:
-          DateTimeComponents.time,
-
-      payload:
-          '${pill.id}|'
-          '$originalScheduledTime',
-    );
-  }
-
-  // ============================================================
-  // SPECIFIC WEEKDAY
-  // ============================================================
-
-  Future<void>
-      _scheduleSpecificDayReminder({
-    required PillModel pill,
-    required int scheduleIndex,
-    required String
-        originalScheduledTime,
-    required int dayOfWeek,
-    required int hour,
-    required int minute,
-  }) async {
-    final int notificationId =
-        _specificDayNotificationId(
-      pill.id,
-      scheduleIndex,
-      dayOfWeek,
-    );
-
-    final scheduledDate =
-        _nextInstanceOfDayAndTime(
-      dayOfWeek,
-      hour,
-      minute,
-    );
-
-    debugPrint(
-      'SCHEDULING DAY '
-      '$dayOfWeek ${pill.name}: '
-      '$scheduledDate '
-      '(ID $notificationId)',
-    );
-
-    final notificationDetails =
-        await _buildNotificationDetails(
-      pill,
-    );
-
-    await _notifications.zonedSchedule(
-      id: notificationId,
-      title:
-          _titleFor(pill),
-      body:
-          _doseBody(pill),
-      scheduledDate:
-          scheduledDate,
-      notificationDetails:
-          notificationDetails,
-      androidScheduleMode:
-          AndroidScheduleMode
-              .exactAllowWhileIdle,
-      matchDateTimeComponents:
-          DateTimeComponents
-              .dayOfWeekAndTime,
-      payload:
-          '${pill.id}|'
-          '$originalScheduledTime',
-    );
-  }
-
-  // ============================================================
-  // INTERVAL
-  // ============================================================
-
-  Future<void>
-      _scheduleIntervalReminders({
-    required PillModel pill,
-    required int scheduleIndex,
-    required String
-        originalScheduledTime,
-    required int hour,
-    required int minute,
-  }) async {
-    final upcomingDates =
-        _generateIntervalDates(
-      startDate: pill.startDate,
-      intervalDays:
-          pill.intervalDays,
-      hour: hour,
-      minute: minute,
-      count:
-          _intervalNotificationCount,
-    );
-
-    final notificationDetails =
-        await _buildNotificationDetails(
-      pill,
-    );
-
-    final doseLogs =
-        await _storageService.getDoseLogs();
-
-    for (
-      int dateIndex = 0;
-      dateIndex <
-          upcomingDates.length;
-      dateIndex++
-    ) {
-      final int notificationId =
-          _intervalNotificationId(
-        pill.id,
-        scheduleIndex,
-        dateIndex,
-      );
-
-      final scheduledDate =
-          upcomingDates[dateIndex];
-
-      final doseLogKey =
-          _doseLogKey(
-        pillId: pill.id,
-        scheduledTime:
-            originalScheduledTime,
-        date: scheduledDate,
-      );
-
-      final doseStatus =
-          doseLogs[doseLogKey];
-
-      if (doseStatus ==
-              DoseStatus.taken.name ||
-          doseStatus ==
-              DoseStatus.skipped.name) {
-        continue;
-      }
-
-      debugPrint(
-        'SCHEDULING INTERVAL '
-        '${pill.name}: '
-        '$scheduledDate '
-        '(ID $notificationId)',
-      );
-
-      await _notifications
-          .zonedSchedule(
-        id: notificationId,
-        title:
-            _titleFor(pill),
-        body:
-            _doseBody(pill),
-        scheduledDate:
-            scheduledDate,
-        notificationDetails:
-            notificationDetails,
-        androidScheduleMode:
-            AndroidScheduleMode
-                .exactAllowWhileIdle,
-        payload:
-            '${pill.id}|'
-            '$originalScheduledTime',
-      );
-    }
-  }
-
-  // ============================================================
-  // CREATE / CACHE PILL IMAGE
-  // ============================================================
-
-  Future<String?> _ensurePillImage(
-    PillModel pill,
-  ) async {
-    try {
-      return await _pillImageService
-          .createSmallPillImage(
-        pill,
-      );
-    } catch (e) {
-      // Never prevent the medication reminder from
-      // being scheduled just because its image failed.
-      debugPrint(
-        'PILL IMAGE ERROR FOR '
-        '${pill.name}: $e',
-      );
-
-      return null;
-    }
-  }
-
-  // ============================================================
-  // NOTIFICATION APPEARANCE
-  // ============================================================
-
-  Future<NotificationDetails>
-      _buildNotificationDetails(
-    PillModel? pill,
-  ) async {
-    String? imagePath;
-
-    if (pill != null) {
-      imagePath =
-          await _ensurePillImage(
-        pill,
-      );
-    }
-
-    final androidDetails =
-        AndroidNotificationDetails(
-      'pill_reminders_v2',
-      _t('notificationChannelName'),
-
-      channelDescription:
-          _t('notificationChannelDescription'),
-
-      importance: Importance.max,
-
-      priority: Priority.high,
-
-      visibility:
-          NotificationVisibility.public,
-
-      category:
-          AndroidNotificationCategory
-              .alarm,
-
-      // This creates the small colored pill image
-      // next to the notification content.
-      largeIcon: imagePath != null
-          ? FilePathAndroidBitmap(
-              imagePath,
-            )
-          : null,
-
-      actions:
-          _androidNotificationActions(),
-    );
-
-    final DarwinNotificationDetails
-        iosDetails;
-
-    if (imagePath != null) {
-      iosDetails =
-          DarwinNotificationDetails(
-        categoryIdentifier:
-            'PILL_ACTIONS',
-        attachments: [
-          DarwinNotificationAttachment(
-            imagePath,
-          ),
-        ],
-      );
+    final pending = {
+      for (final p in await _plugin.pendingNotificationRequests()) p.id,
+    };
+
+    if (force) {
+      await _plugin.cancelAllPendingNotifications();
+      pending.clear();
     } else {
-      iosDetails =
-          const DarwinNotificationDetails(
-        categoryIdentifier:
-            'PILL_ACTIONS',
+      for (final id in pending.difference(plan.ids)) {
+        await _plugin.cancel(id: id);
+      }
+    }
+
+    // Without the exact-alarm permission, exact scheduling throws on
+    // Android 12+. Fall back to inexact alarms (may be a few minutes late)
+    // rather than booking nothing at all.
+    var mode = AndroidScheduleMode.exactAllowWhileIdle;
+    if (await _android?.canScheduleExactNotifications() == false) {
+      mode = AndroidScheduleMode.inexactAllowWhileIdle;
+    }
+
+    final imagePaths = <String, String?>{};
+    for (final reminder in plan.reminders) {
+      if (pending.contains(reminder.id)) continue;
+      final pill = reminder.pill;
+      if (!imagePaths.containsKey(pill.id)) {
+        imagePaths[pill.id] = await _pillImage(pill, regenerate: force);
+      }
+      try {
+        await _plugin.zonedSchedule(
+          id: reminder.id,
+          title: _fmt.l.timeFor(pill.name),
+          body: _doseBody(pill),
+          scheduledDate: tz.TZDateTime.from(reminder.fireAt, tz.local),
+          notificationDetails: _reminderDetails(imagePaths[pill.id]),
+          androidScheduleMode: mode,
+          payload: payloadFor(reminder.ref),
+        );
+      } catch (e) {
+        // A device-specific alarm cap must not break the rest of the app.
+        debugPrint('SCHEDULE ERROR for ${reminder.ref}: $e');
+        if (e.toString().toLowerCase().contains('maximum limit')) break;
+      }
+    }
+
+    final keepAliveAt = plan.keepAliveAt;
+    if (keepAliveAt != null && !pending.contains(ReminderIds.keepAlive)) {
+      await _plugin.zonedSchedule(
+        id: ReminderIds.keepAlive,
+        title: _fmt.l.keepAliveTitle,
+        body: _fmt.l.keepAliveBody,
+        scheduledDate: tz.TZDateTime.from(keepAliveAt, tz.local),
+        notificationDetails: _infoDetails(),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
     }
 
+    debugPrint(
+      'REMINDERS SYNCED (force=$force): ${plan.reminders.length} booked'
+      '${keepAliveAt != null ? ', keep-alive at $keepAliveAt' : ''}',
+    );
+  }
+
+  String _doseBody(PillModel pill) =>
+      _fmt.l.takeDoseBody(_fmt.pills(pill.pillCount), pill.dosage);
+
+  Future<String?> _pillImage(PillModel pill, {required bool regenerate}) async {
+    try {
+      return await _images.imageFor(pill, regenerate: regenerate);
+    } catch (e) {
+      // Never block a reminder because its picture failed.
+      debugPrint('PILL IMAGE ERROR for ${pill.name}: $e');
+      return null;
+    }
+  }
+
+  NotificationDetails _reminderDetails(String? imagePath) {
+    final l = _settings.strings;
+    final persistent = _settings.persistentAlarm;
     return NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-  }
-
-  Future<void> rescheduleAllForLanguageChange() async {
-    await _languageService.loadLanguage();
-    await initializeForBackground();
-
-    final pills =
-        await _storageService.getPills();
-
-    for (final pill in pills) {
-      await cancelPillReminders(pill);
-
-      if (pill.isActive) {
-        await schedulePillReminder(pill);
-      }
-    }
-
-    debugPrint(
-      'REMINDERS RESCHEDULED FOR LANGUAGE: '
-      '${_languageService.languageCode}',
-    );
-  }
-
-  // ============================================================
-  // CANCEL PILL REMINDERS
-  // ============================================================
-
-  Future<void> cancelDoseReminder({
-    required PillModel pill,
-    required String scheduledTime,
-    required DateTime date,
-  }) async {
-    final scheduleIndex =
-        pill.scheduleTimes.indexOf(
-      scheduledTime,
-    );
-
-    if (scheduleIndex < 0) {
-      debugPrint(
-        'CANCEL DOSE REMINDER: '
-        'schedule time "$scheduledTime" '
-        'not found for ${pill.name}.',
-      );
-      return;
-    }
-
-    final normalizedDate = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
-
-    // Current Dawaii medications have a finite treatment date.
-    // Those reminders use one deterministic ID per exact dose/date,
-    // so only the selected dose is removed.
-    if (pill.treatmentEndDate != null) {
-      await _notifications.cancel(
-        id: _finiteNotificationId(
-          pill.id,
-          scheduleIndex,
-          normalizedDate,
-        ),
-      );
-
-      debugPrint(
-        'CANCELED FINITE DOSE REMINDER: '
-        '${pill.name} / $scheduledTime / '
-        '${normalizedDate.toIso8601String().split('T')[0]}',
-      );
-      return;
-    }
-
-    final parsedTime =
-        _tryParseTime(
-      scheduledTime,
-    );
-
-    if (parsedTime == null) {
-      return;
-    }
-
-    // Backwards compatibility for medications saved before treatment
-    // end dates existed.
-    switch (pill.frequencyType) {
-      case FrequencyType.daily:
-        final id =
-            _regularNotificationId(
-          pill.id,
-          scheduleIndex,
-        );
-
-        await _notifications.cancel(
-          id: id,
-        );
-
-        final nextDate =
-            normalizedDate.add(
-          const Duration(days: 1),
-        );
-
-        final nextScheduledDate =
-            tz.TZDateTime(
-          tz.local,
-          nextDate.year,
-          nextDate.month,
-          nextDate.day,
-          parsedTime.$1,
-          parsedTime.$2,
-        );
-
-        final details =
-            await _buildNotificationDetails(
-          pill,
-        );
-
-        await _notifications.zonedSchedule(
-          id: id,
-          title: _titleFor(pill),
-          body: _doseBody(pill),
-          scheduledDate:
-              nextScheduledDate,
-          notificationDetails:
-              details,
-          androidScheduleMode:
-              AndroidScheduleMode
-                  .exactAllowWhileIdle,
-          matchDateTimeComponents:
-              DateTimeComponents.time,
-          payload:
-              '${pill.id}|$scheduledTime',
-        );
-        break;
-
-      case FrequencyType.specificDays:
-        final dayOfWeek =
-            normalizedDate.weekday;
-
-        if (!pill.daysOfWeek.contains(
-          dayOfWeek,
-        )) {
-          return;
-        }
-
-        final id =
-            _specificDayNotificationId(
-          pill.id,
-          scheduleIndex,
-          dayOfWeek,
-        );
-
-        await _notifications.cancel(
-          id: id,
-        );
-
-        final nextDate =
-            normalizedDate.add(
-          const Duration(days: 7),
-        );
-
-        final nextScheduledDate =
-            tz.TZDateTime(
-          tz.local,
-          nextDate.year,
-          nextDate.month,
-          nextDate.day,
-          parsedTime.$1,
-          parsedTime.$2,
-        );
-
-        final details =
-            await _buildNotificationDetails(
-          pill,
-        );
-
-        await _notifications.zonedSchedule(
-          id: id,
-          title: _titleFor(pill),
-          body: _doseBody(pill),
-          scheduledDate:
-              nextScheduledDate,
-          notificationDetails:
-              details,
-          androidScheduleMode:
-              AndroidScheduleMode
-                  .exactAllowWhileIdle,
-          matchDateTimeComponents:
-              DateTimeComponents
-                  .dayOfWeekAndTime,
-          payload:
-              '${pill.id}|$scheduledTime',
-        );
-        break;
-
-      case FrequencyType.interval:
-        // Interval reminders are one-off alarms whose IDs are based on
-        // their generated position. Rebuild this one schedule time after
-        // clearing its old batch. _scheduleIntervalReminders now ignores
-        // Taken/Skipped dose-log entries, so the completed dose is not
-        // added back.
-        for (
-          int dateIndex = 0;
-          dateIndex <
-              _intervalNotificationCount;
-          dateIndex++
-        ) {
-          await _notifications.cancel(
-            id: _intervalNotificationId(
-              pill.id,
-              scheduleIndex,
-              dateIndex,
-            ),
-          );
-        }
-
-        await _scheduleIntervalReminders(
-          pill: pill,
-          scheduleIndex:
-              scheduleIndex,
-          originalScheduledTime:
-              scheduledTime,
-          hour: parsedTime.$1,
-          minute: parsedTime.$2,
-        );
-        break;
-    }
-
-    debugPrint(
-      'CANCELED COMPLETED DOSE REMINDER: '
-      '${pill.name} / $scheduledTime',
-    );
-  }
-
-  Future<void> cancelPillReminders(
-    PillModel pill,
-  ) async {
-    final treatmentEndDate =
-        pill.treatmentEndDate;
-
-    if (treatmentEndDate != null) {
-      final start = DateTime(
-        pill.startDate.year,
-        pill.startDate.month,
-        pill.startDate.day,
-      );
-
-      final end = DateTime(
-        treatmentEndDate.year,
-        treatmentEndDate.month,
-        treatmentEndDate.day,
-      );
-
-      DateTime cursor = start;
-
-      while (!cursor.isAfter(end)) {
-        for (
-          int scheduleIndex = 0;
-          scheduleIndex < pill.scheduleTimes.length;
-          scheduleIndex++
-        ) {
-          await _notifications.cancel(
-            id: _finiteNotificationId(
-              pill.id,
-              scheduleIndex,
-              cursor,
-            ),
-          );
-        }
-
-        cursor =
-            cursor.add(
-          const Duration(days: 1),
-        );
-      }
-    }
-
-    for (
-      int scheduleIndex = 0;
-      scheduleIndex <
-          pill.scheduleTimes.length;
-      scheduleIndex++
-    ) {
-      await _notifications.cancel(
-        id: _regularNotificationId(
-          pill.id,
-          scheduleIndex,
-        ),
-      );
-
-      for (
-        int day = DateTime.monday;
-        day <= DateTime.sunday;
-        day++
-      ) {
-        await _notifications.cancel(
-          id:
-              _specificDayNotificationId(
-            pill.id,
-            scheduleIndex,
-            day,
-          ),
-        );
-      }
-
-      for (
-        int dateIndex = 0;
-        dateIndex <
-            _intervalNotificationCount;
-        dateIndex++
-      ) {
-        await _notifications.cancel(
-          id: _intervalNotificationId(
-            pill.id,
-            scheduleIndex,
-            dateIndex,
-          ),
-        );
-      }
-
-      final String scheduledTime =
-          pill.scheduleTimes[
-              scheduleIndex];
-
-      await cancelSnoozedNotification(
-        pillId: pill.id,
-        scheduledTime:
-            scheduledTime,
-      );
-    }
-
-    debugPrint(
-      'CANCELED ALL PILL '
-      'REMINDERS: ${pill.name}',
-    );
-  }
-
-  // ============================================================
-  // SNOOZE
-  // ============================================================
-
-  Future<void> snoozeNotification({
-    required String pillId,
-    required String scheduledTime,
-    int minutes = 15,
-  }) async {
-    await _initializeTimezone();
-
-    final int safeMinutes =
-        minutes > 0 ? minutes : 15;
-
-    final parsedTime =
-        _tryParseTime(
-      scheduledTime,
-    );
-
-    if (parsedTime == null) {
-      debugPrint(
-        'SNOOZE ERROR: '
-        'Invalid scheduled time '
-        '"$scheduledTime"',
-      );
-
-      return;
-    }
-
-    final tz.TZDateTime now =
-        tz.TZDateTime.now(
-      tz.local,
-    );
-
-    final DateTime? existingSnooze =
-        await _storageService
-            .getSnoozedUntil(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-    );
-
-    late final tz.TZDateTime
-        snoozeTime;
-
-    if (existingSnooze != null) {
-      final existingTZ =
-          tz.TZDateTime.from(
-        existingSnooze,
-        tz.local,
-      );
-
-      final baseTime =
-          existingTZ.isAfter(now)
-              ? existingTZ
-              : now;
-
-      snoozeTime = baseTime.add(
-        Duration(
-          minutes: safeMinutes,
-        ),
-      );
-    } else {
-      final int hour =
-          parsedTime.$1;
-
-      final int minute =
-          parsedTime.$2;
-
-      final originalTimeToday =
-          tz.TZDateTime(
-        tz.local,
-        now.year,
-        now.month,
-        now.day,
-        hour,
-        minute,
-      );
-
-      final baseTime =
-          originalTimeToday
-                  .isAfter(now)
-              ? originalTimeToday
-              : now;
-
-      snoozeTime = baseTime.add(
-        Duration(
-          minutes: safeMinutes,
-        ),
-      );
-    }
-
-    await _storageService
-        .setSnoozedUntil(
-      pillId: pillId,
-      scheduledTime:
-          scheduledTime,
-      snoozedUntil:
-          snoozeTime,
-    );
-
-    final int snoozeNotificationId =
-        _snoozeNotificationId(
-      pillId,
-      scheduledTime,
-    );
-
-    await _notifications.cancel(
-      id: snoozeNotificationId,
-    );
-
-    // Find the medication so the snoozed
-    // notification also shows its shape/color.
-    final PillModel? pill =
-        await _findPill(
-      pillId,
-    );
-
-    final notificationDetails =
-        await _buildNotificationDetails(
-      pill,
-    );
-
-    await _notifications.zonedSchedule(
-      id: snoozeNotificationId,
-
-      title: pill != null
-          ? _titleFor(pill)
-          : _t('snoozedReminder'),
-
-      body: pill != null
-          ? _doseBody(pill)
-          : _t('dontForget'),
-
-      scheduledDate:
-          snoozeTime,
-
-      notificationDetails:
-          notificationDetails,
-
-      androidScheduleMode:
-          AndroidScheduleMode
-              .exactAllowWhileIdle,
-
-      payload:
-          '$pillId|$scheduledTime',
-    );
-
-    debugPrint(
-      'SNOOZE SUCCESS: '
-      '$pillId / $scheduledTime '
-      '-> $snoozeTime (+$safeMinutes min)',
-    );
-  }
-
-  // ============================================================
-  // CANCEL SNOOZE
-  // ============================================================
-
-  Future<void>
-      cancelSnoozedNotification({
-    required String pillId,
-    required String scheduledTime,
-  }) async {
-    final int notificationId =
-        _snoozeNotificationId(
-      pillId,
-      scheduledTime,
-    );
-
-    await _notifications.cancel(
-      id: notificationId,
-    );
-
-    debugPrint(
-      'CANCELED SNOOZE: '
-      '$pillId / $scheduledTime',
-    );
-  }
-
-  // ============================================================
-  // NEXT DAILY TIME
-  // ============================================================
-
-  tz.TZDateTime
-      _nextInstanceOfTime(
-    int hour,
-    int minute,
-  ) {
-    final now =
-        tz.TZDateTime.now(
-      tz.local,
-    );
-
-    var scheduledDate =
-        tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
-
-    if (!scheduledDate
-        .isAfter(now)) {
-      final tomorrowDate =
-          DateTime.utc(
-        now.year,
-        now.month,
-        now.day,
-      ).add(
-        const Duration(
-          days: 1,
-        ),
-      );
-
-      scheduledDate =
-          tz.TZDateTime(
-        tz.local,
-        tomorrowDate.year,
-        tomorrowDate.month,
-        tomorrowDate.day,
-        hour,
-        minute,
-      );
-    }
-
-    return scheduledDate;
-  }
-
-  // ============================================================
-  // NEXT WEEKDAY TIME
-  // ============================================================
-
-  tz.TZDateTime
-      _nextInstanceOfDayAndTime(
-    int dayOfWeek,
-    int hour,
-    int minute,
-  ) {
-    final now =
-        tz.TZDateTime.now(
-      tz.local,
-    );
-
-    var candidate =
-        tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
-
-    int daysToAdd =
-        (dayOfWeek -
-                candidate.weekday) %
-            7;
-
-    if (daysToAdd == 0 &&
-        !candidate.isAfter(now)) {
-      daysToAdd = 7;
-    }
-
-    final candidateDate =
-        DateTime.utc(
-      candidate.year,
-      candidate.month,
-      candidate.day,
-    ).add(
-      Duration(
-        days: daysToAdd,
+      android: AndroidNotificationDetails(
+        persistent ? _alarmChannel : _reminderChannel,
+        persistent ? l.alarmChannelName : l.notificationChannelName,
+        channelDescription: persistent
+            ? l.alarmChannelDescription
+            : l.notificationChannelDescription,
+        importance: Importance.max,
+        priority: Priority.high,
+        category: AndroidNotificationCategory.alarm,
+        visibility: NotificationVisibility.public,
+        audioAttributesUsage: persistent
+            ? AudioAttributesUsage.alarm
+            : AudioAttributesUsage.notification,
+        additionalFlags:
+            persistent ? Int32List.fromList([_flagInsistent]) : null,
+        largeIcon: imagePath != null ? FilePathAndroidBitmap(imagePath) : null,
+        actions: [
+          AndroidNotificationAction(_actionTake, l.notificationTake),
+          AndroidNotificationAction(_actionSnooze, l.notificationSnooze15),
+          AndroidNotificationAction(_actionSkip, l.notificationSkip),
+        ],
+      ),
+      iOS: DarwinNotificationDetails(
+        categoryIdentifier: _darwinCategory,
+        attachments: imagePath != null
+            ? [DarwinNotificationAttachment(imagePath)]
+            : null,
       ),
     );
-
-    candidate =
-        tz.TZDateTime(
-      tz.local,
-      candidateDate.year,
-      candidateDate.month,
-      candidateDate.day,
-      hour,
-      minute,
-    );
-
-    return candidate;
   }
 
-  // ============================================================
-  // INTERVAL DATES
-  // ============================================================
-
-  List<tz.TZDateTime>
-      _generateIntervalDates({
-    required DateTime startDate,
-    required int intervalDays,
-    required int hour,
-    required int minute,
-    int count =
-        _intervalNotificationCount,
-  }) {
-    final List<tz.TZDateTime>
-        dates = [];
-
-    if (intervalDays < 1 ||
-        count < 1) {
-      return dates;
-    }
-
-    final now =
-        tz.TZDateTime.now(
-      tz.local,
-    );
-
-    final anchorDate =
-        DateTime.utc(
-      startDate.year,
-      startDate.month,
-      startDate.day,
-    );
-
-    final todayDate =
-        DateTime.utc(
-      now.year,
-      now.month,
-      now.day,
-    );
-
-    int intervalIndex = 0;
-
-    if (todayDate
-        .isAfter(anchorDate)) {
-      final int daysSinceStart =
-          todayDate
-              .difference(
-                anchorDate,
-              )
-              .inDays;
-
-      intervalIndex =
-          daysSinceStart ~/
-              intervalDays;
-    }
-
-    DateTime candidateDate =
-        anchorDate.add(
-      Duration(
-        days:
-            intervalIndex *
-                intervalDays,
+  NotificationDetails _infoDetails() {
+    final l = _settings.strings;
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        _infoChannel,
+        l.infoChannelName,
+        channelDescription: l.infoChannelDescription,
       ),
+      iOS: const DarwinNotificationDetails(),
     );
-
-    var candidate =
-        tz.TZDateTime(
-      tz.local,
-      candidateDate.year,
-      candidateDate.month,
-      candidateDate.day,
-      hour,
-      minute,
-    );
-
-    if (!candidate
-        .isAfter(now)) {
-      intervalIndex++;
-
-      candidateDate =
-          anchorDate.add(
-        Duration(
-          days:
-              intervalIndex *
-                  intervalDays,
-        ),
-      );
-    }
-
-    for (
-      int i = 0;
-      i < count;
-      i++
-    ) {
-      final scheduledDate =
-          tz.TZDateTime(
-        tz.local,
-        candidateDate.year,
-        candidateDate.month,
-        candidateDate.day,
-        hour,
-        minute,
-      );
-
-      if (scheduledDate
-          .isAfter(now)) {
-        dates.add(
-          scheduledDate,
-        );
-      }
-
-      candidateDate =
-          candidateDate.add(
-        Duration(
-          days:
-              intervalDays,
-        ),
-      );
-    }
-
-    return dates;
   }
 
   // ============================================================
-  // NOTIFICATION IDS
+  // ONE-OFF NOTIFICATIONS
   // ============================================================
 
-  int _finiteNotificationId(
-    String pillId,
-    int scheduleIndex,
-    DateTime date,
-  ) {
-    final dateKey =
-        '${date.year.toString().padLeft(4, '0')}-'
-        '${date.month.toString().padLeft(2, '0')}-'
-        '${date.day.toString().padLeft(2, '0')}';
+  /// Removes a reminder that is currently displayed in the tray.
+  Future<void> dismissDose(DoseRef ref) async {
+    if (!isSupported) return;
+    await _plugin.cancel(id: ReminderIds.dose(ref));
+    await _plugin.cancel(id: ReminderIds.snooze(ref));
+  }
 
-    return _stableNotificationId(
-      'finite|'
-      '$pillId|'
-      '$scheduleIndex|'
-      '$dateKey',
+  Future<void> showLowStock(PillModel pill, int pillsLeft) async {
+    if (!isSupported) return;
+    final l = _settings.strings;
+    await _plugin.show(
+      id: ReminderIds.lowStock(pill.id),
+      title: l.lowStockTitle(pill.name),
+      body: l.lowStockBody(pillsLeft),
+      notificationDetails: _infoDetails(),
     );
   }
 
-  int _regularNotificationId(
-    String pillId,
-    int scheduleIndex,
-  ) {
-    return _stableNotificationId(
-      'regular|'
-      '$pillId|'
-      '$scheduleIndex',
+  Future<void> showTestReminder() async {
+    if (!isSupported) return;
+    final l = _settings.strings;
+    // Shown right away, using the same channel and sound as real reminders.
+    await _plugin.show(
+      id: ReminderIds.test,
+      title: l.testReminderTitle,
+      body: l.testReminderBody,
+      notificationDetails: _reminderDetails(null),
     );
-  }
-
-  int _specificDayNotificationId(
-    String pillId,
-    int scheduleIndex,
-    int day,
-  ) {
-    return _stableNotificationId(
-      'day|'
-      '$pillId|'
-      '$scheduleIndex|'
-      '$day',
-    );
-  }
-
-  int _intervalNotificationId(
-    String pillId,
-    int scheduleIndex,
-    int dateIndex,
-  ) {
-    return _stableNotificationId(
-      'interval|'
-      '$pillId|'
-      '$scheduleIndex|'
-      '$dateIndex',
-    );
-  }
-
-  int _snoozeNotificationId(
-    String pillId,
-    String scheduledTime,
-  ) {
-    return _stableNotificationId(
-      'snooze|'
-      '$pillId|'
-      '$scheduledTime',
-    );
-  }
-
-  int _stableNotificationId(
-    String value,
-  ) {
-    int hash = 0;
-
-    for (final int codeUnit
-        in value.codeUnits) {
-      hash =
-          ((hash * 31) +
-                  codeUnit) &
-              0x7FFFFFFF;
-    }
-
-    return hash;
   }
 }
