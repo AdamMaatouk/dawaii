@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 
 import '../../l10n/app_localizations.dart';
 import '../../services/day_planner.dart';
@@ -18,10 +19,10 @@ Color? dayStatusColor(BuildContext context, DayStatus status) {
   };
 }
 
-/// Horizontal day picker: the past week (to check what was taken), today
-/// and the next 2 days, with a dot that shows how each day went. It opens
-/// scrolled to the newest days, so today is always on screen.
-class CalendarStrip extends StatelessWidget {
+/// Horizontal day picker: the past week, today and the next week, with a
+/// dot that shows how each day went. It opens centered on today and keeps
+/// the selected day in view.
+class CalendarStrip extends StatefulWidget {
   final DateTime selected;
   final DateTime today;
   final ValueChanged<DateTime> onSelected;
@@ -36,10 +37,52 @@ class CalendarStrip extends StatelessWidget {
   });
 
   static const int daysBefore = 7;
-  static const int daysAfter = 2;
+  static const int daysAfter = 7;
+
+  @override
+  State<CalendarStrip> createState() => _CalendarStripState();
+}
+
+class _CalendarStripState extends State<CalendarStrip> {
+  final Map<DateTime, GlobalKey> _keys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _reveal(widget.selected, animate: false),
+    );
+  }
+
+  @override
+  void didUpdateWidget(CalendarStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _reveal(widget.selected, animate: true),
+      );
+    }
+  }
+
+  /// Scrolls so [day] sits in the middle of the strip.
+  void _reveal(DateTime day, {required bool animate}) {
+    final target = _keys[ScheduleService.dayOf(day)]?.currentContext;
+    if (target == null || !mounted) return;
+    Scrollable.ensureVisible(
+      target,
+      alignment: 0.5,
+      duration: animate ? const Duration(milliseconds: 250) : Duration.zero,
+      curve: Curves.easeOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final today = widget.today;
+    final onSelected = widget.onSelected;
+    final statusOf = widget.statusOf;
+    const daysBefore = CalendarStrip.daysBefore;
+    const daysAfter = CalendarStrip.daysAfter;
     final l = AppLocalizations.of(context);
     final palette = context.palette;
     final fmt = Formatters(l);
@@ -47,19 +90,18 @@ class CalendarStrip extends StatelessWidget {
       daysBefore + daysAfter + 1,
       (i) => DateTime(today.year, today.month, today.day - daysBefore + i),
     );
-    final selectedDay = ScheduleService.dayOf(selected);
+    final selectedDay = ScheduleService.dayOf(widget.selected);
 
     return SizedBox(
       height: 112,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        // Reversed: starts at the newest day (end of the row), past days
-        // are a swipe back. Works the same way in Arabic (RTL).
-        reverse: true,
+        // Build all 15 days up front so any of them can be scrolled to.
+        scrollCacheExtent: const ScrollCacheExtent.pixels(3000),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         itemCount: days.length,
         itemBuilder: (context, index) {
-          final day = days[days.length - 1 - index];
+          final day = days[index];
           final isSelected = day == selectedDay;
           final isToday = day == today;
           final dot = dayStatusColor(context, statusOf(day));
@@ -76,6 +118,7 @@ class CalendarStrip extends StatelessWidget {
               : palette.textPrimary;
 
           return Padding(
+            key: _keys.putIfAbsent(day, GlobalKey.new),
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Semantics(
               selected: isSelected,
