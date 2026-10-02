@@ -1420,7 +1420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutCredits =>
-      'Fonts: Atkinson Hyperlegible Next by the Braille Institute, and IBM Plex Sans Arabic by IBM.';
+      'Fonts: Montserrat by Julieta Ulanovsky, and IBM Plex Sans Arabic by IBM.';
 
   @override
   String get openSourceLicenses => 'Open-source licenses';

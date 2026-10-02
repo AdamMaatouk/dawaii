@@ -1455,7 +1455,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aboutCredits =>
-      'الخطوط: Atkinson Hyperlegible Next من معهد برايل، وIBM Plex Sans Arabic من IBM.';
+      'الخطوط: Montserrat من جوليتا أولانوفسكي، وIBM Plex Sans Arabic من IBM.';
 
   @override
   String get openSourceLicenses => 'تراخيص البرمجيات المفتوحة';

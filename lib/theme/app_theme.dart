@@ -128,7 +128,7 @@ extension AppPaletteContext on BuildContext {
 }
 
 class AppTheme {
-  static const String latinFont = 'Atkinson';
+  static const String latinFont = 'Montserrat';
   static const String arabicFont = 'PlexArabic';
 
   static ThemeData light({bool arabic = false}) =>
@@ -165,7 +165,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      // Atkinson Hyperlegible Next was designed for low-vision readers; IBM Plex
+      // Montserrat (plain zeros, clear shapes) for Latin text; IBM Plex
       // Sans Arabic covers Arabic (also as a fallback for Arabic medication
       // names typed while the app is in English).
       fontFamily: arabic ? arabicFont : latinFont,

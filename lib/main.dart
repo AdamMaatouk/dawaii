@@ -29,12 +29,9 @@ Future<void> main() async {
 /// The bundled fonts (SIL Open Font License) appear on the licenses page.
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
-    yield LicenseEntryWithLineBreaks(
-      ['Atkinson Hyperlegible Next (Braille Institute)'],
-      await rootBundle.loadString(
-        'assets/fonts/OFL-AtkinsonHyperlegibleNext.txt',
-      ),
-    );
+    yield LicenseEntryWithLineBreaks([
+      'Montserrat (Julieta Ulanovsky)',
+    ], await rootBundle.loadString('assets/fonts/OFL-Montserrat.txt'));
     yield LicenseEntryWithLineBreaks([
       'IBM Plex Sans Arabic (IBM)',
     ], await rootBundle.loadString('assets/fonts/OFL-IBMPlexSansArabic.txt'));

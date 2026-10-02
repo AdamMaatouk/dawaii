@@ -19,7 +19,7 @@ description: "Dawaii - medication reminders for older adults, in English and Ara
 
 publish_to: 'none'
 
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: ^3.13.1
@@ -57,20 +57,20 @@ flutter:
 
   assets:
     - assets/icon/app_icon.png
-    - assets/fonts/OFL-AtkinsonHyperlegibleNext.txt
+    - assets/fonts/OFL-Montserrat.txt
     - assets/fonts/OFL-IBMPlexSansArabic.txt
 
-  # Atkinson Hyperlegible Next (Braille Institute, designed for low vision) and
+  # Montserrat (Julieta Ulanovsky) and
   # IBM Plex Sans Arabic. Both SIL Open Font License, see assets/fonts.
   fonts:
-    - family: Atkinson
+    - family: Montserrat
       fonts:
-        - asset: assets/fonts/AtkinsonHyperlegibleNext-Regular.ttf
-        - asset: assets/fonts/AtkinsonHyperlegibleNext-Medium.ttf
+        - asset: assets/fonts/Montserrat-Regular.ttf
+        - asset: assets/fonts/Montserrat-Medium.ttf
           weight: 500
-        - asset: assets/fonts/AtkinsonHyperlegibleNext-SemiBold.ttf
+        - asset: assets/fonts/Montserrat-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/AtkinsonHyperlegibleNext-Bold.ttf
+        - asset: assets/fonts/Montserrat-Bold.ttf
           weight: 700
     - family: PlexArabic
       fonts:

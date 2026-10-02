@@ -20,8 +20,9 @@ Color? dayStatusColor(BuildContext context, DayStatus status) {
 }
 
 /// Horizontal day picker: the past week, today and the next week, with a
-/// dot that shows how each day went. It opens centered on today and keeps
-/// the selected day in view.
+/// dot that shows how each day went. Today opens at the start of the row
+/// (left, or right in Arabic); swipe back to see the past week, which is
+/// shown faded.
 class CalendarStrip extends StatefulWidget {
   final DateTime selected;
   final DateTime today;
@@ -64,13 +65,21 @@ class _CalendarStripState extends State<CalendarStrip> {
     }
   }
 
-  /// Scrolls so [day] sits in the middle of the strip.
+  /// Today goes to the start of the strip; any other day is only scrolled
+  /// into view if it is hidden (so tapping a visible day never jumps).
   void _reveal(DateTime day, {required bool animate}) {
-    final target = _keys[ScheduleService.dayOf(day)]?.currentContext;
+    final key = ScheduleService.dayOf(day);
+    final target = _keys[key]?.currentContext;
     if (target == null || !mounted) return;
+    final today = widget.today;
     Scrollable.ensureVisible(
       target,
-      alignment: 0.5,
+      alignment: 0,
+      alignmentPolicy: key == today
+          ? ScrollPositionAlignmentPolicy.explicit
+          : key.isBefore(today)
+          ? ScrollPositionAlignmentPolicy.keepVisibleAtStart
+          : ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
       duration: animate ? const Duration(milliseconds: 250) : Duration.zero,
       curve: Curves.easeOut,
     );
@@ -104,6 +113,7 @@ class _CalendarStripState extends State<CalendarStrip> {
           final day = days[index];
           final isSelected = day == selectedDay;
           final isToday = day == today;
+          final isPast = day.isBefore(today);
           final dot = dayStatusColor(context, statusOf(day));
 
           final background = isSelected
@@ -126,66 +136,70 @@ class _CalendarStripState extends State<CalendarStrip> {
               label:
                   '${fmt.weekdayNames[day.weekday - 1]} ${fmt.shortDate(day)}',
               excludeSemantics: true,
-              child: Material(
-                color: background,
-                borderRadius: BorderRadius.circular(18),
-                child: InkWell(
+              child: Opacity(
+                // Past days are faded unless one is being looked at.
+                opacity: isPast && !isSelected ? 0.45 : 1,
+                child: Material(
+                  color: background,
                   borderRadius: BorderRadius.circular(18),
-                  onTap: () => onSelected(day),
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 64),
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: isSelected
-                            ? palette.accentStrong
-                            : isToday
-                            ? palette.accent
-                            : palette.border,
-                        width: isToday && !isSelected ? 2 : 1,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => onSelected(day),
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 64),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isSelected
+                              ? palette.accentStrong
+                              : isToday
+                              ? palette.accent
+                              : palette.border,
+                          width: isToday && !isSelected ? 2 : 1,
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isToday
-                              ? l.today
-                              : fmt.weekdayShortNames[day.weekday - 1],
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected || isToday
-                                ? foreground
-                                : palette.textSecondary,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            isToday
+                                ? l.today
+                                : fmt.weekdayShortNames[day.weekday - 1],
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected || isToday
+                                  ? foreground
+                                  : palette.textSecondary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: foreground,
+                          const SizedBox(height: 2),
+                          Text(
+                            '${day.day}',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: foreground,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: dot ?? Colors.transparent,
-                            // Keep the status color visible on the
-                            // selected (blue) day.
-                            border: isSelected && dot != null
-                                ? Border.all(color: Colors.white, width: 1.5)
-                                : null,
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: dot ?? Colors.transparent,
+                              // Keep the status color visible on the
+                              // selected (blue) day.
+                              border: isSelected && dot != null
+                                  ? Border.all(color: Colors.white, width: 1.5)
+                                  : null,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

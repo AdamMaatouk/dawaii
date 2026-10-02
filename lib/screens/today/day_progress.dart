@@ -26,19 +26,14 @@ class DayProgress extends StatelessWidget {
     return Semantics(
       label: l.todayProgress(taken, total),
       excludeSemantics: true,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: palette.cardBorder),
-        ),
+      // No card behind it: the ring sits directly on the page.
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(20, 6, 16, 12),
         child: Row(
           children: [
             SizedBox(
-              width: 58,
-              height: 58,
+              width: 84,
+              height: 84,
               child: TweenAnimationBuilder<double>(
                 tween: Tween(end: total == 0 ? 0 : logged / total),
                 duration: const Duration(milliseconds: 600),
@@ -48,19 +43,19 @@ class DayProgress extends StatelessWidget {
                   children: [
                     CircularProgressIndicator(
                       value: value,
-                      strokeWidth: 7,
+                      strokeWidth: 9,
                       strokeCap: StrokeCap.round,
-                      backgroundColor: palette.innerSurface,
+                      backgroundColor: palette.border,
                       valueColor: AlwaysStoppedAnimation(color),
                     ),
                     Center(
                       child: done
-                          ? Icon(Icons.check_rounded, color: color, size: 30)
+                          ? Icon(Icons.check_rounded, color: color, size: 42)
                           : Text(
                               '$logged/$total',
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
                                 color: palette.textPrimary,
                               ),
                             ),
@@ -69,7 +64,7 @@ class DayProgress extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +72,7 @@ class DayProgress extends StatelessWidget {
                   Text(
                     l.todayProgress(taken, total),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
@@ -85,7 +80,7 @@ class DayProgress extends StatelessWidget {
                   Text(
                     done ? l.legendAllTaken : l.dosesLeftToday(total - logged),
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
                       color: done ? palette.successText : palette.textSecondary,
                     ),
                   ),

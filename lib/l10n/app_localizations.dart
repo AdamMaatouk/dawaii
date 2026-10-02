@@ -2477,7 +2477,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutCredits.
   ///
   /// In en, this message translates to:
-  /// **'Fonts: Atkinson Hyperlegible Next by the Braille Institute, and IBM Plex Sans Arabic by IBM.'**
+  /// **'Fonts: Montserrat by Julieta Ulanovsky, and IBM Plex Sans Arabic by IBM.'**
   String get aboutCredits;
 
   /// No description provided for @openSourceLicenses.

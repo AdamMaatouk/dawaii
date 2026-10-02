@@ -47,14 +47,10 @@ class ReportService {
         ? pw.ThemeData.withFont(base: arabic, bold: arabicBold)
         : pw.ThemeData.withFont(
             base: pw.Font.ttf(
-              await rootBundle.load(
-                'assets/fonts/AtkinsonHyperlegibleNext-Regular.ttf',
-              ),
+              await rootBundle.load('assets/fonts/Montserrat-Regular.ttf'),
             ),
             bold: pw.Font.ttf(
-              await rootBundle.load(
-                'assets/fonts/AtkinsonHyperlegibleNext-Bold.ttf',
-              ),
+              await rootBundle.load('assets/fonts/Montserrat-Bold.ttf'),
             ),
             fontFallback: [arabic],
           );
