@@ -43,7 +43,7 @@ class HealthCard extends StatelessWidget {
             l.myHealth,
             style: TextStyle(
               fontSize: 19,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: palette.textPrimary,
             ),
           ),
@@ -106,7 +106,7 @@ class _Tile extends StatelessWidget {
                       bp ? l.bloodPressure : l.bloodSugar,
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textSecondary,
                       ),
                     ),
@@ -129,7 +129,7 @@ class _Tile extends StatelessWidget {
                   textDirection: TextDirection.ltr,
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: palette.textPrimary,
                   ),
                 ),

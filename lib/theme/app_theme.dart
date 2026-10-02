@@ -56,24 +56,25 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.warningBorder,
   });
 
-  // Clear blue accent on neutral greys. Status colors (green = taken,
-  // amber = later / refill, red = late) are unchanged and stay distinct
-  // from the blue.
+  // "Soft slate": clear blue accent on cool, quiet greys. Text is dark
+  // slate grey instead of black (and soft off-white instead of pure white
+  // in dark mode), still above WCAG AA contrast everywhere. Status colors
+  // (green = taken, amber = later / refill, red = late) stay distinct.
   static const light = AppPalette(
-    page: Color(0xFFF5F6F7),
-    surface: Colors.white,
-    innerSurface: Color(0xFFF7F8F9),
-    textPrimary: Color(0xFF111418),
-    textBody: Color(0xFF2E3338),
-    textSecondary: Color(0xFF474D55),
-    textMuted: Color(0xFF5F6670),
-    border: Color(0xFFE3E5E8),
-    cardBorder: Color(0xFFE6E8EB),
-    pillTray: Color(0xFFF0F1F3),
-    pillTrayBorder: Color(0xFFD9DCE0),
+    page: Color(0xFFF1F3F6),
+    surface: Color(0xFFFFFFFF),
+    innerSurface: Color(0xFFF6F7F9),
+    textPrimary: Color(0xFF2B323B),
+    textBody: Color(0xFF3D4550),
+    textSecondary: Color(0xFF555E6A),
+    textMuted: Color(0xFF646E7B),
+    border: Color(0xFFDFE3E8),
+    cardBorder: Color(0xFFE4E7EC),
+    pillTray: Color(0xFFEDF0F3),
+    pillTrayBorder: Color(0xFFD5DAE0),
     accent: Color(0xFF2563EB),
     accentStrong: Color(0xFF2563EB),
-    softAccent: Color(0xFFEAF1FE),
+    softAccent: Color(0xFFE8F0FD),
     success: Color(0xFF059669),
     successText: Color(0xFF15803D),
     softSuccess: Color(0xFFDCFCE7),
@@ -87,20 +88,20 @@ class AppPalette extends ThemeExtension<AppPalette> {
   );
 
   static const dark = AppPalette(
-    page: Color(0xFF121417),
-    surface: Color(0xFF1C1F24),
-    innerSurface: Color(0xFF16181C),
-    textPrimary: Color(0xFFF5F6F7),
-    textBody: Color(0xFFD3D6DB),
-    textSecondary: Color(0xFFB9BDC4),
-    textMuted: Color(0xFF9AA0A8),
-    border: Color(0xFF2C3036),
-    cardBorder: Color(0xFF2A2E34),
-    pillTray: Color(0xFF24282E),
-    pillTrayBorder: Color(0xFF3A3F47),
+    page: Color(0xFF14171C),
+    surface: Color(0xFF1D2128),
+    innerSurface: Color(0xFF181B21),
+    textPrimary: Color(0xFFE3E6EA),
+    textBody: Color(0xFFC5CAD1),
+    textSecondary: Color(0xFFAEB4BC),
+    textMuted: Color(0xFF949BA5),
+    border: Color(0xFF2D323A),
+    cardBorder: Color(0xFF2B3038),
+    pillTray: Color(0xFF252A31),
+    pillTrayBorder: Color(0xFF3B414A),
     accent: Color(0xFF60A5FA),
     accentStrong: Color(0xFF2563EB),
-    softAccent: Color(0xFF1B2B45),
+    softAccent: Color(0xFF1C2C46),
     success: Color(0xFF10B981),
     successText: Color(0xFF6EE7B7),
     softSuccess: Color(0xFF15352A),
@@ -141,6 +142,8 @@ class AppTheme {
       brightness: brightness,
       primary: p.accentStrong,
       surface: p.surface,
+      onSurface: p.textPrimary,
+      onSurfaceVariant: p.textSecondary,
     );
 
     // Generous sizes throughout: the app is designed for older adults.
@@ -156,13 +159,13 @@ class AppTheme {
       fontFamily: family,
       fontFamilyFallback: fallback,
       fontSize: 16,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
     );
     const minButton = Size(64, 52);
 
     return ThemeData(
       useMaterial3: true,
-      // Atkinson Hyperlegible was designed for low-vision readers; IBM Plex
+      // Atkinson Hyperlegible Next was designed for low-vision readers; IBM Plex
       // Sans Arabic covers Arabic (also as a fallback for Arabic medication
       // names typed while the app is in English).
       fontFamily: arabic ? arabicFont : latinFont,
@@ -188,7 +191,7 @@ class AppTheme {
           fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontSize: 24,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
       ),
       textTheme: TextTheme(
@@ -196,19 +199,19 @@ class AppTheme {
           fontFamily: family,
           fontFamilyFallback: fallback,
           color: p.textPrimary,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
         titleLarge: TextStyle(
           fontFamily: family,
           fontFamilyFallback: fallback,
           color: p.textPrimary,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
         titleMedium: TextStyle(
           fontFamily: family,
           fontFamilyFallback: fallback,
           color: p.textPrimary,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
         bodyLarge: TextStyle(
           fontFamily: family,
@@ -290,7 +293,7 @@ class AppTheme {
           fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontSize: 21,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
         contentTextStyle: TextStyle(
           fontFamily: family,
@@ -321,8 +324,8 @@ class AppTheme {
                 ? p.accent
                 : p.textMuted,
             fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w800
-                : FontWeight.w600,
+                ? FontWeight.w600
+                : FontWeight.w500,
           ),
         ),
         iconTheme: WidgetStateProperty.resolveWith(
@@ -383,7 +386,7 @@ class AppTheme {
             fontFamily: family,
             fontFamilyFallback: fallback,
             fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -406,16 +409,16 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: brightness == Brightness.dark
-            ? const Color(0xFFE8EAED)
-            : const Color(0xFF26292E),
+            ? const Color(0xFFE3E6EA)
+            : const Color(0xFF2B323B),
         contentTextStyle: TextStyle(
           fontFamily: family,
           fontFamilyFallback: fallback,
           color: brightness == Brightness.dark
-              ? const Color(0xFF111418)
+              ? const Color(0xFF2B323B)
               : Colors.white,
           fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -428,7 +431,7 @@ class AppTheme {
           fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontSize: 17,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
         subtitleTextStyle: TextStyle(
           fontFamily: family,

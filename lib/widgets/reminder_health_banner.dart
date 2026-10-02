@@ -47,7 +47,7 @@ class ReminderHealthBanner extends StatelessWidget {
                   style: TextStyle(
                     color: palette.warningText,
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -66,7 +66,11 @@ class ReminderHealthBanner extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: palette.warning,
-              foregroundColor: Colors.black,
+              // Dark amber in light mode needs white text; bright amber in
+              // dark mode needs dark text.
+              foregroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.black
+                  : Colors.white,
               minimumSize: const Size(64, 48),
             ),
             onPressed: busy ? null : onFix,

@@ -286,7 +286,6 @@
   "nowNext": "التالي",
   "laterToday": "لاحقًا اليوم",
   "backToToday": "اليوم",
-  "add": "إضافة",
   "tabToday": "اليوم",
   "tabMedicines": "أدويتي",
   "medicinesTitle": "أدويتي",
@@ -406,6 +405,6 @@
   "aboutFeedbackTitle": "لديك فكرة أو مشكلة؟",
   "aboutFeedbackBody": "أقرأ كل رسالة. اضغط لنسخ بريدي الإلكتروني.",
   "aboutMadeIn": "صُنع بعناية في بيروت 🇱🇧",
-  "aboutCredits": "الخطوط: Atkinson Hyperlegible من معهد برايل، وIBM Plex Sans Arabic من IBM.",
+  "aboutCredits": "الخطوط: Atkinson Hyperlegible Next من معهد برايل، وIBM Plex Sans Arabic من IBM.",
   "openSourceLicenses": "تراخيص البرمجيات المفتوحة"
 }

@@ -83,7 +83,7 @@ class AboutScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: palette.textSecondary,
                   ),
                 ),
@@ -177,7 +177,7 @@ class _Hero extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 30,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: palette.textPrimary,
             ),
           ),
@@ -199,7 +199,7 @@ class _Hero extends StatelessWidget {
               l.aboutVersion(appVersion),
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: palette.textSecondary,
               ),
             ),
@@ -246,7 +246,7 @@ class _Card extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -300,7 +300,7 @@ class _Principle extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -350,7 +350,7 @@ class _DosesStat extends StatelessWidget {
               l.aboutDosesLogged(count),
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: palette.successText,
               ),
             ),
@@ -396,7 +396,7 @@ class _Creator extends StatelessWidget {
                   textDirection: TextDirection.ltr,
                   style: TextStyle(
                     fontSize: 24,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -410,7 +410,7 @@ class _Creator extends StatelessWidget {
                       l.createdBy,
                       style: TextStyle(
                         fontSize: 19,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -418,7 +418,7 @@ class _Creator extends StatelessWidget {
                       l.aboutCreatorRole,
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color: palette.accent,
                       ),
                     ),
@@ -441,7 +441,7 @@ class _Creator extends StatelessWidget {
             l.aboutFeedbackTitle,
             style: TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: palette.textPrimary,
             ),
           ),

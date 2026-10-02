@@ -81,7 +81,7 @@ class _BigTimePickerState extends State<_BigTimePicker> {
               value,
               style: TextStyle(
                 fontSize: 44,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: palette.textPrimary,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -116,7 +116,7 @@ class _BigTimePickerState extends State<_BigTimePicker> {
                       ':',
                       style: TextStyle(
                         fontSize: 44,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: palette.textPrimary,
                       ),
                     ),

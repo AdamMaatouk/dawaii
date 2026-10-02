@@ -30,8 +30,10 @@ Future<void> main() async {
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(
-      ['Atkinson Hyperlegible (Braille Institute)'],
-      await rootBundle.loadString('assets/fonts/OFL-AtkinsonHyperlegible.txt'),
+      ['Atkinson Hyperlegible Next (Braille Institute)'],
+      await rootBundle.loadString(
+        'assets/fonts/OFL-AtkinsonHyperlegibleNext.txt',
+      ),
     );
     yield LicenseEntryWithLineBreaks([
       'IBM Plex Sans Arabic (IBM)',
@@ -68,7 +70,7 @@ class DawaiiApp extends StatelessWidget {
             // so layouts stay usable.
             final media = MediaQuery.of(context);
             final scale = (media.textScaler.scale(1) * settings.textScale)
-                .clamp(1.0, 2.0);
+                .clamp(0.8, 2.0);
             return MediaQuery(
               data: media.copyWith(textScaler: TextScaler.linear(scale)),
               child: child ?? const SizedBox.shrink(),

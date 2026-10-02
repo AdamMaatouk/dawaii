@@ -49,7 +49,7 @@ class _HealthScreenState extends State<HealthScreen> {
         title: Text(l.deleteReadingQuestion),
         content: Text(
           '${readingValue(reading)} ${readingUnit(l, reading)}',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
         actions: [
           TextButton(
@@ -121,7 +121,7 @@ class _HealthScreenState extends State<HealthScreen> {
         icon: const Icon(Icons.add_rounded, size: 28),
         label: Text(
           bp ? l.addBloodPressure : l.addBloodSugar,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
       ),
       body: ListView(
@@ -166,7 +166,7 @@ class _HealthScreenState extends State<HealthScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             color: palette.textPrimary,
                           ),
                         ),
@@ -191,7 +191,7 @@ class _HealthScreenState extends State<HealthScreen> {
                           l.latestReading,
                           style: TextStyle(
                             fontSize: 15,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: palette.textSecondary,
                           ),
                         ),
@@ -206,7 +206,7 @@ class _HealthScreenState extends State<HealthScreen> {
                               textDirection: TextDirection.ltr,
                               style: TextStyle(
                                 fontSize: 44,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 color: palette.textPrimary,
                               ),
                             ),
@@ -256,7 +256,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: palette.dangerText,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
@@ -276,7 +276,7 @@ class _HealthScreenState extends State<HealthScreen> {
                             l.last30Days,
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                               color: palette.textPrimary,
                             ),
                           ),
@@ -330,7 +330,7 @@ class _HealthScreenState extends State<HealthScreen> {
                       l.allReadings,
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -353,7 +353,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                 textDirection: TextDirection.ltr,
                                 style: TextStyle(
                                   fontSize: 22,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   color: palette.textPrimary,
                                 ),
                               ),
@@ -414,7 +414,7 @@ class _Stat extends StatelessWidget {
           textDirection: TextDirection.ltr,
           style: TextStyle(
             fontSize: 26,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: palette.textPrimary,
           ),
         ),

@@ -142,7 +142,7 @@ class _AddMedicationWizardState extends State<AddMedicationWizard> {
                         l.stepOf(_step + 1, _stepCount),
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: palette.textSecondary,
                         ),
                       ),
@@ -177,7 +177,7 @@ class _AddMedicationWizardState extends State<AddMedicationWizard> {
                                   title,
                                   style: TextStyle(
                                     fontSize: 26,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: palette.textPrimary,
                                   ),
                                 ),
@@ -214,7 +214,7 @@ class _AddMedicationWizardState extends State<AddMedicationWizard> {
                             _error!,
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: palette.dangerText,
                             ),
                           ),

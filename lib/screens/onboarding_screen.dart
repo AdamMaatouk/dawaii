@@ -147,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     textAlign: TextAlign.center,
     style: TextStyle(
       fontSize: 28,
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w700,
       color: palette.textPrimary,
       height: 1.25,
     ),
@@ -193,7 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style ??
                         TextStyle(
                           fontSize: 24,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: palette.textPrimary,
                         ),
                   ),
@@ -309,7 +309,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       l.timeFor(l.onbSampleName),
                       style: TextStyle(
                         fontSize: 19,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -334,7 +334,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             palette: palette,
             style: TextStyle(
               fontSize: 18 * scale,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: palette.textPrimary,
             ),
             onTap: () => _settings.setTextScale(scale),

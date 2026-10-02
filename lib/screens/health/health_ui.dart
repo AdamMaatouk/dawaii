@@ -53,7 +53,7 @@ class LevelChip extends StatelessWidget {
         levelName(l, level),
         style: TextStyle(
           fontSize: large ? 16 : 14,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: color,
         ),
       ),

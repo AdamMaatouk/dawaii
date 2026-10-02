@@ -48,12 +48,12 @@ class ReportService {
         : pw.ThemeData.withFont(
             base: pw.Font.ttf(
               await rootBundle.load(
-                'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
+                'assets/fonts/AtkinsonHyperlegibleNext-Regular.ttf',
               ),
             ),
             bold: pw.Font.ttf(
               await rootBundle.load(
-                'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
+                'assets/fonts/AtkinsonHyperlegibleNext-Bold.ttf',
               ),
             ),
             fontFallback: [arabic],

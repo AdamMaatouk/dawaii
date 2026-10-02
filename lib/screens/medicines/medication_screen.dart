@@ -153,7 +153,7 @@ class _MedicationScreenState extends State<MedicationScreen>
                     value,
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
                   ),
@@ -172,7 +172,7 @@ class _MedicationScreenState extends State<MedicationScreen>
         text,
         style: TextStyle(
           fontSize: 20,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: palette.textPrimary,
         ),
       ),
@@ -235,7 +235,7 @@ class _MedicationScreenState extends State<MedicationScreen>
                   pill.name,
                   style: TextStyle(
                     fontSize: 30,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -263,7 +263,7 @@ class _MedicationScreenState extends State<MedicationScreen>
                             l.medicationPaused,
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: palette.warningText,
                             ),
                           ),

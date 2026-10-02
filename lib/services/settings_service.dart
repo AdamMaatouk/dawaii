@@ -14,18 +14,22 @@ class SettingsService extends ChangeNotifier {
 
   static const _themeKey = 'app_theme_mode';
   static const _languageKey = 'app_language_code';
-  static const _textScaleKey = 'text_scale';
+  static const _textSizeKey = 'text_size';
+  static const _legacyTextScaleKey = 'text_scale';
   static const _simpleModeKey = 'simple_mode';
   static const _persistentAlarmKey = 'persistent_alarm';
   static const _readAloudKey = 'read_aloud';
   static const _userNameKey = 'user_name';
   static const _onboardingKey = 'onboarding_done';
 
-  static const List<double> textScales = [1.0, 1.15, 1.3];
+  /// Normal, Large, Extra large. Normal is a bit smaller than the phone's
+  /// default (the app's own sizes are already generous); the other two keep
+  /// the same steps as before. Saved as the option's index (0-2).
+  static const List<double> textScales = [0.88, 1.0, 1.14];
 
   ThemeMode _themeMode = ThemeMode.light;
   String _languageCode = 'en';
-  double _textScale = 1.0;
+  double _textScale = textScales[0];
   bool _simpleMode = false;
   bool _persistentAlarm = true;
   bool _readAloud = true;
@@ -64,8 +68,12 @@ class SettingsService extends ChangeNotifier {
         (PlatformDispatcher.instance.locale.languageCode == 'ar' ? 'ar' : 'en');
     if (_languageCode != 'ar') _languageCode = 'en';
 
-    final scale = prefs.getDouble(_textScaleKey) ?? 1.0;
-    _textScale = textScales.contains(scale) ? scale : 1.0;
+    // Older versions saved the scale itself (1.0 / 1.15 / 1.3).
+    final legacy = prefs.getDouble(_legacyTextScaleKey);
+    final index =
+        prefs.getInt(_textSizeKey) ??
+        (legacy == null ? 0 : const [1.0, 1.15, 1.3].indexOf(legacy));
+    _textScale = textScales[index.clamp(0, textScales.length - 1)];
     _simpleMode = prefs.getBool(_simpleModeKey) ?? false;
     _persistentAlarm = prefs.getBool(_persistentAlarmKey) ?? true;
     _readAloud = prefs.getBool(_readAloudKey) ?? true;
@@ -97,7 +105,8 @@ class SettingsService extends ChangeNotifier {
     _textScale = scale;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(_textScaleKey, scale);
+    await prefs.setInt(_textSizeKey, textScales.indexOf(scale));
+    await prefs.remove(_legacyTextScaleKey);
   }
 
   Future<void> setSimpleMode(bool value) async {

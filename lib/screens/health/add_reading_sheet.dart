@@ -123,7 +123,7 @@ class _AddReadingSheetState extends State<_AddReadingSheet> {
         ],
         style: TextStyle(
           fontSize: 30,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
           color: palette.textPrimary,
         ),
         decoration: InputDecoration(
@@ -151,7 +151,7 @@ class _AddReadingSheetState extends State<_AddReadingSheet> {
                   _isBp ? l.addBloodPressure : l.addBloodSugar,
                   style: TextStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -226,7 +226,7 @@ class _AddReadingSheetState extends State<_AddReadingSheet> {
                     l.whenMeasured,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: palette.textSecondary,
                     ),
                   ),

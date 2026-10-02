@@ -1031,9 +1031,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get backToToday => 'اليوم';
 
   @override
-  String get add => 'إضافة';
-
-  @override
   String get tabToday => 'اليوم';
 
   @override
@@ -1491,7 +1488,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aboutCredits =>
-      'الخطوط: Atkinson Hyperlegible من معهد برايل، وIBM Plex Sans Arabic من IBM.';
+      'الخطوط: Atkinson Hyperlegible Next من معهد برايل، وIBM Plex Sans Arabic من IBM.';
 
   @override
   String get openSourceLicenses => 'تراخيص البرمجيات المفتوحة';

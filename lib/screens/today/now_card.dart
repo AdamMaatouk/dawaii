@@ -79,7 +79,7 @@ class NowCard extends StatelessWidget {
                   headline,
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     color: headlineColor,
                   ),
                 ),
@@ -90,7 +90,7 @@ class NowCard extends StatelessWidget {
                   timing,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: isDue ? palette.dangerText : palette.textSecondary,
                   ),
                 ),
@@ -136,7 +136,7 @@ class NowCard extends StatelessWidget {
                   group.length == 1 ? l.iTookIt : l.iTookThemAll,
                   style: const TextStyle(
                     fontSize: 21,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -147,7 +147,7 @@ class NowCard extends StatelessWidget {
                 l.remindAgainIn,
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: palette.textSecondary,
                 ),
               ),
@@ -243,7 +243,7 @@ class _SingleDose extends StatelessWidget {
                   pill.name,
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: palette.textPrimary,
                     height: 1.15,
                   ),
@@ -253,7 +253,7 @@ class _SingleDose extends StatelessWidget {
                   fmt.doseSummary(pill),
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: palette.textSecondary,
                   ),
                 ),
@@ -324,7 +324,7 @@ class _GroupRow extends StatelessWidget {
                       pill.name,
                       style: TextStyle(
                         fontSize: 21,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -373,7 +373,7 @@ class _AllDoneCard extends StatelessWidget {
                   l.allDoneTitle,
                   style: TextStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.successText,
                   ),
                 ),

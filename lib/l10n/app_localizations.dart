@@ -1814,12 +1814,6 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get backToToday;
 
-  /// No description provided for @add.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get add;
-
   /// No description provided for @tabToday.
   ///
   /// In en, this message translates to:
@@ -2537,7 +2531,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutCredits.
   ///
   /// In en, this message translates to:
-  /// **'Fonts: Atkinson Hyperlegible by the Braille Institute, and IBM Plex Sans Arabic by IBM.'**
+  /// **'Fonts: Atkinson Hyperlegible Next by the Braille Institute, and IBM Plex Sans Arabic by IBM.'**
   String get aboutCredits;
 
   /// No description provided for @openSourceLicenses.

@@ -71,7 +71,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                     title,
                     style: TextStyle(
                       fontSize: 19,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
                   ),

@@ -67,7 +67,7 @@ void main() {
     expect(find.text('Is this text easy to read?'), findsOneWidget);
     await tester.tap(find.text('Large'));
     await tester.pumpAndSettle();
-    expect(SettingsService().textScale, 1.15);
+    expect(SettingsService().textScale, SettingsService.textScales[1]);
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 

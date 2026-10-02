@@ -81,7 +81,7 @@ class _MedicinesScreenState extends State<MedicinesScreen> {
         text,
         style: TextStyle(
           fontSize: 18,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: palette.textSecondary,
         ),
       ),
@@ -101,7 +101,7 @@ class _MedicinesScreenState extends State<MedicinesScreen> {
                   l.addMedication,
                   style: const TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -207,7 +207,7 @@ class MedicineTile extends StatelessWidget {
                                   pill.name,
                                   style: TextStyle(
                                     fontSize: 20,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                     color: palette.textPrimary,
                                   ),
                                 ),
@@ -234,7 +234,7 @@ class MedicineTile extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: pill.isLowOnStock
-                                          ? FontWeight.w800
+                                          ? FontWeight.w600
                                           : FontWeight.w500,
                                       color: pill.isLowOnStock
                                           ? palette.warningText

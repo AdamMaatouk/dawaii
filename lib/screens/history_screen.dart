@@ -167,7 +167,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       dropdownColor: palette.surface,
                       style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                       items: [
@@ -211,7 +211,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             l.doseBreakdown,
                             style: TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                               color: palette.textPrimary,
                             ),
                           ),
@@ -241,7 +241,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       l.perMedication,
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -336,7 +336,7 @@ class _Encouragement extends StatelessWidget {
                   l.takenOfLast(stats.taken, stats.total),
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: color,
                   ),
                 ),
@@ -414,7 +414,7 @@ class _MonthCalendarState extends State<_MonthCalendar> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -448,7 +448,7 @@ class _MonthCalendarState extends State<_MonthCalendar> {
                       name,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: palette.textSecondary,
                       ),
                     ),
@@ -484,7 +484,7 @@ class _MonthCalendarState extends State<_MonthCalendar> {
                         '$d',
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: palette.textPrimary,
                         ),
                       ),
@@ -558,7 +558,7 @@ class _MetricCard extends StatelessWidget {
             value,
             style: TextStyle(
               fontSize: 26,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: palette.textPrimary,
             ),
           ),
@@ -587,7 +587,7 @@ class _Stat extends StatelessWidget {
           '$value',
           style: TextStyle(
             fontSize: 24,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: color,
           ),
         ),
@@ -639,7 +639,7 @@ class _PillAdherence extends StatelessWidget {
                       pill.name,
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -667,7 +667,7 @@ class _PillAdherence extends StatelessWidget {
                 adherence == null ? '—' : '${(adherence * 100).round()}%',
                 style: TextStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: adherence == null ? palette.textMuted : color,
                 ),
               ),

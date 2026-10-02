@@ -409,7 +409,6 @@
   "nowNext": "NEXT",
   "laterToday": "Later today",
   "backToToday": "Today",
-  "add": "Add",
   "tabToday": "Today",
   "tabMedicines": "Medicines",
   "medicinesTitle": "My medicines",
@@ -675,6 +674,6 @@
   "aboutFeedbackTitle": "Ideas or problems?",
   "aboutFeedbackBody": "I read every message. Tap to copy my email.",
   "aboutMadeIn": "Made with care in Beirut 🇱🇧",
-  "aboutCredits": "Fonts: Atkinson Hyperlegible by the Braille Institute, and IBM Plex Sans Arabic by IBM.",
+  "aboutCredits": "Fonts: Atkinson Hyperlegible Next by the Braille Institute, and IBM Plex Sans Arabic by IBM.",
   "openSourceLicenses": "Open-source licenses"
 }

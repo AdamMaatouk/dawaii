@@ -93,7 +93,7 @@ class DaySectionView extends StatelessWidget {
                         dayPartName(l, section.part),
                         style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: palette.textPrimary,
                         ),
                       ),
@@ -240,7 +240,7 @@ class DoseTile extends StatelessWidget {
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
                                           fontSize: large ? 21 : 19,
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w600,
                                           color: palette.textPrimary,
                                         ),
                                       ),
@@ -361,7 +361,7 @@ class _TimeColumn extends StatelessWidget {
           fmt.time24(item.ref.time),
           style: TextStyle(
             fontSize: large ? 21 : 19,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: state == DoseState.overdue
                 ? palette.dangerText
                 : palette.textPrimary,
@@ -375,7 +375,7 @@ class _TimeColumn extends StatelessWidget {
               textAlign: TextAlign.end,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: noteColor,
               ),
             ),
@@ -508,7 +508,7 @@ class _LoggedChip extends StatelessWidget {
                   text,
                   style: TextStyle(
                     color: color,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
                 ),
@@ -636,7 +636,7 @@ class DoneSection extends StatelessWidget {
                       l.doneTitle,
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -654,7 +654,7 @@ class DoneSection extends StatelessWidget {
                         '${items.length}',
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: palette.successText,
                         ),
                       ),
@@ -664,7 +664,7 @@ class DoneSection extends StatelessWidget {
                       expanded ? l.hideDone : l.showDone,
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: palette.accent,
                       ),
                     ),

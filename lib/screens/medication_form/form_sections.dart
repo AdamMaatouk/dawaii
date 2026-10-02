@@ -41,7 +41,7 @@ const List<TimeOfDay> quickTimes = [
 
 TextStyle formInputStyle(BuildContext context) => TextStyle(
   fontSize: 18,
-  fontWeight: FontWeight.w600,
+  fontWeight: FontWeight.w500,
   color: context.palette.textPrimary,
 );
 
@@ -51,7 +51,7 @@ Widget formLabel(BuildContext context, String text) => Padding(
     text,
     style: TextStyle(
       fontSize: 16,
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w600,
       color: context.palette.textSecondary,
     ),
   ),
@@ -301,7 +301,7 @@ class PhotoPicker extends StatelessWidget {
                       l.pillPhotoAdded,
                       style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -399,7 +399,7 @@ class ReminderPreview extends StatelessWidget {
                   l.timeFor(name),
                   style: TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -559,7 +559,7 @@ class WhenSection extends StatelessWidget {
                       fmt.time(time.hour, time.minute),
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -696,7 +696,7 @@ class DurationSection extends StatelessWidget {
                       ),
                       style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),
@@ -832,7 +832,7 @@ class _ChoiceCard extends StatelessWidget {
                         title,
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: palette.textPrimary,
                         ),
                       ),
@@ -909,7 +909,7 @@ class _SelectableTile extends StatelessWidget {
                   maxLines: 2,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     color: selected ? palette.accent : palette.textSecondary,
                   ),
                 ),
@@ -1044,7 +1044,7 @@ class MedicationSummary extends StatelessWidget {
             l.summaryTitle,
             style: TextStyle(
               fontSize: 15,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: palette.accent,
             ),
           ),
@@ -1065,7 +1065,7 @@ class MedicationSummary extends StatelessWidget {
                       form.name.text.trim(),
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
                     ),

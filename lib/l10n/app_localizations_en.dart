@@ -1014,9 +1014,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backToToday => 'Today';
 
   @override
-  String get add => 'Add';
-
-  @override
   String get tabToday => 'Today';
 
   @override
@@ -1457,7 +1454,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutCredits =>
-      'Fonts: Atkinson Hyperlegible by the Braille Institute, and IBM Plex Sans Arabic by IBM.';
+      'Fonts: Atkinson Hyperlegible Next by the Braille Institute, and IBM Plex Sans Arabic by IBM.';
 
   @override
   String get openSourceLicenses => 'Open-source licenses';

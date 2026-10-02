@@ -44,7 +44,7 @@ class EmptyStateWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 22,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: palette.textPrimary,
             ),
           ),

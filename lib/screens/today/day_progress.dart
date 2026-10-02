@@ -60,7 +60,7 @@ class DayProgress extends StatelessWidget {
                               '$logged/$total',
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                                 color: palette.textPrimary,
                               ),
                             ),
@@ -78,7 +78,7 @@ class DayProgress extends StatelessWidget {
                     l.todayProgress(taken, total),
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
                   ),

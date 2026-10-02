@@ -45,7 +45,7 @@ class _DoseHeader extends StatelessWidget {
                   pill.name,
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),
@@ -54,7 +54,7 @@ class _DoseHeader extends StatelessWidget {
                   details,
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: palette.textSecondary,
                   ),
                 ),
@@ -174,7 +174,7 @@ Future<DateTime?> confirmTakeDose(
                 l.markTakenQuestion,
                 style: TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: palette.textBody,
                 ),
               ),
@@ -253,7 +253,7 @@ Future<bool> confirmSkipDose(
                     fontSize: 15,
                     height: 1.35,
                     color: palette.dangerText,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -327,7 +327,7 @@ Future<int?> showSnoozeSheet(BuildContext context, PillModel pill) {
               l.snoozeMedication(pill.name),
               style: TextStyle(
                 fontSize: 21,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: palette.textPrimary,
               ),
             ),
@@ -360,7 +360,7 @@ Future<int?> showSnoozeSheet(BuildContext context, PillModel pill) {
                                 : l.hoursCount(minutes ~/ 60),
                             style: TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: palette.textPrimary,
                             ),
                           ),
@@ -436,7 +436,7 @@ class _RefillDialogState extends State<_RefillDialog> {
                 LengthLimitingTextInputFormatter(4),
               ],
               onSubmitted: (_) => _submit(),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
               decoration: InputDecoration(labelText: l.refillLabel),
             ),
           ],
@@ -508,7 +508,7 @@ Future<DoseOption?> showDoseOptionsSheet(
                   text,
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: palette.textPrimary,
                   ),
                 ),

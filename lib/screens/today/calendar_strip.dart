@@ -109,7 +109,7 @@ class CalendarStrip extends StatelessWidget {
                           maxLines: 1,
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: isSelected || isToday
                                 ? foreground
                                 : palette.textSecondary,
@@ -120,7 +120,7 @@ class CalendarStrip extends StatelessWidget {
                           '${day.day}',
                           style: TextStyle(
                             fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: foreground,
                           ),
                         ),

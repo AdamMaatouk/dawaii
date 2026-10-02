@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title,
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: palette.accent,
                 ),
               ),
@@ -186,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label,
                     style: TextStyle(
                       fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
                   ),
@@ -426,7 +426,7 @@ class _NameDialogState extends State<_NameDialog> {
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         decoration: InputDecoration(hintText: l.onbNameHint),
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),

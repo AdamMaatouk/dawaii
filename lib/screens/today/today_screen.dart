@@ -243,7 +243,7 @@ class _TodayScreenState extends State<TodayScreen>
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: palette.textPrimary,
               ),
             ),
@@ -251,27 +251,12 @@ class _TodayScreenState extends State<TodayScreen>
               '${fmt.weekdayNames[now.weekday - 1]} ${fmt.shortDate(now)}',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: palette.textSecondary,
               ),
             ),
           ],
         ),
-        actions: [
-          if (_data.pills.isNotEmpty)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 12),
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(48, 48),
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                ),
-                onPressed: _addMedication,
-                icon: const Icon(Icons.add_rounded, size: 26),
-                label: Text(l.add),
-              ),
-            ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -310,7 +295,7 @@ class _TodayScreenState extends State<TodayScreen>
                               '${fmt.shortDate(date)}',
                               style: TextStyle(
                                 fontSize: 19,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                                 color: palette.textPrimary,
                               ),
                             ),
