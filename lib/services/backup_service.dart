@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/dose.dart';
@@ -16,16 +14,16 @@ class BackupService {
 
   Future<void> exportBackup({required String subject}) async {
     final data = await _storage.exportData();
-    final directory = await getTemporaryDirectory();
-    final stamp = DoseRef.dateKey(DateTime.now());
-    final file = File('${directory.path}/dawaii-backup-$stamp.json');
-    await file.writeAsString(
-      const JsonEncoder.withIndent('  ').convert(data),
-      flush: true,
-    );
+    final name = 'dawaii-backup-${DoseRef.dateKey(DateTime.now())}.json';
+    final bytes = utf8.encode(const JsonEncoder.withIndent('  ').convert(data));
+    // Built in memory (no temp folder): on phones share_plus saves it for the
+    // share sheet; in a browser it downloads the file instead.
     await SharePlus.instance.share(
       ShareParams(
-        files: [XFile(file.path, mimeType: 'application/json')],
+        files: [
+          XFile.fromData(bytes, mimeType: 'application/json', name: name),
+        ],
+        fileNameOverrides: [name],
         subject: subject,
       ),
     );
