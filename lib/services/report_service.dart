@@ -1,11 +1,8 @@
-import 'dart:ui' show Locale;
-
-import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-import '../l10n/app_localizations.dart';
 import '../models/health_reading.dart';
 import '../utils/formatters.dart';
 import 'schedule_service.dart';
@@ -27,34 +24,39 @@ class ReportService {
   }
 
   Future<Uint8List> buildReport({int days = 30}) async {
-    var l = SettingsService().strings;
     final pills = await _storage.getPills();
     final records = await _storage.getDoseRecords();
     final allReadings = await _storage.getReadings();
     final now = DateTime.now();
     final from = DateTime(now.year, now.month, now.day - (days - 1));
 
-    // Arabic needs a font with Arabic glyphs (downloaded once and cached by
-    // the printing package). Medication names may be Arabic in an English
-    // report too, so it is used as a fallback font either way.
-    pw.Font? arabic;
-    pw.Font? arabicBold;
-    try {
-      arabic = await PdfGoogleFonts.notoNaskhArabicRegular();
-      arabicBold = await PdfGoogleFonts.notoNaskhArabicBold();
-    } catch (e) {
-      debugPrint('ARABIC PDF FONT UNAVAILABLE (offline?): $e');
-      if (l.localeName == 'ar') l = lookupAppLocalizations(const Locale('en'));
-    }
-    final isArabic = l.localeName == 'ar' && arabic != null;
+    // Fonts come from the app itself (no internet: the release app has no
+    // internet permission). IBM Plex Sans Arabic also covers Latin text, and
+    // is the fallback for Arabic medication names in an English report.
+    final l = SettingsService().strings;
+    final isArabic = l.localeName == 'ar';
+    final arabic = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/IBMPlexSansArabic-Regular.ttf'),
+    );
+    final arabicBold = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/IBMPlexSansArabic-Bold.ttf'),
+    );
     final fmt = Formatters(l);
 
     final theme = isArabic
         ? pw.ThemeData.withFont(base: arabic, bold: arabicBold)
         : pw.ThemeData.withFont(
-            base: pw.Font.helvetica(),
-            bold: pw.Font.helveticaBold(),
-            fontFallback: [?arabic],
+            base: pw.Font.ttf(
+              await rootBundle.load(
+                'assets/fonts/AtkinsonHyperlegible-Regular.ttf',
+              ),
+            ),
+            bold: pw.Font.ttf(
+              await rootBundle.load(
+                'assets/fonts/AtkinsonHyperlegible-Bold.ttf',
+              ),
+            ),
+            fontFallback: [arabic],
           );
 
     final overall = _schedule.stats(
@@ -124,18 +126,45 @@ class ReportService {
     String percent(double? value) =>
         value == null ? '—' : '${(value * 100).round()}%';
 
+    // The PDF library only joins Arabic letters (and orders them right to
+    // left) in RTL text, so any line containing Arabic is laid out RTL,
+    // even inside an English report (e.g. an Arabic medication name).
+    final arabicLetters = RegExp('[\u0600-\u06FF]');
+    pw.TextDirection dirOf(String text) => arabicLetters.hasMatch(text)
+        ? pw.TextDirection.rtl
+        : pw.TextDirection.ltr;
+
+    pw.Widget line(
+      String text, {
+      double size = 10,
+      bool bold = false,
+      PdfColor? color,
+    }) => pw.Text(
+      text,
+      textDirection: dirOf(text),
+      style: pw.TextStyle(
+        // Shape Arabic with the Arabic font itself, not as a fallback.
+        font: arabicLetters.hasMatch(text)
+            ? (bold ? arabicBold : arabic)
+            : null,
+        fontSize: size,
+        fontWeight: bold ? pw.FontWeight.bold : null,
+        color: color,
+      ),
+    );
+
     pw.Widget cell(String text, {bool bold = false, PdfColor? color}) =>
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: pw.Text(
-            text,
-            style: pw.TextStyle(
-              fontSize: 10,
-              fontWeight: bold ? pw.FontWeight.bold : null,
-              color: color,
-            ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              for (final part in text.split('\n'))
+                line(part, bold: bold, color: color),
+            ],
           ),
         );
+    final listSeparator = isArabic ? '، ' : ', ';
 
     final headerRow = pw.TableRow(
       decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEAF1FE)),
@@ -163,7 +192,7 @@ class ReportService {
             cell('${pill.name}\n${fmt.doseSummary(pill)}'),
             cell(
               '${fmt.frequency(pill)}\n'
-              '${pill.scheduleTimes.map(fmt.time24).join(', ')}',
+              '${pill.scheduleTimes.map(fmt.time24).join(listSeparator)}',
             ),
             cell('${stats.taken}'),
             cell('${stats.skipped}'),
@@ -236,10 +265,28 @@ class ReportService {
           else
             ...missed.map((ref) {
               final pill = pillsById[ref.pillId];
-              return pw.Bullet(
-                text:
-                    '${fmt.date(ref.date)} • ${fmt.time24(ref.time)} — '
-                    '${pill?.name ?? ''}',
+              // Date and name as separate pieces so an Arabic name keeps
+              // its own direction inside an English line (and vice versa).
+              return pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 4),
+                child: pw.Row(
+                  children: [
+                    pw.Container(
+                      width: 4,
+                      height: 4,
+                      margin: const pw.EdgeInsetsDirectional.only(end: 8),
+                      decoration: const pw.BoxDecoration(
+                        color: PdfColors.black,
+                        shape: pw.BoxShape.circle,
+                      ),
+                    ),
+                    line(
+                      '${fmt.date(ref.date)} • ${fmt.time24(ref.time)} — ',
+                      size: 11,
+                    ),
+                    line(pill?.name ?? '', size: 11),
+                  ],
+                ),
               );
             }),
           // ---------------- Blood pressure ----------------

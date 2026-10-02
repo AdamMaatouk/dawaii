@@ -132,7 +132,7 @@ class NotificationService {
 
     await _plugin.initialize(
       settings: InitializationSettings(
-        android: const AndroidInitializationSettings('@mipmap/ic_launcher'),
+        android: const AndroidInitializationSettings('ic_stat_dawaii'),
         iOS: DarwinInitializationSettings(
           requestAlertPermission: requestPermissions,
           requestBadgePermission: false,
@@ -521,6 +521,7 @@ class NotificationService {
             : l.notificationChannelDescription,
         importance: Importance.max,
         priority: Priority.high,
+        color: const Color(0xFF2563EB),
         category: AndroidNotificationCategory.alarm,
         visibility: NotificationVisibility.public,
         audioAttributesUsage: persistent
@@ -565,6 +566,7 @@ class NotificationService {
         _infoChannel,
         l.infoChannelName,
         channelDescription: l.infoChannelDescription,
+        color: const Color(0xFF2563EB),
       ),
       iOS: const DarwinNotificationDetails(),
     );

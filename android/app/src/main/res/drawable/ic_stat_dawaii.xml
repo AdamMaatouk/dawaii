@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon for reminders: a white capsule (Android tints it). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:rotation="-45">
+        <!-- Left half: solid -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M7,7.5 L11.25,7.5 L11.25,16.5 L7,16.5 A4.5,4.5 0 0,1 7,7.5 Z" />
+        <!-- Right half: outline -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M12.75,7.5 L17,7.5 A4.5,4.5 0 0,1 17,16.5 L12.75,16.5 Z M14.25,9.25 L17,9.25 A2.75,2.75 0 0,1 17,14.75 L14.25,14.75 Z" />
+    </group>
+</vector>

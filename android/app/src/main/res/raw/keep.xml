@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resources used only by notifications are looked up by name at runtime,
+     so the release shrinker must not remove them (or reminders fail silently). -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_dawaii,@mipmap/ic_launcher" />
