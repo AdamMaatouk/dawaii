@@ -119,7 +119,6 @@ class _MedicationScreenState extends State<MedicationScreen>
     final callbacks = DoseCallbacks(
       onTake: takeDose,
       onSnooze: snoozeDose,
-      onSnoozeFor: snoozeDoseFor,
       onSkip: skipDose,
       onUndo: undoDose,
       onOptions: openDoseOptions,

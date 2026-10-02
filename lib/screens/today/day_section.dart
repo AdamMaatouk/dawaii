@@ -27,7 +27,6 @@ String dayPartName(AppLocalizations l, DayPart part) => switch (part) {
 class DoseCallbacks {
   final void Function(PillModel, DoseRef) onTake;
   final void Function(PillModel, DoseRef) onSnooze;
-  final void Function(PillModel, DoseRef, int minutes) onSnoozeFor;
   final void Function(PillModel, DoseRef) onSkip;
   final void Function(PillModel, DoseRef) onUndo;
   final void Function(PillModel, DoseRef, {required bool isLogged}) onOptions;
@@ -38,7 +37,6 @@ class DoseCallbacks {
   const DoseCallbacks({
     required this.onTake,
     required this.onSnooze,
-    required this.onSnoozeFor,
     required this.onSkip,
     required this.onUndo,
     required this.onOptions,

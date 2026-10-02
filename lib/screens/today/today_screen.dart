@@ -18,7 +18,6 @@ import 'calendar_strip.dart';
 import 'day_progress.dart';
 import 'day_section.dart';
 import 'dose_action_handler.dart';
-import 'now_card.dart';
 
 class TodayScreen extends StatefulWidget {
   /// Set by the app shell when the user opens a reminder notification.
@@ -130,7 +129,6 @@ class _TodayScreenState extends State<TodayScreen>
   DoseCallbacks get _callbacks => DoseCallbacks(
     onTake: takeDose,
     onSnooze: snoozeDose,
-    onSnoozeFor: snoozeDoseFor,
     onSkip: skipDose,
     onUndo: undoDose,
     onOptions: openDoseOptions,
@@ -196,9 +194,6 @@ class _TodayScreenState extends State<TodayScreen>
         ),
       );
     } else {
-      if (isToday) {
-        children.add(NowCard(plan: plan, now: now, callbacks: _callbacks));
-      }
       if (plan.isEmpty) {
         children.add(
           EmptyStateWidget(

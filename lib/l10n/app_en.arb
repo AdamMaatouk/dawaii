@@ -18,8 +18,6 @@
   "nothingTodayTitle": "Nothing to take today",
   "nothingDayTitle": "Nothing scheduled",
   "nothingDayBody": "No doses are scheduled for this day.",
-  "allDoneTitle": "All done for today!",
-  "allDoneBody": "You have taken care of every dose today. Well done.",
   "addMedication": "Add medication",
   "editMedication": "Edit medication",
   "remindersNeedAttention": "Reminders need attention",
@@ -401,12 +399,8 @@
   },
   "tookAll": "Took all",
   "iTookIt": "I took it",
-  "iTookThemAll": "I took them all",
-  "takeEarly": "Take it now (early)",
   "yesTookAll": "Yes, I took them all",
   "confirmTakeAllTitle": "Did you take all of these?",
-  "nowTimeToTake": "TIME TO TAKE",
-  "nowNext": "NEXT",
   "laterToday": "Later today",
   "backToToday": "Today",
   "tabToday": "Today",
@@ -484,30 +478,6 @@
   },
   "takenAllSnack": "{count, plural, =1{1 dose taken ✓} other{{count} doses taken ✓}}",
   "@takenAllSnack": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "snoozedFor": "I'll remind you again in {duration}.",
-  "@snoozedFor": {
-    "placeholders": {
-      "duration": {
-        "type": "String"
-      }
-    }
-  },
-  "minutesShort": "{count} min",
-  "@minutesShort": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "hoursShort": "{count} h",
-  "@hoursShort": {
     "placeholders": {
       "count": {
         "type": "int"

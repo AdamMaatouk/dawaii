@@ -10,13 +10,16 @@ flutter_launcher_icons:
   # fills the round/squircle icon instead of being shrunk inside it.
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  # The foreground PNG already has the safe-zone margin built in. Without
+  # this the tool adds another 16% and the artwork ends up tiny.
+  adaptive_icon_foreground_inset: 0
   remove_alpha_ios: true
 
 description: "Dawaii - medication reminders for older adults, in English and Arabic."
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.13.1

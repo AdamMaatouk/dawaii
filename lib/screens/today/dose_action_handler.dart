@@ -116,24 +116,6 @@ mixin DoseActionHandler<T extends StatefulWidget> on State<T> {
     await _run([ref], l.unableSnooze, () => doseActions.snooze(ref, minutes));
   }
 
-  /// One-tap snooze from the Now card (no sheet).
-  Future<void> snoozeDoseFor(PillModel pill, DoseRef ref, int minutes) async {
-    final l = AppLocalizations.of(context);
-    if (isProcessing(ref)) return;
-    final ok = await _run(
-      [ref],
-      l.unableSnooze,
-      () => doseActions.snooze(ref, minutes),
-    );
-    if (ok && mounted) {
-      showMessage(
-        l.snoozedFor(
-          minutes < 60 ? l.minutesCount(minutes) : l.hoursCount(minutes ~/ 60),
-        ),
-      );
-    }
-  }
-
   Future<void> undoDose(PillModel pill, DoseRef ref) async {
     final l = AppLocalizations.of(context);
     if (isProcessing(ref)) return;

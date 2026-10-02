@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pill_reminder_app/app_info.dart';
 import 'package:pill_reminder_app/main.dart';
 import 'package:pill_reminder_app/models/dose.dart';
 import 'package:pill_reminder_app/models/pill_model.dart';
@@ -90,7 +91,7 @@ void main() {
     expect(SettingsService().onboardingDone, isTrue);
   });
 
-  testWidgets('Today: Now card, sections, take a dose', (tester) async {
+  testWidgets('Today: sections, take a dose', (tester) async {
     usePhoneSize(tester);
     final pill = testPill(
       name: 'Concor',
@@ -101,11 +102,10 @@ void main() {
       'user_pills': pillsJson([pill]),
     });
 
-    expect(find.text('TIME TO TAKE'), findsOneWidget);
     expect(find.text('Night'), findsOneWidget); // both doses are at night
     expect(find.text('0 of 2 taken'), findsOneWidget);
 
-    await tester.tap(find.text('I took it'));
+    await tester.tap(find.text('Take').first);
     await tester.pumpAndSettle();
     expect(find.text('Did you take this dose?'), findsOneWidget);
     await tester.tap(find.text('Yes, I took it'));
@@ -116,8 +116,6 @@ void main() {
       DoseStatus.taken,
     );
     expect(find.text('1 of 2 taken'), findsOneWidget);
-    // The next dose is now the "Now" card.
-    expect(find.text('NEXT'), findsOneWidget);
 
     // Let the Undo bar disappear so it does not cover the list.
     await tester.pump(const Duration(seconds: 7));
@@ -179,14 +177,14 @@ void main() {
       'user_pills': pillsJson([a, b]),
     });
 
-    await tester.tap(find.text('I took them all'));
+    await tester.tap(find.text('Took all'));
     await tester.pumpAndSettle();
     expect(find.text('Did you take all of these?'), findsOneWidget);
     await tester.tap(find.text('Yes, I took them all'));
     await tester.pumpAndSettle();
 
     expect(AppData().records, hasLength(2));
-    expect(find.text('All done for today!'), findsOneWidget);
+    expect(find.text('All taken'), findsOneWidget);
   });
 
   testWidgets('add a medication with the step-by-step wizard', (tester) async {
@@ -279,7 +277,7 @@ void main() {
     expect(find.text('Refill'), findsOneWidget);
   });
 
-  testWidgets('progress ring, undo bar and one-tap snooze', (tester) async {
+  testWidgets('progress ring, undo bar and snooze', (tester) async {
     usePhoneSize(tester);
     final pill = testPill(
       name: 'Concor',
@@ -292,7 +290,7 @@ void main() {
     expect(find.text('0 of 2 taken today'), findsOneWidget);
 
     // Take, then undo from the bar that appears.
-    await tester.tap(find.text('I took it'));
+    await tester.tap(find.text('Take').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yes, I took it'));
     await tester.pumpAndSettle();
@@ -303,14 +301,16 @@ void main() {
     expect(AppData().records, isEmpty);
     expect(find.text('0 of 2 taken today'), findsOneWidget);
 
-    // One tap snoozes the late dose for 10 minutes.
-    await tester.tap(find.text('10 min'));
+    // "Later" on the late dose, then 15 minutes.
+    await tester.tap(find.text('Later').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('15 minutes'));
     await tester.pumpAndSettle();
     final record = AppData().records[ref('1', today, '00:00').key]!;
     expect(record.status, DoseStatus.snoozed);
     expect(
       record.snoozedUntil!.difference(DateTime.now()).inMinutes,
-      inInclusiveRange(8, 10),
+      inInclusiveRange(13, 15),
     );
   });
 
@@ -323,7 +323,7 @@ void main() {
       'user_pills': pillsJson([pill]),
     });
 
-    await tester.tap(find.text('I took it'));
+    await tester.tap(find.text('Take').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('I took it at another time'));
     await tester.pumpAndSettle();
@@ -419,7 +419,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Why I built Dawaii'), findsOneWidget);
-    expect(find.text('Version 1.0.0'), findsOneWidget);
+    expect(find.text('Version $appVersion'), findsOneWidget);
     expect(
       find.text(
         "Together, we've logged your first dose. That's a great start!",

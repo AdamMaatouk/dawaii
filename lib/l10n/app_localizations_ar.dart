@@ -65,12 +65,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nothingDayBody => 'لا توجد جرعات مجدولة في هذا اليوم.';
 
   @override
-  String get allDoneTitle => 'انتهيت من جرعات اليوم!';
-
-  @override
-  String get allDoneBody => 'أخذت جميع جرعات اليوم. أحسنت.';
-
-  @override
   String get addMedication => 'إضافة دواء';
 
   @override
@@ -1007,22 +1001,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get iTookIt => 'أخذته';
 
   @override
-  String get iTookThemAll => 'أخذتها كلها';
-
-  @override
-  String get takeEarly => 'خذه الآن (مبكرًا)';
-
-  @override
   String get yesTookAll => 'نعم، أخذتها كلها';
 
   @override
   String get confirmTakeAllTitle => 'هل أخذت كل هذه الأدوية؟';
-
-  @override
-  String get nowTimeToTake => 'حان الموعد';
-
-  @override
-  String get nowNext => 'التالي';
 
   @override
   String get laterToday => 'لاحقًا اليوم';
@@ -1198,21 +1180,6 @@ class AppLocalizationsAr extends AppLocalizations {
       one: 'تم أخذ جرعة واحدة ✓',
     );
     return '$_temp0';
-  }
-
-  @override
-  String snoozedFor(String duration) {
-    return 'سأذكّرك مجددًا بعد $duration.';
-  }
-
-  @override
-  String minutesShort(int count) {
-    return '$count د';
-  }
-
-  @override
-  String hoursShort(int count) {
-    return '$count س';
   }
 
   @override

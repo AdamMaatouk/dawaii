@@ -68,16 +68,11 @@ class DaySection {
 class DayPlan {
   final DateTime date;
   final List<DaySection> sections;
-
-  /// The doses to take right now (or next), all sharing one time.
-  /// Empty when not looking at today or when everything is done.
-  final List<DoseItem> nowGroup;
   final bool allDone;
 
   const DayPlan({
     required this.date,
     required this.sections,
-    required this.nowGroup,
     required this.allDone,
   });
 
@@ -177,20 +172,10 @@ class DayPlanner {
     ].where((s) => s.items.isNotEmpty).toList();
 
     final isToday = ScheduleService.dayOf(date) == ScheduleService.dayOf(now);
-    var nowGroup = <DoseItem>[];
-    if (isToday) {
-      final open = items.where((i) => i.isOpen).toList()
-        ..sort((a, b) => a.effectiveTime.compareTo(b.effectiveTime));
-      if (open.isNotEmpty) {
-        final first = open.first.effectiveTime;
-        nowGroup = open.where((i) => i.effectiveTime == first).toList();
-      }
-    }
 
     return DayPlan(
       date: ScheduleService.dayOf(date),
       sections: sections,
-      nowGroup: nowGroup,
       allDone: isToday && items.isNotEmpty && items.every((i) => !i.isOpen),
     );
   }

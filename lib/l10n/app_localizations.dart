@@ -206,18 +206,6 @@ abstract class AppLocalizations {
   /// **'No doses are scheduled for this day.'**
   String get nothingDayBody;
 
-  /// No description provided for @allDoneTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'All done for today!'**
-  String get allDoneTitle;
-
-  /// No description provided for @allDoneBody.
-  ///
-  /// In en, this message translates to:
-  /// **'You have taken care of every dose today. Well done.'**
-  String get allDoneBody;
-
   /// No description provided for @addMedication.
   ///
   /// In en, this message translates to:
@@ -1766,18 +1754,6 @@ abstract class AppLocalizations {
   /// **'I took it'**
   String get iTookIt;
 
-  /// No description provided for @iTookThemAll.
-  ///
-  /// In en, this message translates to:
-  /// **'I took them all'**
-  String get iTookThemAll;
-
-  /// No description provided for @takeEarly.
-  ///
-  /// In en, this message translates to:
-  /// **'Take it now (early)'**
-  String get takeEarly;
-
   /// No description provided for @yesTookAll.
   ///
   /// In en, this message translates to:
@@ -1789,18 +1765,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Did you take all of these?'**
   String get confirmTakeAllTitle;
-
-  /// No description provided for @nowTimeToTake.
-  ///
-  /// In en, this message translates to:
-  /// **'TIME TO TAKE'**
-  String get nowTimeToTake;
-
-  /// No description provided for @nowNext.
-  ///
-  /// In en, this message translates to:
-  /// **'NEXT'**
-  String get nowNext;
 
   /// No description provided for @laterToday.
   ///
@@ -2095,24 +2059,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 dose taken ✓} other{{count} doses taken ✓}}'**
   String takenAllSnack(int count);
-
-  /// No description provided for @snoozedFor.
-  ///
-  /// In en, this message translates to:
-  /// **'I\'ll remind you again in {duration}.'**
-  String snoozedFor(String duration);
-
-  /// No description provided for @minutesShort.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} min'**
-  String minutesShort(int count);
-
-  /// No description provided for @hoursShort.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} h'**
-  String hoursShort(int count);
 
   /// No description provided for @todayProgress.
   ///

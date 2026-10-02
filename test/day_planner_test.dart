@@ -63,7 +63,7 @@ void main() {
     ]);
   });
 
-  test('the Now group holds every open dose sharing the earliest time', () {
+  test('allDone only once every dose today is taken or skipped', () {
     final a = testPill(id: 'a', times: ['08:00'], start: DateTime(2026, 1, 1));
     final b = testPill(id: 'b', times: ['08:00'], start: DateTime(2026, 1, 1));
     final c = testPill(id: 'c', times: ['18:00'], start: DateTime(2026, 1, 1));
@@ -73,9 +73,8 @@ void main() {
       date: today,
       now: now,
     );
-    expect(plan.nowGroup.map((i) => i.pill.id), ['a', 'b']);
+    expect(plan.allDone, isFalse);
 
-    // Once both are taken, the next dose becomes "Now".
     plan = planner.plan(
       pills: [a, b, c],
       records: {
@@ -85,7 +84,6 @@ void main() {
       date: today,
       now: now,
     );
-    expect(plan.nowGroup.map((i) => i.pill.id), ['c']);
     expect(plan.allDone, isFalse);
 
     plan = planner.plan(
@@ -98,7 +96,6 @@ void main() {
       date: today,
       now: now,
     );
-    expect(plan.nowGroup, isEmpty);
     expect(plan.allDone, isTrue);
   });
 
@@ -125,7 +122,7 @@ void main() {
     expect(morning.openItems, isEmpty);
   });
 
-  test('no Now group on other days; paused medications are hidden', () {
+  test('paused medications are hidden', () {
     final active = testPill(id: 'a', start: DateTime(2026, 1, 1));
     final paused = testPill(
       id: 'p',
@@ -138,7 +135,6 @@ void main() {
       date: DateTime(2026, 3, 11),
       now: now,
     );
-    expect(plan.nowGroup, isEmpty);
     expect(plan.items.map((i) => i.pill.id), ['a']);
   });
 

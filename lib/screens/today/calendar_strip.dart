@@ -18,8 +18,9 @@ Color? dayStatusColor(BuildContext context, DayStatus status) {
   };
 }
 
-/// Horizontal day picker: 3 days back to 10 days ahead, with a dot that
-/// shows how each day went.
+/// Horizontal day picker: the past week (to check what was taken), today
+/// and the next 2 days, with a dot that shows how each day went. It opens
+/// scrolled to the newest days, so today is always on screen.
 class CalendarStrip extends StatelessWidget {
   final DateTime selected;
   final DateTime today;
@@ -34,8 +35,8 @@ class CalendarStrip extends StatelessWidget {
     required this.statusOf,
   });
 
-  static const int daysBefore = 3;
-  static const int daysAfter = 10;
+  static const int daysBefore = 7;
+  static const int daysAfter = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +53,13 @@ class CalendarStrip extends StatelessWidget {
       height: 112,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        // Reversed: starts at the newest day (end of the row), past days
+        // are a swipe back. Works the same way in Arabic (RTL).
+        reverse: true,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         itemCount: days.length,
         itemBuilder: (context, index) {
-          final day = days[index];
+          final day = days[days.length - 1 - index];
           final isSelected = day == selectedDay;
           final isToday = day == today;
           final dot = dayStatusColor(context, statusOf(day));

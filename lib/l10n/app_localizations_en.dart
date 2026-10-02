@@ -65,13 +65,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nothingDayBody => 'No doses are scheduled for this day.';
 
   @override
-  String get allDoneTitle => 'All done for today!';
-
-  @override
-  String get allDoneBody =>
-      'You have taken care of every dose today. Well done.';
-
-  @override
   String get addMedication => 'Add medication';
 
   @override
@@ -990,22 +983,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iTookIt => 'I took it';
 
   @override
-  String get iTookThemAll => 'I took them all';
-
-  @override
-  String get takeEarly => 'Take it now (early)';
-
-  @override
   String get yesTookAll => 'Yes, I took them all';
 
   @override
   String get confirmTakeAllTitle => 'Did you take all of these?';
-
-  @override
-  String get nowTimeToTake => 'TIME TO TAKE';
-
-  @override
-  String get nowNext => 'NEXT';
 
   @override
   String get laterToday => 'Later today';
@@ -1175,21 +1156,6 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 dose taken ✓',
     );
     return '$_temp0';
-  }
-
-  @override
-  String snoozedFor(String duration) {
-    return 'I\'ll remind you again in $duration.';
-  }
-
-  @override
-  String minutesShort(int count) {
-    return '$count min';
-  }
-
-  @override
-  String hoursShort(int count) {
-    return '$count h';
   }
 
   @override
