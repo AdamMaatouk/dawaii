@@ -19,7 +19,7 @@ description: "Dawaii - medication reminders for older adults, in English and Ara
 
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.13.1
