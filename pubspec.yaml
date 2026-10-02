@@ -48,6 +48,8 @@ flutter:
 
   assets:
     - assets/icon/app_icon.png
+    - assets/fonts/OFL-AtkinsonHyperlegible.txt
+    - assets/fonts/OFL-IBMPlexSansArabic.txt
 
   # Atkinson Hyperlegible (Braille Institute, designed for low vision) and
   # IBM Plex Sans Arabic. Both SIL Open Font License, see assets/fonts.

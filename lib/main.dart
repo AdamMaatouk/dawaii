@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'l10n/app_localizations.dart';
@@ -12,6 +14,7 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  _registerFontLicenses();
   await SettingsService().load();
   // Permission is asked during onboarding (with an explanation first), not
   // the moment the app opens.
@@ -21,6 +24,19 @@ Future<void> main() async {
 
   // Re-book reminders on every launch so the rolling window never runs out.
   unawaited(NotificationService().syncReminders());
+}
+
+/// The bundled fonts (SIL Open Font License) appear on the licenses page.
+void _registerFontLicenses() {
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      ['Atkinson Hyperlegible (Braille Institute)'],
+      await rootBundle.loadString('assets/fonts/OFL-AtkinsonHyperlegible.txt'),
+    );
+    yield LicenseEntryWithLineBreaks([
+      'IBM Plex Sans Arabic (IBM)',
+    ], await rootBundle.loadString('assets/fonts/OFL-IBMPlexSansArabic.txt'));
+  });
 }
 
 class DawaiiApp extends StatelessWidget {

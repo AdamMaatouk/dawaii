@@ -790,22 +790,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutSubtitle => 'Medication reminders made simple.';
 
   @override
-  String get aboutParagraph1 =>
-      'Dawaii was created to solve a real everyday problem: forgetting medication, missing doses, and struggling to keep track of different schedules.';
-
-  @override
-  String get aboutParagraph2 =>
-      'The app focuses on making medication management simple, clear, and accessible through reminders, dose tracking, scheduling, and an easy-to-use interface.';
-
-  @override
   String get createdBy => 'Created by Adam Maatouk';
 
   @override
   String get creatorBio =>
-      'Computer Science & Engineering student at the American University of Beirut (AUB), interested in solving real-world problems through practical, user-centered technology.';
-
-  @override
-  String get contact => 'Contact';
+      'Computer Science & Engineering student at the American University of Beirut (AUB). I love building practical technology that makes everyday life a little easier, especially for the people who need it most.';
 
   @override
   String emailCopied(Object email) {
@@ -1398,4 +1387,78 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reportReadingsNote =>
       'Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis.';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutStoryTitle => 'Why I built Dawaii';
+
+  @override
+  String get aboutStory =>
+      'Dawaii started at home. Someone in my family takes several medicines every day, and keeping track of them (which pill, what time, did I already take it?) was a daily worry for all of us.\n\nI wanted something simple enough to use without help, in Arabic or English, with big buttons and no clutter. So I built it, and I hope it brings your family the same peace of mind.';
+
+  @override
+  String get aboutPrinciplesTitle => 'Made for older adults';
+
+  @override
+  String get principleBig => 'Big and clear';
+
+  @override
+  String get principleBigBody =>
+      'Large text, big buttons, and one clear thing to do at a time.';
+
+  @override
+  String get principleLanguages => 'Arabic and English';
+
+  @override
+  String get principleLanguagesBody =>
+      'Fully in both languages, written the way people actually speak.';
+
+  @override
+  String get principleGentle => 'Gentle, never bossy';
+
+  @override
+  String get principleGentleBody =>
+      'Missed a dose? No red alarms or scolding. Just a calm reminder and an easy way to catch up.';
+
+  @override
+  String get principlePrivate => 'Private by design';
+
+  @override
+  String get principlePrivateBody =>
+      'No account, no ads, no tracking. Your medicines and readings never leave your phone.';
+
+  @override
+  String aboutDosesLogged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Together, we\'ve logged $count doses. Thank you for trusting Dawaii.',
+      one: 'Together, we\'ve logged your first dose. That\'s a great start!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aboutCreatorRole => 'Developer & designer';
+
+  @override
+  String get aboutFeedbackTitle => 'Ideas or problems?';
+
+  @override
+  String get aboutFeedbackBody => 'I read every message. Tap to copy my email.';
+
+  @override
+  String get aboutMadeIn => 'Made with care in Beirut 🇱🇧';
+
+  @override
+  String get aboutCredits =>
+      'Fonts: Atkinson Hyperlegible by the Braille Institute, and IBM Plex Sans Arabic by IBM.';
+
+  @override
+  String get openSourceLicenses => 'Open-source licenses';
 }

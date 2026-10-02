@@ -393,6 +393,47 @@ void main() {
     expect(AppData().readings, isEmpty);
   });
 
+  testWidgets('About Dawaii page from Settings', (tester) async {
+    usePhoneSize(tester);
+    await pumpApp(tester, {
+      'user_pills': pillsJson([testPill(start: today)]),
+      'dose.${ref('1', today, '08:00').key}': json.encode(
+        const DoseRecord(status: DoseStatus.taken).toMap(),
+      ),
+    });
+    await tester.tap(find.text('Settings').last);
+    await tester.pumpAndSettle();
+    // The section title and the row are both "About Dawaii": scroll to the
+    // row's icon instead.
+    await tester.scrollUntilVisible(
+      find.byIcon(Icons.info_outline_rounded),
+      300,
+      scrollable: find
+          .byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+          )
+          .last,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('About Dawaii').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Why I built Dawaii'), findsOneWidget);
+    expect(find.text('Version 1.0.0'), findsOneWidget);
+    expect(
+      find.text(
+        "Together, we've logged your first dose. That's a great start!",
+      ),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(find.text('Open-source licenses'));
+    await tester.pumpAndSettle();
+    expect(find.text('Made with care in Beirut 🇱🇧'), findsOneWidget);
+    await tester.tap(find.text('Open-source licenses'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LicensePage), findsOneWidget);
+  });
+
   testWidgets('big time picker steps hours and minutes', (tester) async {
     usePhoneSize(tester);
     await pumpApp(tester, {});

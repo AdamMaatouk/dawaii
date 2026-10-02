@@ -806,22 +806,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutSubtitle => 'تذكيرات الدواء بشكل أبسط.';
 
   @override
-  String get aboutParagraph1 =>
-      'تم إنشاء دوائي لحل مشكلة يومية حقيقية: نسيان الدواء، تفويت الجرعات، وصعوبة متابعة المواعيد المختلفة.';
-
-  @override
-  String get aboutParagraph2 =>
-      'يركّز التطبيق على جعل إدارة الأدوية بسيطة وواضحة وسهلة من خلال التذكيرات، وتتبع الجرعات، وتنظيم المواعيد، وواجهة سهلة الاستخدام.';
-
-  @override
   String get createdBy => 'أنشأه آدم معتوق';
 
   @override
   String get creatorBio =>
-      'طالب هندسة علوم الحاسوب في الجامعة الأميركية في بيروت (AUB)، مهتم بحل المشكلات الواقعية من خلال تقنيات عملية تتمحور حول المستخدم.';
-
-  @override
-  String get contact => 'التواصل';
+      'طالب هندسة علوم الحاسوب في الجامعة الأميركية في بيروت (AUB). أحب صنع تقنيات عملية تجعل الحياة اليومية أسهل قليلًا، خصوصًا لمن هم في أمسّ الحاجة إليها.';
 
   @override
   String emailCopied(Object email) {
@@ -1430,4 +1419,80 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get reportReadingsNote =>
       'أدخل المريض هذه القياسات. تتبع المستويات الإرشادات الشائعة (AHA / ADA) وليست تشخيصًا.';
+
+  @override
+  String aboutVersion(String version) {
+    return 'الإصدار $version';
+  }
+
+  @override
+  String get aboutStoryTitle => 'لماذا صنعت دوائي';
+
+  @override
+  String get aboutStory =>
+      'بدأ دوائي في البيت. أحد أفراد عائلتي يأخذ عدة أدوية كل يوم، وكانت متابعتها (أي حبة، في أي وقت، وهل أخذتها أصلًا؟) همًّا يوميًّا لنا جميعًا.\n\nأردت شيئًا بسيطًا يمكن استخدامه من دون مساعدة، بالعربية أو الإنجليزية، بأزرار كبيرة ومن دون تعقيد. فصنعته، وأتمنى أن يمنح عائلتك راحة البال نفسها.';
+
+  @override
+  String get aboutPrinciplesTitle => 'مصمَّم لكبار السن';
+
+  @override
+  String get principleBig => 'كبير وواضح';
+
+  @override
+  String get principleBigBody =>
+      'خط كبير وأزرار كبيرة وخطوة واضحة واحدة في كل مرة.';
+
+  @override
+  String get principleLanguages => 'العربية والإنجليزية';
+
+  @override
+  String get principleLanguagesBody =>
+      'بالكامل باللغتين، بكلمات قريبة من كلام الناس.';
+
+  @override
+  String get principleGentle => 'لطيف وغير متسلّط';
+
+  @override
+  String get principleGentleBody =>
+      'فاتتك جرعة؟ لا تحذيرات حمراء ولا لوم. فقط تذكير هادئ وطريقة سهلة للمتابعة.';
+
+  @override
+  String get principlePrivate => 'خصوصية من الأساس';
+
+  @override
+  String get principlePrivateBody =>
+      'لا حساب ولا إعلانات ولا تتبّع. أدويتك وقياساتك لا تغادر هاتفك أبدًا.';
+
+  @override
+  String aboutDosesLogged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'سجّلنا معًا $count جرعة. شكرًا لثقتك بدوائي.',
+      many: 'سجّلنا معًا $count جرعة. شكرًا لثقتك بدوائي.',
+      few: 'سجّلنا معًا $count جرعات. شكرًا لثقتك بدوائي.',
+      two: 'سجّلنا معًا جرعتين. شكرًا لثقتك بدوائي.',
+      one: 'سجّلنا معًا جرعتك الأولى. بداية رائعة!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aboutCreatorRole => 'المطوّر والمصمّم';
+
+  @override
+  String get aboutFeedbackTitle => 'لديك فكرة أو مشكلة؟';
+
+  @override
+  String get aboutFeedbackBody => 'أقرأ كل رسالة. اضغط لنسخ بريدي الإلكتروني.';
+
+  @override
+  String get aboutMadeIn => 'صُنع بعناية في بيروت 🇱🇧';
+
+  @override
+  String get aboutCredits =>
+      'الخطوط: Atkinson Hyperlegible من معهد برايل، وIBM Plex Sans Arabic من IBM.';
+
+  @override
+  String get openSourceLicenses => 'تراخيص البرمجيات المفتوحة';
 }

@@ -297,11 +297,8 @@
   "reportError": "Unable to create the report.",
   "aboutDawaii": "About Dawaii",
   "aboutSubtitle": "Medication reminders made simple.",
-  "aboutParagraph1": "Dawaii was created to solve a real everyday problem: forgetting medication, missing doses, and struggling to keep track of different schedules.",
-  "aboutParagraph2": "The app focuses on making medication management simple, clear, and accessible through reminders, dose tracking, scheduling, and an easy-to-use interface.",
   "createdBy": "Created by Adam Maatouk",
-  "creatorBio": "Computer Science & Engineering student at the American University of Beirut (AUB), interested in solving real-world problems through practical, user-centered technology.",
-  "contact": "Contact",
+  "creatorBio": "Computer Science & Engineering student at the American University of Beirut (AUB). I love building practical technology that makes everyday life a little easier, especially for the people who need it most.",
   "emailCopied": "Email copied: {email}",
   "notificationChannelName": "Medication reminders",
   "notificationChannelDescription": "Reminders to take your medications",
@@ -646,5 +643,38 @@
   },
   "reportDateTime": "Date & time",
   "reportLevel": "Level",
-  "reportReadingsNote": "Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis."
+  "reportReadingsNote": "Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis.",
+  "aboutVersion": "Version {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutStoryTitle": "Why I built Dawaii",
+  "aboutStory": "Dawaii started at home. Someone in my family takes several medicines every day, and keeping track of them (which pill, what time, did I already take it?) was a daily worry for all of us.\n\nI wanted something simple enough to use without help, in Arabic or English, with big buttons and no clutter. So I built it, and I hope it brings your family the same peace of mind.",
+  "aboutPrinciplesTitle": "Made for older adults",
+  "principleBig": "Big and clear",
+  "principleBigBody": "Large text, big buttons, and one clear thing to do at a time.",
+  "principleLanguages": "Arabic and English",
+  "principleLanguagesBody": "Fully in both languages, written the way people actually speak.",
+  "principleGentle": "Gentle, never bossy",
+  "principleGentleBody": "Missed a dose? No red alarms or scolding. Just a calm reminder and an easy way to catch up.",
+  "principlePrivate": "Private by design",
+  "principlePrivateBody": "No account, no ads, no tracking. Your medicines and readings never leave your phone.",
+  "aboutDosesLogged": "{count, plural, =1{Together, we've logged your first dose. That's a great start!} other{Together, we've logged {count} doses. Thank you for trusting Dawaii.}}",
+  "@aboutDosesLogged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aboutCreatorRole": "Developer & designer",
+  "aboutFeedbackTitle": "Ideas or problems?",
+  "aboutFeedbackBody": "I read every message. Tap to copy my email.",
+  "aboutMadeIn": "Made with care in Beirut 🇱🇧",
+  "aboutCredits": "Fonts: Atkinson Hyperlegible by the Braille Institute, and IBM Plex Sans Arabic by IBM.",
+  "openSourceLicenses": "Open-source licenses"
 }

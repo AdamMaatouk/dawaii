@@ -7,8 +7,8 @@ import '../services/notification_service.dart';
 import '../services/report_service.dart';
 import '../services/settings_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/about_sheet.dart';
 import '../widgets/responsive_center.dart';
+import 'about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -375,7 +375,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     action(
                       icon: Icons.info_outline_rounded,
                       title: l.aboutDawaii,
-                      onTap: () => showAboutDawaiiSheet(context),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                      ),
                     ),
                   ]),
                 ],

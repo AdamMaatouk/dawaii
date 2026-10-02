@@ -1424,18 +1424,6 @@ abstract class AppLocalizations {
   /// **'Medication reminders made simple.'**
   String get aboutSubtitle;
 
-  /// No description provided for @aboutParagraph1.
-  ///
-  /// In en, this message translates to:
-  /// **'Dawaii was created to solve a real everyday problem: forgetting medication, missing doses, and struggling to keep track of different schedules.'**
-  String get aboutParagraph1;
-
-  /// No description provided for @aboutParagraph2.
-  ///
-  /// In en, this message translates to:
-  /// **'The app focuses on making medication management simple, clear, and accessible through reminders, dose tracking, scheduling, and an easy-to-use interface.'**
-  String get aboutParagraph2;
-
   /// No description provided for @createdBy.
   ///
   /// In en, this message translates to:
@@ -1445,14 +1433,8 @@ abstract class AppLocalizations {
   /// No description provided for @creatorBio.
   ///
   /// In en, this message translates to:
-  /// **'Computer Science & Engineering student at the American University of Beirut (AUB), interested in solving real-world problems through practical, user-centered technology.'**
+  /// **'Computer Science & Engineering student at the American University of Beirut (AUB). I love building practical technology that makes everyday life a little easier, especially for the people who need it most.'**
   String get creatorBio;
-
-  /// No description provided for @contact.
-  ///
-  /// In en, this message translates to:
-  /// **'Contact'**
-  String get contact;
 
   /// No description provided for @emailCopied.
   ///
@@ -2449,6 +2431,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis.'**
   String get reportReadingsNote;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String aboutVersion(String version);
+
+  /// No description provided for @aboutStoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why I built Dawaii'**
+  String get aboutStoryTitle;
+
+  /// No description provided for @aboutStory.
+  ///
+  /// In en, this message translates to:
+  /// **'Dawaii started at home. Someone in my family takes several medicines every day, and keeping track of them (which pill, what time, did I already take it?) was a daily worry for all of us.\n\nI wanted something simple enough to use without help, in Arabic or English, with big buttons and no clutter. So I built it, and I hope it brings your family the same peace of mind.'**
+  String get aboutStory;
+
+  /// No description provided for @aboutPrinciplesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Made for older adults'**
+  String get aboutPrinciplesTitle;
+
+  /// No description provided for @principleBig.
+  ///
+  /// In en, this message translates to:
+  /// **'Big and clear'**
+  String get principleBig;
+
+  /// No description provided for @principleBigBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Large text, big buttons, and one clear thing to do at a time.'**
+  String get principleBigBody;
+
+  /// No description provided for @principleLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic and English'**
+  String get principleLanguages;
+
+  /// No description provided for @principleLanguagesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fully in both languages, written the way people actually speak.'**
+  String get principleLanguagesBody;
+
+  /// No description provided for @principleGentle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle, never bossy'**
+  String get principleGentle;
+
+  /// No description provided for @principleGentleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed a dose? No red alarms or scolding. Just a calm reminder and an easy way to catch up.'**
+  String get principleGentleBody;
+
+  /// No description provided for @principlePrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Private by design'**
+  String get principlePrivate;
+
+  /// No description provided for @principlePrivateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No account, no ads, no tracking. Your medicines and readings never leave your phone.'**
+  String get principlePrivateBody;
+
+  /// No description provided for @aboutDosesLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Together, we\'ve logged your first dose. That\'s a great start!} other{Together, we\'ve logged {count} doses. Thank you for trusting Dawaii.}}'**
+  String aboutDosesLogged(int count);
+
+  /// No description provided for @aboutCreatorRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer & designer'**
+  String get aboutCreatorRole;
+
+  /// No description provided for @aboutFeedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ideas or problems?'**
+  String get aboutFeedbackTitle;
+
+  /// No description provided for @aboutFeedbackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'I read every message. Tap to copy my email.'**
+  String get aboutFeedbackBody;
+
+  /// No description provided for @aboutMadeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Made with care in Beirut 🇱🇧'**
+  String get aboutMadeIn;
+
+  /// No description provided for @aboutCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Fonts: Atkinson Hyperlegible by the Braille Institute, and IBM Plex Sans Arabic by IBM.'**
+  String get aboutCredits;
+
+  /// No description provided for @openSourceLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licenses'**
+  String get openSourceLicenses;
 }
 
 class _AppLocalizationsDelegate
