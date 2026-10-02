@@ -939,7 +939,7 @@ class _ColorDot extends StatelessWidget {
                   ? Icon(
                       Icons.check_rounded,
                       color: color.computeLuminance() > 0.6
-                          ? const Color(0xFF0F172A)
+                          ? const Color(0xFF111418)
                           : Colors.white,
                     )
                   : null,

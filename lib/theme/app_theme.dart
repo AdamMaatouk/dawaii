@@ -56,21 +56,24 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.warningBorder,
   });
 
+  // Clear blue accent on neutral greys. Status colors (green = taken,
+  // amber = later / refill, red = late) are unchanged and stay distinct
+  // from the blue.
   static const light = AppPalette(
-    page: Color(0xFFF2F5FA),
+    page: Color(0xFFF5F6F7),
     surface: Colors.white,
-    innerSurface: Color(0xFFF8FAFC),
-    textPrimary: Color(0xFF0F172A),
-    textBody: Color(0xFF334155),
-    textSecondary: Color(0xFF475569),
-    textMuted: Color(0xFF5B6B80),
-    border: Color(0xFFE2E8F0),
-    cardBorder: Color(0xFFE3E9F2),
-    pillTray: Color(0xFFEEF2F7),
-    pillTrayBorder: Color(0xFFD8E0EA),
-    accent: Color(0xFF4F46E5),
-    accentStrong: Color(0xFF4F46E5),
-    softAccent: Color(0xFFEEF2FF),
+    innerSurface: Color(0xFFF7F8F9),
+    textPrimary: Color(0xFF111418),
+    textBody: Color(0xFF2E3338),
+    textSecondary: Color(0xFF474D55),
+    textMuted: Color(0xFF5F6670),
+    border: Color(0xFFE3E5E8),
+    cardBorder: Color(0xFFE6E8EB),
+    pillTray: Color(0xFFF0F1F3),
+    pillTrayBorder: Color(0xFFD9DCE0),
+    accent: Color(0xFF2563EB),
+    accentStrong: Color(0xFF2563EB),
+    softAccent: Color(0xFFEAF1FE),
     success: Color(0xFF059669),
     successText: Color(0xFF15803D),
     softSuccess: Color(0xFFDCFCE7),
@@ -84,26 +87,26 @@ class AppPalette extends ThemeExtension<AppPalette> {
   );
 
   static const dark = AppPalette(
-    page: Color(0xFF0B1220),
-    surface: Color(0xFF172033),
-    innerSurface: Color(0xFF0F172A),
-    textPrimary: Color(0xFFF8FAFC),
-    textBody: Color(0xFFCBD5E1),
-    textSecondary: Color(0xFFB8C3D3),
-    textMuted: Color(0xFF94A3B8),
-    border: Color(0xFF283548),
-    cardBorder: Color(0xFF26344A),
-    pillTray: Color(0xFF202B40),
-    pillTrayBorder: Color(0xFF35445C),
-    accent: Color(0xFFA5B4FC),
-    accentStrong: Color(0xFF6366F1),
-    softAccent: Color(0xFF252C52),
+    page: Color(0xFF121417),
+    surface: Color(0xFF1C1F24),
+    innerSurface: Color(0xFF16181C),
+    textPrimary: Color(0xFFF5F6F7),
+    textBody: Color(0xFFD3D6DB),
+    textSecondary: Color(0xFFB9BDC4),
+    textMuted: Color(0xFF9AA0A8),
+    border: Color(0xFF2C3036),
+    cardBorder: Color(0xFF2A2E34),
+    pillTray: Color(0xFF24282E),
+    pillTrayBorder: Color(0xFF3A3F47),
+    accent: Color(0xFF60A5FA),
+    accentStrong: Color(0xFF2563EB),
+    softAccent: Color(0xFF1B2B45),
     success: Color(0xFF10B981),
     successText: Color(0xFF6EE7B7),
     softSuccess: Color(0xFF15352A),
     danger: Color(0xFFF87171),
     dangerText: Color(0xFFFCA5A5),
-    softDanger: Color(0xFF3B1D27),
+    softDanger: Color(0xFF3A1E1E),
     warning: Color(0xFFFBBF24),
     warningText: Color(0xFFFDE68A),
     softWarning: Color(0xFF3A2A12),
@@ -134,7 +137,7 @@ class AppTheme {
 
   static ThemeData _build(AppPalette p, Brightness brightness, bool arabic) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF4F46E5),
+      seedColor: const Color(0xFF2563EB),
       brightness: brightness,
       primary: p.accentStrong,
       surface: p.surface,
@@ -403,13 +406,13 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: brightness == Brightness.dark
-            ? const Color(0xFFE2E8F0)
-            : const Color(0xFF1E293B),
+            ? const Color(0xFFE8EAED)
+            : const Color(0xFF26292E),
         contentTextStyle: TextStyle(
           fontFamily: family,
           fontFamilyFallback: fallback,
           color: brightness == Brightness.dark
-              ? const Color(0xFF0F172A)
+              ? const Color(0xFF111418)
               : Colors.white,
           fontSize: 16,
           fontWeight: FontWeight.w600,

@@ -43,9 +43,9 @@ class _TodayScreenState extends State<TodayScreen>
   NotificationHealth? _health;
   bool _fixingHealth = false;
 
-  /// The Done section starts open: seeing what was already taken is
-  /// reassuring. It can be folded away.
-  bool _doneExpanded = true;
+  /// The Done section starts folded so today's open doses stand out;
+  /// tap "Show" to see what was already taken.
+  bool _doneExpanded = false;
 
   @override
   void initState() {

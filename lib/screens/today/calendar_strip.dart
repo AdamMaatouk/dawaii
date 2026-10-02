@@ -132,7 +132,7 @@ class CalendarStrip extends StatelessWidget {
                             shape: BoxShape.circle,
                             color: dot ?? Colors.transparent,
                             // Keep the status color visible on the
-                            // selected (indigo) day.
+                            // selected (blue) day.
                             border: isSelected && dot != null
                                 ? Border.all(color: Colors.white, width: 1.5)
                                 : null,

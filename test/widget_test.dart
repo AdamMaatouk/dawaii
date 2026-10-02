@@ -115,15 +115,15 @@ void main() {
       AppData().records[ref('1', today, '00:00').key]?.status,
       DoseStatus.taken,
     );
-    expect(find.textContaining('Taken at'), findsOneWidget);
     expect(find.text('1 of 2 taken'), findsOneWidget);
     // The next dose is now the "Now" card.
     expect(find.text('NEXT'), findsOneWidget);
 
-    // The taken dose moved down into "Done", which can be folded away.
+    // The taken dose moved down into "Done", which starts folded.
     expect(find.text('Done'), findsOneWidget);
+    expect(find.textContaining('Taken at'), findsNothing);
     await tester.scrollUntilVisible(
-      find.text('Hide'),
+      find.text('Show'),
       300,
       scrollable: find
           .byWidgetPredicate(
@@ -131,12 +131,12 @@ void main() {
           )
           .first,
     );
-    await tester.tap(find.text('Hide'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Taken at'), findsNothing);
     await tester.tap(find.text('Show'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Taken at'), findsOneWidget);
+    await tester.tap(find.text('Hide'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Taken at'), findsNothing);
   });
 
   testWidgets('a part of the day disappears once all its doses are done', (
@@ -159,6 +159,8 @@ void main() {
     });
     expect(find.text('Night'), findsNothing);
     expect(find.text('Done'), findsOneWidget);
+    await tester.tap(find.text('Show'));
+    await tester.pumpAndSettle();
     expect(find.text('Taken'), findsOneWidget);
     expect(find.text('Skipped'), findsOneWidget);
   });

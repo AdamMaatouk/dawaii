@@ -86,7 +86,7 @@ class ReportService {
         );
 
     final headerRow = pw.TableRow(
-      decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEEF2FF)),
+      decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEAF1FE)),
       children: [
         l.reportMedication,
         l.reportSchedule,

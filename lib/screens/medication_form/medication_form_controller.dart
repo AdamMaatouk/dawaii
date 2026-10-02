@@ -28,7 +28,7 @@ class MedicationFormController extends ChangeNotifier {
     threshold = TextEditingController(text: '${pill?.refillThreshold ?? 10}');
 
     shape = pill?.shape ?? PillShape.capsule;
-    colorHex = pill?.colorHex ?? 0xFF6366F1;
+    colorHex = pill?.colorHex ?? 0xFF3B82F6;
     frequency = pill?.frequencyType ?? FrequencyType.daily;
     times = (pill?.scheduleTimes ?? const [])
         .map(_parseTime)
