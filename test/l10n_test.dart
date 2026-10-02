@@ -7,15 +7,25 @@ void main() {
   final ar = lookupAppLocalizations(const Locale('ar'));
   final en = lookupAppLocalizations(const Locale('en'));
 
-  test('Arabic plurals follow Arabic grammar (old bug: "2 حبات", "11 أيام")', () {
-    expect(ar.pillsCount(1), 'حبة واحدة');
-    expect(ar.pillsCount(2), 'حبتين');
-    expect(ar.pillsCount(3), '3 حبات');
-    expect(ar.pillsCount(11), '11 حبة');
-    expect(ar.streakDays(2), 'يومان');
-    expect(ar.streakDays(5), '5 أيام');
-    expect(ar.streakDays(11), '11 يومًا');
-    expect(ar.pillsLeft(2), 'بقيت حبتان');
+  test(
+    'Arabic plurals follow Arabic grammar (old bug: "2 حبات", "11 أيام")',
+    () {
+      expect(ar.pillsCount(1), 'حبة واحدة');
+      expect(ar.pillsCount(2), 'حبتين');
+      expect(ar.pillsCount(3), '3 حبات');
+      expect(ar.pillsCount(11), '11 حبة');
+      expect(ar.streakDays(2), 'يومان');
+      expect(ar.streakDays(5), '5 أيام');
+      expect(ar.streakDays(11), '11 يومًا');
+      expect(ar.pillsLeft(2), 'بقيت حبتان');
+    },
+  );
+
+  test('reminder text puts the pill count before the strength', () {
+    // Undeclared ARB placeholders are ordered alphabetically by gen-l10n,
+    // which once swapped these two arguments.
+    expect(en.takeDoseBody(en.pillsCount(2), '500mg'), 'Take 2 pills • 500mg');
+    expect(ar.takeDoseBody(ar.pillsCount(1), '5mg'), 'خذ حبة واحدة • 5mg');
   });
 
   test('English plurals', () {
@@ -29,7 +39,10 @@ void main() {
     final now = DateTime(2026, 3, 10, 12, 0);
     expect(fmt.since(DateTime(2026, 3, 10, 1, 13), now), '10 h 47 min ago');
     expect(fmt.until(DateTime(2026, 3, 10, 12, 25), now), 'in 25 minutes');
-    expect(Formatters(ar).since(DateTime(2026, 3, 10, 11, 0), now), 'منذ ساعة واحدة');
+    expect(
+      Formatters(ar).since(DateTime(2026, 3, 10, 11, 0), now),
+      'منذ ساعة واحدة',
+    );
   });
 
   test('every English key has an Arabic translation', () {

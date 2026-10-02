@@ -20,7 +20,8 @@ class ReportService {
     final bytes = await buildReport(days: days);
     await Printing.sharePdf(
       bytes: bytes,
-      filename: 'dawaii-report-${DateTime.now().toIso8601String().split('T').first}.pdf',
+      filename:
+          'dawaii-report-${DateTime.now().toIso8601String().split('T').first}.pdf',
     );
   }
 
@@ -104,32 +105,38 @@ class ReportService {
         from: from,
         now: now,
       );
-      rows.add(pw.TableRow(children: [
-        cell('${pill.name}\n${fmt.doseSummary(pill)}'),
-        cell(
-          '${fmt.frequency(pill)}\n'
-          '${pill.scheduleTimes.map(fmt.time24).join(', ')}',
+      rows.add(
+        pw.TableRow(
+          children: [
+            cell('${pill.name}\n${fmt.doseSummary(pill)}'),
+            cell(
+              '${fmt.frequency(pill)}\n'
+              '${pill.scheduleTimes.map(fmt.time24).join(', ')}',
+            ),
+            cell('${stats.taken}'),
+            cell('${stats.skipped}'),
+            cell(
+              '${stats.missed}',
+              color: stats.missed > 0 ? PdfColors.red800 : null,
+            ),
+            cell(percent(stats.adherence), bold: true),
+          ],
         ),
-        cell('${stats.taken}'),
-        cell('${stats.skipped}'),
-        cell(
-          '${stats.missed}',
-          color: stats.missed > 0 ? PdfColors.red800 : null,
-        ),
-        cell(percent(stats.adherence), bold: true),
-      ]));
+      );
     }
-    rows.add(pw.TableRow(
-      decoration: const pw.BoxDecoration(color: PdfColors.grey200),
-      children: [
-        cell(l.reportOverall, bold: true),
-        cell(''),
-        cell('${overall.taken}', bold: true),
-        cell('${overall.skipped}', bold: true),
-        cell('${overall.missed}', bold: true),
-        cell(percent(overall.adherence), bold: true),
-      ],
-    ));
+    rows.add(
+      pw.TableRow(
+        decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+        children: [
+          cell(l.reportOverall, bold: true),
+          cell(''),
+          cell('${overall.taken}', bold: true),
+          cell('${overall.skipped}', bold: true),
+          cell('${overall.missed}', bold: true),
+          cell(percent(overall.adherence), bold: true),
+        ],
+      ),
+    );
 
     final doc = pw.Document(title: l.reportTitle, author: 'Dawaii');
     doc.addPage(
@@ -178,7 +185,8 @@ class ReportService {
             ...missed.map((ref) {
               final pill = pillsById[ref.pillId];
               return pw.Bullet(
-                text: '${fmt.date(ref.date)} • ${fmt.time24(ref.time)} — '
+                text:
+                    '${fmt.date(ref.date)} • ${fmt.time24(ref.time)} — '
                     '${pill?.name ?? ''}',
               );
             }),

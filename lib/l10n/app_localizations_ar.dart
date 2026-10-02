@@ -267,7 +267,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String hoursMinutes(Object hours, Object minutes) {
+  String hoursMinutes(String hours, String minutes) {
     return '$hours س و$minutes د';
   }
 
@@ -954,7 +954,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String takeDoseBody(Object dosage, Object pillLabel) {
+  String takeDoseBody(String pillLabel, String dosage) {
     return 'خذ $pillLabel • $dosage';
   }
 
@@ -994,7 +994,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reportTitle => 'تقرير الأدوية';
 
   @override
-  String reportPeriod(Object from, Object to) {
+  String reportPeriod(String from, String to) {
     return 'الفترة: $from – $to';
   }
 

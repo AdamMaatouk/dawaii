@@ -10,8 +10,7 @@
         android:label="Dawaii"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:allowBackup="false"
-        android:fullBackupContent="false">
+        android:allowBackup="true">
 
         <activity
             android:name=".MainActivity"
@@ -65,6 +64,10 @@
     </application>
 
     <queries>
+        <!-- Needed on Android 11+ to find the phone's text-to-speech engine -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

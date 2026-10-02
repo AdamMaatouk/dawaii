@@ -28,9 +28,9 @@ class ReminderPlan {
   const ReminderPlan(this.reminders, this.keepAliveAt);
 
   Set<int> get ids => {
-        for (final r in reminders) r.id,
-        if (keepAliveAt != null) ReminderIds.keepAlive,
-      };
+    for (final r in reminders) r.id,
+    if (keepAliveAt != null) ReminderIds.keepAlive,
+  };
 }
 
 class ReminderIds {
@@ -85,13 +85,15 @@ class ReminderPlanner {
             continue;
           }
           if (!ref.scheduledAt.isAfter(now)) continue;
-          candidates.add(PlannedReminder(
-            id: ReminderIds.dose(ref),
-            pill: pill,
-            ref: ref,
-            fireAt: ref.scheduledAt,
-            isSnooze: false,
-          ));
+          candidates.add(
+            PlannedReminder(
+              id: ReminderIds.dose(ref),
+              pill: pill,
+              ref: ref,
+              fireAt: ref.scheduledAt,
+              isSnooze: false,
+            ),
+          );
         }
       }
     }
@@ -104,18 +106,24 @@ class ReminderPlanner {
       final ref = DoseRef.fromKey(key);
       final pill = ref == null ? null : pillsById[ref.pillId];
       if (ref == null || pill == null) return;
-      candidates.add(PlannedReminder(
-        id: ReminderIds.snooze(ref),
-        pill: pill,
-        ref: ref,
-        fireAt: until,
-        isSnooze: true,
-      ));
+      candidates.add(
+        PlannedReminder(
+          id: ReminderIds.snooze(ref),
+          pill: pill,
+          ref: ref,
+          fireAt: until,
+          isSnooze: true,
+        ),
+      );
     });
 
     candidates.sort((a, b) => a.fireAt.compareTo(b.fireAt));
 
-    final horizonEnd = DateTime(today.year, today.month, today.day + horizonDays);
+    final horizonEnd = DateTime(
+      today.year,
+      today.month,
+      today.day + horizonDays,
+    );
     final continuesLater = active.any((p) {
       final end = p.treatmentEndDate;
       return end == null || !ScheduleService.dayOf(end).isBefore(horizonEnd);

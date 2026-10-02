@@ -374,8 +374,7 @@ class _RefillDialogState extends State<_RefillDialog> {
                 LengthLimitingTextInputFormatter(4),
               ],
               onSubmitted: (_) => _submit(),
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               decoration: InputDecoration(labelText: l.refillLabel),
             ),
           ],

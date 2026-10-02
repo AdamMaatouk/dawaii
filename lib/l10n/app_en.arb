@@ -69,6 +69,7 @@
   "dosesCount": "{count, plural, =1{1 dose} other{{count} doses}}",
   "@dosesCount": {"placeholders": {"count": {"type": "int"}}},
   "hoursMinutes": "{hours} h {minutes} min",
+  "@hoursMinutes": {"placeholders": {"hours": {"type": "String"}, "minutes": {"type": "String"}}},
   "inDuration": "in {duration}",
   "agoDuration": "{duration} ago",
   "lessThanMinute": "in less than a minute",
@@ -280,6 +281,7 @@
   "notificationSkip": "Skip",
   "timeFor": "Time for {name}",
   "takeDoseBody": "Take {pillLabel} • {dosage}",
+  "@takeDoseBody": {"placeholders": {"pillLabel": {"type": "String"}, "dosage": {"type": "String"}}},
   "keepAliveTitle": "Please open Dawaii",
   "keepAliveBody": "Open the app so your medication reminders keep coming.",
   "lowStockTitle": "{name} is running low",
@@ -290,6 +292,7 @@
 
   "reportTitle": "Medication report",
   "reportPeriod": "Period: {from} – {to}",
+  "@reportPeriod": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
   "reportGenerated": "Created on {date}",
   "reportMedication": "Medication",
   "reportSchedule": "Schedule",

@@ -48,6 +48,8 @@ class PillShapeWidget extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(height / 2),
             child: Row(
+              // ColoredBox has no size of its own: stretch it to full height.
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(child: ColoredBox(color: color)),
                 Expanded(
@@ -158,7 +160,8 @@ class PillVisual extends StatelessWidget {
                 height: double.infinity,
                 fit: BoxFit.cover,
                 // A deleted/missing file falls back to the drawn pill.
-                errorBuilder: (context, error, stackTrace) => Center(child: shape),
+                errorBuilder: (context, error, stackTrace) =>
+                    Center(child: shape),
               ),
             ),
     );

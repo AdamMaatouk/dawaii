@@ -39,9 +39,10 @@ class PillNotificationImageService {
       const Offset(_canvasSize / 2, _canvasSize / 2),
       72,
     );
-    final image = await recorder
-        .endRecording()
-        .toImage(_canvasSize, _canvasSize);
+    final image = await recorder.endRecording().toImage(
+      _canvasSize,
+      _canvasSize,
+    );
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     if (bytes == null) {
       throw Exception('Unable to generate notification pill image.');
@@ -69,10 +70,15 @@ class PillNotificationImageService {
 
     switch (shape) {
       case PillShape.capsule:
-        final rect =
-            Rect.fromCenter(center: center, width: size, height: size * 0.44);
-        final pill =
-            RRect.fromRectAndRadius(rect, Radius.circular(rect.height / 2));
+        final rect = Rect.fromCenter(
+          center: center,
+          width: size,
+          height: size * 0.44,
+        );
+        final pill = RRect.fromRectAndRadius(
+          rect,
+          Radius.circular(rect.height / 2),
+        );
         canvas.save();
         canvas.clipRRect(pill);
         canvas.drawRect(
@@ -100,10 +106,15 @@ class PillNotificationImageService {
           scorePaint..strokeWidth = 3,
         );
       case PillShape.caplet:
-        final rect =
-            Rect.fromCenter(center: center, width: size, height: size * 0.46);
-        final pill =
-            RRect.fromRectAndRadius(rect, Radius.circular(rect.height / 2));
+        final rect = Rect.fromCenter(
+          center: center,
+          width: size,
+          height: size * 0.46,
+        );
+        final pill = RRect.fromRectAndRadius(
+          rect,
+          Radius.circular(rect.height / 2),
+        );
         canvas.drawRRect(pill, Paint()..color = color);
         canvas.drawRRect(pill, outline);
         canvas.drawLine(

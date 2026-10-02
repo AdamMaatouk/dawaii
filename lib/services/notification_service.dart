@@ -107,13 +107,15 @@ class NotificationService {
   /// ~500 alarms; stay well below so other apps' limits are never an issue.
   static int get maxPending => _isIOS ? 60 : 250;
 
-  AndroidFlutterLocalNotificationsPlugin? get _android =>
-      _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+  AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
 
-  IOSFlutterLocalNotificationsPlugin? get _ios =>
-      _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+  IOSFlutterLocalNotificationsPlugin? get _ios => _plugin
+      .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin
+      >();
 
   Formatters get _fmt => Formatters(_settings.strings);
 
@@ -165,25 +167,31 @@ class NotificationService {
           await android.deleteNotificationChannel(channelId: id);
         } catch (_) {}
       }
-      await android.createNotificationChannel(AndroidNotificationChannel(
-        _reminderChannel,
-        l.notificationChannelName,
-        description: l.notificationChannelDescription,
-        importance: Importance.max,
-      ));
-      await android.createNotificationChannel(AndroidNotificationChannel(
-        _alarmChannel,
-        l.alarmChannelName,
-        description: l.alarmChannelDescription,
-        importance: Importance.max,
-        audioAttributesUsage: AudioAttributesUsage.alarm,
-      ));
-      await android.createNotificationChannel(AndroidNotificationChannel(
-        _infoChannel,
-        l.infoChannelName,
-        description: l.infoChannelDescription,
-        importance: Importance.defaultImportance,
-      ));
+      await android.createNotificationChannel(
+        AndroidNotificationChannel(
+          _reminderChannel,
+          l.notificationChannelName,
+          description: l.notificationChannelDescription,
+          importance: Importance.max,
+        ),
+      );
+      await android.createNotificationChannel(
+        AndroidNotificationChannel(
+          _alarmChannel,
+          l.alarmChannelName,
+          description: l.alarmChannelDescription,
+          importance: Importance.max,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+        ),
+      );
+      await android.createNotificationChannel(
+        AndroidNotificationChannel(
+          _infoChannel,
+          l.infoChannelName,
+          description: l.infoChannelDescription,
+          importance: Importance.defaultImportance,
+        ),
+      );
       if (requestPermissions) {
         try {
           await android.requestNotificationsPermission();
@@ -280,8 +288,7 @@ class NotificationService {
       final android = _android;
       if (android != null) {
         return NotificationHealth(
-          notificationsEnabled:
-              await android.areNotificationsEnabled() ?? true,
+          notificationsEnabled: await android.areNotificationsEnabled() ?? true,
           exactAlarmsEnabled:
               await android.canScheduleExactNotifications() ?? true,
           canCheckExactAlarms: true,
@@ -478,8 +485,9 @@ class NotificationService {
         audioAttributesUsage: persistent
             ? AudioAttributesUsage.alarm
             : AudioAttributesUsage.notification,
-        additionalFlags:
-            persistent ? Int32List.fromList([_flagInsistent]) : null,
+        additionalFlags: persistent
+            ? Int32List.fromList([_flagInsistent])
+            : null,
         largeIcon: imagePath != null ? FilePathAndroidBitmap(imagePath) : null,
         actions: [
           AndroidNotificationAction(_actionTake, l.notificationTake),

@@ -66,8 +66,10 @@ class EmptyStateWidget extends StatelessWidget {
                 icon: Icon(actionIcon, size: 24),
                 label: Text(actionText!),
                 style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                 ),
               ),
             ],

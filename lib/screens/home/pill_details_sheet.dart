@@ -9,12 +9,11 @@ import 'medication_card.dart';
 
 enum DetailsAction { edit, togglePause, delete, refill }
 
-DetailsAction detailsActionFromMenu(CardMenuAction action) =>
-    switch (action) {
-      CardMenuAction.edit => DetailsAction.edit,
-      CardMenuAction.togglePause => DetailsAction.togglePause,
-      CardMenuAction.delete => DetailsAction.delete,
-    };
+DetailsAction detailsActionFromMenu(CardMenuAction action) => switch (action) {
+  CardMenuAction.edit => DetailsAction.edit,
+  CardMenuAction.togglePause => DetailsAction.togglePause,
+  CardMenuAction.delete => DetailsAction.delete,
+};
 
 Future<DetailsAction?> showPillDetailsSheet(
   BuildContext context,

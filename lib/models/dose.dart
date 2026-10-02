@@ -6,11 +6,8 @@ class DoseRef {
   final DateTime date;
   final String time;
 
-  DoseRef({
-    required this.pillId,
-    required DateTime date,
-    required this.time,
-  }) : date = DateTime(date.year, date.month, date.day);
+  DoseRef({required this.pillId, required DateTime date, required this.time})
+    : date = DateTime(date.year, date.month, date.day);
 
   static String dateKey(DateTime date) =>
       '${date.year.toString().padLeft(4, '0')}-'
@@ -62,10 +59,10 @@ class DoseRecord {
   const DoseRecord({required this.status, this.takenAt, this.snoozedUntil});
 
   Map<String, dynamic> toMap() => {
-        's': status.name,
-        if (takenAt != null) 't': takenAt!.toIso8601String(),
-        if (snoozedUntil != null) 'z': snoozedUntil!.toIso8601String(),
-      };
+    's': status.name,
+    if (takenAt != null) 't': takenAt!.toIso8601String(),
+    if (snoozedUntil != null) 'z': snoozedUntil!.toIso8601String(),
+  };
 
   static DoseRecord? fromMap(dynamic value) {
     if (value is! Map) return null;
@@ -77,8 +74,9 @@ class DoseRecord {
     return DoseRecord(
       status: status,
       takenAt: value['t'] == null ? null : DateTime.tryParse('${value['t']}'),
-      snoozedUntil:
-          value['z'] == null ? null : DateTime.tryParse('${value['z']}'),
+      snoozedUntil: value['z'] == null
+          ? null
+          : DateTime.tryParse('${value['z']}'),
     );
   }
 }

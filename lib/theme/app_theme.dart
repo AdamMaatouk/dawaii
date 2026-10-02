@@ -136,8 +136,9 @@ class AppTheme {
     );
 
     // Generous sizes throughout: the app is designed for older adults.
-    final buttonShape =
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
+    final buttonShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    );
     const buttonText = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
     const minButton = Size(64, 52);
 
@@ -166,11 +167,18 @@ class AppTheme {
         ),
       ),
       textTheme: TextTheme(
-        headlineSmall:
-            TextStyle(color: p.textPrimary, fontWeight: FontWeight.w800),
-        titleLarge: TextStyle(color: p.textPrimary, fontWeight: FontWeight.w800),
-        titleMedium:
-            TextStyle(color: p.textPrimary, fontWeight: FontWeight.w700),
+        headlineSmall: TextStyle(
+          color: p.textPrimary,
+          fontWeight: FontWeight.w800,
+        ),
+        titleLarge: TextStyle(
+          color: p.textPrimary,
+          fontWeight: FontWeight.w800,
+        ),
+        titleMedium: TextStyle(
+          color: p.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
         bodyLarge: TextStyle(color: p.textBody, fontSize: 17),
         bodyMedium: TextStyle(color: p.textBody, fontSize: 15),
         bodySmall: TextStyle(color: p.textMuted, fontSize: 13),
@@ -183,8 +191,10 @@ class AppTheme {
         hintStyle: TextStyle(color: p.textMuted),
         helperStyle: TextStyle(color: p.textMuted, fontSize: 13),
         prefixIconColor: p.textMuted,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: p.border),

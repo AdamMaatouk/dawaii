@@ -58,9 +58,11 @@ class ScheduleService {
       case FrequencyType.interval:
         if (pill.intervalDays < 1) return false;
         // Use calendar-day arithmetic so DST changes cannot shift the cycle.
-        final days = DateTime.utc(target.year, target.month, target.day)
-            .difference(DateTime.utc(start.year, start.month, start.day))
-            .inDays;
+        final days = DateTime.utc(
+          target.year,
+          target.month,
+          target.day,
+        ).difference(DateTime.utc(start.year, start.month, start.day)).inDays;
         return days % pill.intervalDays == 0;
     }
   }
@@ -99,7 +101,9 @@ class ScheduleService {
     if (record?.status == DoseStatus.snoozed && record?.snoozedUntil != null) {
       return DoseState.snoozed;
     }
-    return ref.scheduledAt.isAfter(now) ? DoseState.upcoming : DoseState.overdue;
+    return ref.scheduledAt.isAfter(now)
+        ? DoseState.upcoming
+        : DoseState.overdue;
   }
 
   /// The time the user should actually take the dose (snooze moves it).
@@ -145,7 +149,9 @@ class ScheduleService {
     final counted = <String>{};
 
     for (final pill in pillsById.values) {
-      var day = dayOf(pill.startDate).isAfter(first) ? dayOf(pill.startDate) : first;
+      var day = dayOf(pill.startDate).isAfter(first)
+          ? dayOf(pill.startDate)
+          : first;
       while (!day.isAfter(today)) {
         for (final ref in dosesForDay(pill, day)) {
           final record = records[ref.key];
@@ -219,9 +225,11 @@ class ScheduleService {
     final earliest = earliestStart(pills, now);
     var streak = 0;
 
-    for (var day = today;
-        !day.isBefore(earliest);
-        day = DateTime(day.year, day.month, day.day - 1)) {
+    for (
+      var day = today;
+      !day.isBefore(earliest);
+      day = DateTime(day.year, day.month, day.day - 1)
+    ) {
       var due = 0;
       var taken = 0;
       var blocking = false;

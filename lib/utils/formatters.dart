@@ -8,17 +8,39 @@ class Formatters {
   const Formatters(this.l);
 
   List<String> get _months => [
-        l.jan, l.feb, l.mar, l.apr, l.may, l.jun,
-        l.jul, l.aug, l.sep, l.oct, l.nov, l.dec,
-      ];
+    l.jan,
+    l.feb,
+    l.mar,
+    l.apr,
+    l.may,
+    l.jun,
+    l.jul,
+    l.aug,
+    l.sep,
+    l.oct,
+    l.nov,
+    l.dec,
+  ];
 
-  List<String> get weekdayNames =>
-      [l.mon, l.tue, l.wed, l.thu, l.fri, l.sat, l.sun];
+  List<String> get weekdayNames => [
+    l.mon,
+    l.tue,
+    l.wed,
+    l.thu,
+    l.fri,
+    l.sat,
+    l.sun,
+  ];
 
   List<String> get weekdayShortNames => [
-        l.monShort, l.tueShort, l.wedShort, l.thuShort,
-        l.friShort, l.satShort, l.sunShort,
-      ];
+    l.monShort,
+    l.tueShort,
+    l.wedShort,
+    l.thuShort,
+    l.friShort,
+    l.satShort,
+    l.sunShort,
+  ];
 
   String time(int hour, int minute) {
     final period = hour >= 12 ? l.pm : l.am;
@@ -35,9 +57,16 @@ class Formatters {
     return h == null || m == null ? value : time(h, m);
   }
 
-  String timeOf(DateTime dateTime) => time(dateTime.hour, dateTime.minute);
+  String timeOf(DateTime dateTime) {
+    // Stored times may be UTC (e.g. from a backup); always show local time.
+    final local = dateTime.toLocal();
+    return time(local.hour, local.minute);
+  }
 
-  String date(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+  String date(DateTime d) {
+    final local = d.toLocal();
+    return '${local.day} ${_months[local.month - 1]} ${local.year}';
+  }
 
   String shortDate(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 
@@ -52,7 +81,7 @@ class Formatters {
     final minutes = d.inMinutes % 60;
     if (hours == 0) return l.minutesCount(d.inMinutes);
     if (minutes == 0) return l.hoursCount(hours);
-    return l.hoursMinutes(hours, minutes);
+    return l.hoursMinutes('$hours', '$minutes');
   }
 
   /// "in 2 h 5 min"
@@ -84,9 +113,9 @@ class Formatters {
   }
 
   String shapeName(PillShape shape) => switch (shape) {
-        PillShape.capsule => l.capsule,
-        PillShape.tablet => l.tablet,
-        PillShape.caplet => l.caplet,
-        PillShape.softgel => l.softgel,
-      };
+    PillShape.capsule => l.capsule,
+    PillShape.tablet => l.tablet,
+    PillShape.caplet => l.caplet,
+    PillShape.softgel => l.softgel,
+  };
 }

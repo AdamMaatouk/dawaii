@@ -14,10 +14,22 @@ void main() {
         start: DateTime(2026, 3, 10, 15),
         end: DateTime(2026, 3, 12),
       );
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 9)), isFalse);
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 10)), isTrue);
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 12)), isTrue);
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 13)), isFalse);
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 9)),
+        isFalse,
+      );
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 10)),
+        isTrue,
+      );
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 12)),
+        isTrue,
+      );
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 13)),
+        isFalse,
+      );
     });
 
     test('specific days', () {
@@ -27,9 +39,18 @@ void main() {
         days: [DateTime.monday, DateTime.friday],
       );
       // 2026-03-02 is a Monday.
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 2)), isTrue);
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 3)), isFalse);
-      expect(schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 6)), isTrue);
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 2)),
+        isTrue,
+      );
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 3)),
+        isFalse,
+      );
+      expect(
+        schedule.isPillScheduledForDate(pill, DateTime(2026, 3, 6)),
+        isTrue,
+      );
     });
 
     test('interval is anchored to the start day, across DST changes', () {
@@ -38,9 +59,9 @@ void main() {
         frequency: FrequencyType.interval,
         intervalDays: 3,
       );
-      final due = [
-        for (var d = 0; d < 16; d++) DateTime(2026, 3, 20 + d),
-      ].where((d) => schedule.isPillScheduledForDate(pill, d)).map((d) => d.day);
+      final due = [for (var d = 0; d < 16; d++) DateTime(2026, 3, 20 + d)]
+          .where((d) => schedule.isPillScheduledForDate(pill, d))
+          .map((d) => d.day);
       // Spans the end-of-March DST change in many time zones.
       expect(due, [20, 23, 26, 29, 1, 4]);
     });
@@ -91,10 +112,22 @@ void main() {
 
     test('covers every state', () {
       final today = DateTime(2026, 3, 10);
-      expect(schedule.stateOf(ref('1', today, '08:00'), taken, now), DoseState.taken);
-      expect(schedule.stateOf(ref('1', today, '08:00'), skipped, now), DoseState.skipped);
-      expect(schedule.stateOf(ref('1', today, '08:00'), null, now), DoseState.overdue);
-      expect(schedule.stateOf(ref('1', today, '18:00'), null, now), DoseState.upcoming);
+      expect(
+        schedule.stateOf(ref('1', today, '08:00'), taken, now),
+        DoseState.taken,
+      );
+      expect(
+        schedule.stateOf(ref('1', today, '08:00'), skipped, now),
+        DoseState.skipped,
+      );
+      expect(
+        schedule.stateOf(ref('1', today, '08:00'), null, now),
+        DoseState.overdue,
+      );
+      expect(
+        schedule.stateOf(ref('1', today, '18:00'), null, now),
+        DoseState.upcoming,
+      );
       expect(
         schedule.stateOf(ref('1', DateTime(2026, 3, 9), '08:00'), null, now),
         DoseState.missed,
@@ -107,7 +140,10 @@ void main() {
         status: DoseStatus.snoozed,
         snoozedUntil: DateTime(2026, 3, 10, 12, 15),
       );
-      expect(schedule.stateOf(ref('1', today, '08:00'), snoozed, now), DoseState.snoozed);
+      expect(
+        schedule.stateOf(ref('1', today, '08:00'), snoozed, now),
+        DoseState.snoozed,
+      );
     });
 
     test('a snoozed dose from yesterday becomes missed', () {
@@ -212,8 +248,8 @@ void main() {
     final pill = testPill(start: DateTime(2026, 3, 1));
 
     Map<String, DoseRecord> takenOn(List<int> days) => {
-          for (final d in days) ref('1', DateTime(2026, 3, d), '08:00').key: taken,
-        };
+      for (final d in days) ref('1', DateTime(2026, 3, d), '08:00').key: taken,
+    };
 
     test('a missed day breaks the streak (old bug: it did not)', () {
       final streak = schedule.streak(

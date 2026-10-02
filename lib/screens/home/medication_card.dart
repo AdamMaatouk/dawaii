@@ -338,7 +338,8 @@ class _DoseRow extends StatelessWidget {
     final state = dose.state;
     final isLate = state == DoseState.overdue;
     final isFutureDay =
-        state == DoseState.upcoming && dose.ref.date.isAfter(ScheduleService.dayOf(now));
+        state == DoseState.upcoming &&
+        dose.ref.date.isAfter(ScheduleService.dayOf(now));
 
     String? badge;
     Color badgeColor = palette.accent;
@@ -361,14 +362,13 @@ class _DoseRow extends StatelessWidget {
       relative = fmt.until(dose.ref.scheduledAt, now);
     }
 
-    final showActions = !isFutureDay &&
-        state != DoseState.taken &&
-        state != DoseState.skipped;
+    final showActions =
+        !isFutureDay && state != DoseState.taken && state != DoseState.skipped;
     final timeColor = isLate
         ? palette.dangerText
         : isFutureDay
-            ? palette.textSecondary
-            : palette.textPrimary;
+        ? palette.textSecondary
+        : palette.textPrimary;
 
     return Container(
       width: double.infinity,
@@ -410,8 +410,10 @@ class _DoseRow extends StatelessWidget {
               ),
               if (badge != null)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeBackground,
                     borderRadius: BorderRadius.circular(10),
@@ -474,7 +476,10 @@ class _DoseRow extends StatelessWidget {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: palette.warning,
-                        side: BorderSide(color: palette.warningBorder, width: 1.5),
+                        side: BorderSide(
+                          color: palette.warningBorder,
+                          width: 1.5,
+                        ),
                         minimumSize: Size(0, large ? 60 : 52),
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                       ),
@@ -515,28 +520,32 @@ class _StatusChip extends StatelessWidget {
     final palette = context.palette;
     final fmt = Formatters(l);
 
-    final (IconData icon, String text, Color color, Color background) =
-        switch (dose.state) {
+    final (
+      IconData icon,
+      String text,
+      Color color,
+      Color background,
+    ) = switch (dose.state) {
       DoseState.taken => (
-          Icons.check_circle_rounded,
-          dose.record?.takenAt != null
-              ? l.takenAt(fmt.timeOf(dose.record!.takenAt!))
-              : l.taken,
-          palette.successText,
-          palette.softSuccess,
-        ),
+        Icons.check_circle_rounded,
+        dose.record?.takenAt != null
+            ? l.takenAt(fmt.timeOf(dose.record!.takenAt!))
+            : l.taken,
+        palette.successText,
+        palette.softSuccess,
+      ),
       DoseState.skipped => (
-          Icons.cancel_rounded,
-          l.skipped,
-          palette.dangerText,
-          palette.softDanger,
-        ),
+        Icons.cancel_rounded,
+        l.skipped,
+        palette.dangerText,
+        palette.softDanger,
+      ),
       _ => (
-          Icons.error_outline_rounded,
-          l.missed,
-          palette.warningText,
-          palette.softWarning,
-        ),
+        Icons.error_outline_rounded,
+        l.missed,
+        palette.warningText,
+        palette.softWarning,
+      ),
     };
 
     final chip = Container(

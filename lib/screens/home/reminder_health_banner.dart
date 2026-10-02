@@ -32,7 +32,11 @@ class ReminderHealthBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.notifications_off_outlined, color: palette.warning, size: 26),
+          Icon(
+            Icons.notifications_off_outlined,
+            color: palette.warning,
+            size: 26,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

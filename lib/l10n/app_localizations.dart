@@ -426,7 +426,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{hours} h {minutes} min'**
-  String hoursMinutes(Object hours, Object minutes);
+  String hoursMinutes(String hours, String minutes);
 
   /// No description provided for @inDuration.
   ///
@@ -1614,7 +1614,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Take {pillLabel} • {dosage}'**
-  String takeDoseBody(Object dosage, Object pillLabel);
+  String takeDoseBody(String pillLabel, String dosage);
 
   /// No description provided for @keepAliveTitle.
   ///
@@ -1662,7 +1662,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Period: {from} – {to}'**
-  String reportPeriod(Object from, Object to);
+  String reportPeriod(String from, String to);
 
   /// No description provided for @reportGenerated.
   ///

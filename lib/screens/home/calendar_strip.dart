@@ -65,20 +65,21 @@ class _CalendarStripState extends State<CalendarStrip> {
           final background = isSelected
               ? palette.accentStrong
               : isToday
-                  ? palette.softAccent
-                  : palette.surface;
+              ? palette.softAccent
+              : palette.surface;
           final foreground = isSelected
               ? Colors.white
               : isToday
-                  ? palette.accent
-                  : palette.textPrimary;
+              ? palette.accent
+              : palette.textPrimary;
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Semantics(
               selected: isSelected,
               button: true,
-              label: '${Formatters(l).weekdayNames[day.weekday - 1]} '
+              label:
+                  '${Formatters(l).weekdayNames[day.weekday - 1]} '
                   '${Formatters(l).shortDate(day)}',
               child: Material(
                 color: background,
@@ -95,8 +96,8 @@ class _CalendarStripState extends State<CalendarStrip> {
                         color: isSelected
                             ? palette.accentStrong
                             : isToday
-                                ? palette.accent
-                                : palette.border,
+                            ? palette.accent
+                            : palette.border,
                         width: isToday && !isSelected ? 2 : 1,
                       ),
                     ),

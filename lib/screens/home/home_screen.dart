@@ -113,7 +113,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // DOSE ACTIONS
   // ============================================================
 
-  Future<void> _run(DoseRef ref, String errorText, Future<void> Function() action) async {
+  Future<void> _run(
+    DoseRef ref,
+    String errorText,
+    Future<void> Function() action,
+  ) async {
     if (_processing.contains(ref.key)) return;
     setState(() => _processing.add(ref.key));
     try {
@@ -180,9 +184,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // ============================================================
 
   Future<void> _openEditor([PillModel? pill]) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AddPillScreen(pillToEdit: pill)),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => AddPillScreen(pillToEdit: pill)));
     await _data.reload();
   }
 
@@ -302,9 +306,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // Cards with open doses first, ordered by their earliest open dose.
     DateTime firstOpen(List<DoseView> views) {
-      final open = views.where(_isOpen).map(
-            (v) => _schedule.effectiveTime(v.ref, v.record),
-          );
+      final open = views
+          .where(_isOpen)
+          .map((v) => _schedule.effectiveTime(v.ref, v.record));
       return open.isEmpty
           ? DateTime(9999)
           : open.reduce((a, b) => a.isBefore(b) ? a : b);
@@ -312,7 +316,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     withNext.sort((a, b) => firstOpen(a.$2).compareTo(firstOpen(b.$2)));
 
-    final allDoneToday = date == today &&
+    final allDoneToday =
+        date == today &&
         withNext.isNotEmpty &&
         withNext.every((c) => c.$2.every((v) => !_isOpen(v)));
 
@@ -509,9 +514,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (value == 'paused') {
           setState(() => _showPaused = true);
         } else if (value == 'settings') {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const SettingsScreen()),
-          );
+          await Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
           await _data.reload();
         }
       },
@@ -521,8 +525,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           height: 64,
           child: ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.pause_circle_outline_rounded,
-                color: palette.warning),
+            leading: Icon(
+              Icons.pause_circle_outline_rounded,
+              color: palette.warning,
+            ),
             title: Text(l.pausedMedications),
             subtitle: Text(l.pausedCount(pausedCount)),
           ),

@@ -92,13 +92,15 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tab = simple ? 0 : _tab;
 
-    final overlay = (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
-        .copyWith(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: palette.surface,
-      systemNavigationBarIconBrightness:
-          dark ? Brightness.light : Brightness.dark,
-    );
+    final overlay =
+        (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+            .copyWith(
+              statusBarColor: Colors.transparent,
+              systemNavigationBarColor: palette.surface,
+              systemNavigationBarIconBrightness: dark
+                  ? Brightness.light
+                  : Brightness.dark,
+            );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,

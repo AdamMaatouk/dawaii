@@ -161,17 +161,17 @@ class _AddPillScreenState extends State<AddPillScreen> {
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
   void _sortTimes() => _times.sort(
-        (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
-      );
+    (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
+  );
 
   bool _hasTime(TimeOfDay t) =>
       _times.any((e) => e.hour == t.hour && e.minute == t.minute);
 
   int get _durationMax => switch (_durationUnit) {
-        TreatmentDurationUnit.days => 365,
-        TreatmentDurationUnit.weeks => 104,
-        TreatmentDurationUnit.months => 24,
-      };
+    TreatmentDurationUnit.days => 365,
+    TreatmentDurationUnit.weeks => 104,
+    TreatmentDurationUnit.months => 24,
+  };
 
   /// Fixed durations count from the original start, unless the medication
   /// was ongoing before (then from today).
@@ -185,15 +185,21 @@ class _AddPillScreenState extends State<AddPillScreen> {
     final base = _durationBase;
     final start = DateTime(base.year, base.month, base.day);
     return switch (_durationUnit) {
-      TreatmentDurationUnit.days =>
-        DateTime(start.year, start.month, start.day + value - 1),
-      TreatmentDurationUnit.weeks =>
-        DateTime(start.year, start.month, start.day + value * 7 - 1),
+      TreatmentDurationUnit.days => DateTime(
+        start.year,
+        start.month,
+        start.day + value - 1,
+      ),
+      TreatmentDurationUnit.weeks => DateTime(
+        start.year,
+        start.month,
+        start.day + value * 7 - 1,
+      ),
       TreatmentDurationUnit.months => () {
-          final lastDay = DateTime(start.year, start.month + value + 1, 0).day;
-          final day = start.day > lastDay ? lastDay : start.day;
-          return DateTime(start.year, start.month + value, day - 1);
-        }(),
+        final lastDay = DateTime(start.year, start.month + value + 1, 0).day;
+        final day = start.day > lastDay ? lastDay : start.day;
+        return DateTime(start.year, start.month + value, day - 1);
+      }(),
     };
   }
 
@@ -308,14 +314,13 @@ class _AddPillScreenState extends State<AddPillScreen> {
       final days = _frequency == FrequencyType.specificDays
           ? (List.of(_days)..sort())
           : <int>[];
-      final interval =
-          _frequency == FrequencyType.interval ? _intervalDays : 1;
-      final durationValue =
-          _ongoing ? null : int.parse(_duration.text.trim());
+      final interval = _frequency == FrequencyType.interval ? _intervalDays : 1;
+      final durationValue = _ongoing ? null : int.parse(_duration.text.trim());
 
       // If the dose times changed, past days under the old times must not
       // be reported as "missed".
-      final scheduleChanged = existing != null &&
+      final scheduleChanged =
+          existing != null &&
           (existing.frequencyType != _frequency ||
               !listEquals(existing.scheduleTimes, times) ||
               !listEquals(existing.daysOfWeek, days) ||
@@ -336,15 +341,16 @@ class _AddPillScreenState extends State<AddPillScreen> {
         startDate: existing?.startDate ?? now,
         treatmentDurationUnit: _ongoing ? null : _durationUnit,
         treatmentDurationValue: durationValue,
-        treatmentEndDate: durationValue == null ? null : _endDate(durationValue),
+        treatmentEndDate: durationValue == null
+            ? null
+            : _endDate(durationValue),
         photoPath: _photoPath,
         instructions: instructions.isEmpty ? null : instructions,
         isActive: existing?.isActive ?? true,
         pausePeriods: existing?.pausePeriods ?? const [],
         scheduleUpdatedAt: scheduleChanged ? now : existing?.scheduleUpdatedAt,
         stockCount: _trackStock ? int.parse(_stock.text.trim()) : null,
-        refillThreshold:
-            _trackStock ? int.parse(_threshold.text.trim()) : 10,
+        refillThreshold: _trackStock ? int.parse(_threshold.text.trim()) : 10,
       );
 
       await DoseActions().savePill(pill);
@@ -393,8 +399,9 @@ class _AddPillScreenState extends State<AddPillScreen> {
                   hintText: l.medicationNameHint,
                   prefixIcon: const Icon(Icons.edit_note_rounded),
                 ),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? l.enterMedicationName : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? l.enterMedicationName
+                    : null,
               ),
               const SizedBox(height: 14),
               Row(
@@ -607,7 +614,8 @@ class _AddPillScreenState extends State<AddPillScreen> {
                         deleteIcon: const Icon(Icons.close_rounded, size: 22),
                         onDeleted: () => setState(
                           () => _times.removeWhere(
-                            (e) => e.hour == time.hour && e.minute == time.minute,
+                            (e) =>
+                                e.hour == time.hour && e.minute == time.minute,
                           ),
                         ),
                       ),
@@ -684,29 +692,33 @@ class _AddPillScreenState extends State<AddPillScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Builder(builder: (context) {
-                  final value = int.tryParse(_duration.text.trim());
-                  if (value == null || value < 1 || value > _durationMax) {
-                    return const SizedBox.shrink();
-                  }
-                  return Row(
-                    children: [
-                      Icon(Icons.event_available_rounded,
-                          color: palette.accent),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l.scheduleEndsDate(fmt.date(_endDate(value))),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: palette.textPrimary,
+                Builder(
+                  builder: (context) {
+                    final value = int.tryParse(_duration.text.trim());
+                    if (value == null || value < 1 || value > _durationMax) {
+                      return const SizedBox.shrink();
+                    }
+                    return Row(
+                      children: [
+                        Icon(
+                          Icons.event_available_rounded,
+                          color: palette.accent,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l.scheduleEndsDate(fmt.date(_endDate(value))),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: palette.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                }),
+                      ],
+                    );
+                  },
+                ),
               ],
             ]),
             _section(l.stockSection, Icons.inventory_2_outlined, [
@@ -759,10 +771,10 @@ class _AddPillScreenState extends State<AddPillScreen> {
   }
 
   TextStyle get _inputStyle => TextStyle(
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: context.palette.textPrimary,
-      );
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    color: context.palette.textPrimary,
+  );
 
   Widget _numberField(TextEditingController controller, String label) {
     return TextFormField(
@@ -784,16 +796,16 @@ class _AddPillScreenState extends State<AddPillScreen> {
   }
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: context.palette.textSecondary,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w800,
+        color: context.palette.textSecondary,
+      ),
+    ),
+  );
 
   Widget _section(String title, IconData icon, List<Widget> children) {
     final palette = context.palette;
@@ -924,7 +936,9 @@ class _AddPillScreenState extends State<AddPillScreen> {
     final palette = context.palette;
     final fmt = Formatters(l);
     final name = _name.text.trim().isEmpty ? l.medication : _name.text.trim();
-    final dosage = _dosage.text.trim().isEmpty ? l.yourDose : _dosage.text.trim();
+    final dosage = _dosage.text.trim().isEmpty
+        ? l.yourDose
+        : _dosage.text.trim();
     final count = int.tryParse(_pillCount.text.trim()) ?? 1;
 
     return Row(

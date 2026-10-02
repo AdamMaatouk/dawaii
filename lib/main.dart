@@ -49,8 +49,8 @@ class DawaiiApp extends StatelessWidget {
             // Combine the phone's text size with the in-app setting, capped
             // so layouts stay usable.
             final media = MediaQuery.of(context);
-            final scale =
-                (media.textScaler.scale(1) * settings.textScale).clamp(1.0, 2.0);
+            final scale = (media.textScaler.scale(1) * settings.textScale)
+                .clamp(1.0, 2.0);
             return MediaQuery(
               data: media.copyWith(textScaler: TextScaler.linear(scale)),
               child: child ?? const SizedBox.shrink(),

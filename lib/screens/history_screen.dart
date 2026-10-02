@@ -44,21 +44,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
   DateTime _from(DateTime now) {
     final today = ScheduleService.dayOf(now);
     return switch (_timeframe) {
-      AnalyticsTimeframe.last7Days =>
-        DateTime(today.year, today.month, today.day - 6),
-      AnalyticsTimeframe.last30Days =>
-        DateTime(today.year, today.month, today.day - 29),
+      AnalyticsTimeframe.last7Days => DateTime(
+        today.year,
+        today.month,
+        today.day - 6,
+      ),
+      AnalyticsTimeframe.last30Days => DateTime(
+        today.year,
+        today.month,
+        today.day - 29,
+      ),
       AnalyticsTimeframe.thisYear => DateTime(today.year),
       AnalyticsTimeframe.allTime => _schedule.earliestStart(_data.pills, now),
     };
   }
 
   String _label(AppLocalizations l, AnalyticsTimeframe t) => switch (t) {
-        AnalyticsTimeframe.last7Days => l.last7Days,
-        AnalyticsTimeframe.last30Days => l.last30Days,
-        AnalyticsTimeframe.thisYear => l.thisYear,
-        AnalyticsTimeframe.allTime => l.allTime,
-      };
+    AnalyticsTimeframe.last7Days => l.last7Days,
+    AnalyticsTimeframe.last30Days => l.last30Days,
+    AnalyticsTimeframe.thisYear => l.thisYear,
+    AnalyticsTimeframe.allTime => l.allTime,
+  };
 
   DateTime? _lastTaken(PillModel pill) {
     DateTime? latest;

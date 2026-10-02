@@ -64,8 +64,9 @@ void main() {
     expect(direction, TextDirection.rtl);
   });
 
-  testWidgets('dark mode and large text render without overflow',
-      (tester) async {
+  testWidgets('dark mode and large text render without overflow', (
+    tester,
+  ) async {
     final now = DateTime.now();
     await pumpApp(tester, {
       'app_language_code': 'ar',

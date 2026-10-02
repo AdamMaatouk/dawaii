@@ -51,7 +51,8 @@ class SettingsService extends ChangeNotifier {
     };
 
     final savedLanguage = prefs.getString(_languageKey);
-    _languageCode = savedLanguage ??
+    _languageCode =
+        savedLanguage ??
         (PlatformDispatcher.instance.locale.languageCode == 'ar' ? 'ar' : 'en');
     if (_languageCode != 'ar') _languageCode = 'en';
 

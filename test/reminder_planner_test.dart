@@ -11,7 +11,11 @@ void main() {
   final now = DateTime(2026, 3, 10, 12, 0);
 
   test('books doses soonest-first across all medications', () {
-    final a = testPill(id: 'a', times: ['08:00', '20:00'], start: DateTime(2026, 1, 1));
+    final a = testPill(
+      id: 'a',
+      times: ['08:00', '20:00'],
+      start: DateTime(2026, 1, 1),
+    );
     final b = testPill(id: 'b', times: ['14:00'], start: DateTime(2026, 1, 1));
     final plan = planner.plan(
       pills: [a, b],
@@ -77,9 +81,17 @@ void main() {
   });
 
   test('skips taken/skipped doses and paused medications', () {
-    final active = testPill(id: 'a', times: ['18:00'], start: DateTime(2026, 1, 1),
-        end: DateTime(2026, 3, 11));
-    final paused = testPill(id: 'p', start: DateTime(2026, 1, 1), active: false);
+    final active = testPill(
+      id: 'a',
+      times: ['18:00'],
+      start: DateTime(2026, 1, 1),
+      end: DateTime(2026, 3, 11),
+    );
+    final paused = testPill(
+      id: 'p',
+      start: DateTime(2026, 1, 1),
+      active: false,
+    );
     final plan = planner.plan(
       pills: [active, paused],
       records: {ref('a', DateTime(2026, 3, 10), '18:00').key: taken},
@@ -92,8 +104,11 @@ void main() {
   });
 
   test('a snoozed dose is reminded at the snooze time only', () {
-    final pill = testPill(times: ['13:00'], start: DateTime(2026, 1, 1),
-        end: DateTime(2026, 3, 10));
+    final pill = testPill(
+      times: ['13:00'],
+      start: DateTime(2026, 1, 1),
+      end: DateTime(2026, 3, 10),
+    );
     final dose = ref('1', DateTime(2026, 3, 10), '13:00');
     final plan = planner.plan(
       pills: [pill],

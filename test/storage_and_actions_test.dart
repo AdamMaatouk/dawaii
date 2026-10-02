@@ -19,76 +19,85 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({'storage_version': 2}));
 
-  test('concurrent dose writes are never lost (old bug: 3 writes -> 1 kept)',
-      () async {
-    final actions = DoseActions();
-    await Future.wait([
-      for (final id in ['A', 'B', 'C', 'D', 'E'])
-        actions.take(ref(id, today, '08:00')),
-    ]);
-    final records = await storage.getDoseRecords();
-    expect(records, hasLength(5));
-    expect(records.values.every((r) => r.status == DoseStatus.taken), isTrue);
-  });
+  test(
+    'concurrent dose writes are never lost (old bug: 3 writes -> 1 kept)',
+    () async {
+      final actions = DoseActions();
+      await Future.wait([
+        for (final id in ['A', 'B', 'C', 'D', 'E'])
+          actions.take(ref(id, today, '08:00')),
+      ]);
+      final records = await storage.getDoseRecords();
+      expect(records, hasLength(5));
+      expect(records.values.every((r) => r.status == DoseStatus.taken), isTrue);
+    },
+  );
 
-  test('migrates version 1 data (one big JSON map) to per-dose records',
-      () async {
-    SharedPreferences.setMockInitialValues({
-      'user_pills': json.encode([
-        testPill(start: DateTime(2026, 1, 1)).toMap(),
-      ]),
-      'pill_logs': json.encode({
-        '2026-03-01_1_08:00': 'taken',
-        '2026-03-02_1_08:00': 'skipped',
-        '2026-03-03_1_08:00': 'snoozed',
-        'garbage': 'taken',
-      }),
-      'pill_taken_times': json.encode({
-        '2026-03-01_1_08:00': '2026-03-01T08:05:00.000',
-      }),
-      'pill_snoozes': json.encode({
-        '2026-03-03_1_08:00': '2026-03-03T08:15:00.000',
-      }),
-    });
-    final records = await storage.getDoseRecords();
-    expect(records, hasLength(3));
-    expect(records['2026-03-01_1_08:00']!.takenAt, DateTime(2026, 3, 1, 8, 5));
-    expect(records['2026-03-02_1_08:00']!.status, DoseStatus.skipped);
-    expect(
-      records['2026-03-03_1_08:00']!.snoozedUntil,
-      DateTime(2026, 3, 3, 8, 15),
-    );
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('pill_logs'), isNull);
-    expect(prefs.getInt('storage_version'), 2);
-    expect(await storage.getPills(), hasLength(1));
-  });
+  test(
+    'migrates version 1 data (one big JSON map) to per-dose records',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'user_pills': json.encode([
+          testPill(start: DateTime(2026, 1, 1)).toMap(),
+        ]),
+        'pill_logs': json.encode({
+          '2026-03-01_1_08:00': 'taken',
+          '2026-03-02_1_08:00': 'skipped',
+          '2026-03-03_1_08:00': 'snoozed',
+          'garbage': 'taken',
+        }),
+        'pill_taken_times': json.encode({
+          '2026-03-01_1_08:00': '2026-03-01T08:05:00.000',
+        }),
+        'pill_snoozes': json.encode({
+          '2026-03-03_1_08:00': '2026-03-03T08:15:00.000',
+        }),
+      });
+      final records = await storage.getDoseRecords();
+      expect(records, hasLength(3));
+      expect(
+        records['2026-03-01_1_08:00']!.takenAt,
+        DateTime(2026, 3, 1, 8, 5),
+      );
+      expect(records['2026-03-02_1_08:00']!.status, DoseStatus.skipped);
+      expect(
+        records['2026-03-03_1_08:00']!.snoozedUntil,
+        DateTime(2026, 3, 3, 8, 15),
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('pill_logs'), isNull);
+      expect(prefs.getInt('storage_version'), 2);
+      expect(await storage.getPills(), hasLength(1));
+    },
+  );
 
-  test('taking a dose uses stock; undo gives it back; low stock is flagged',
-      () async {
-    final actions = DoseActions();
-    final pill = testPill(
-      start: DateTime(2026, 1, 1),
-      stock: 12,
-      refillThreshold: 10,
-      pillCount: 2,
-    );
-    await storage.savePill(pill);
-    final dose = ref('1', today, '08:00');
+  test(
+    'taking a dose uses stock; undo gives it back; low stock is flagged',
+    () async {
+      final actions = DoseActions();
+      final pill = testPill(
+        start: DateTime(2026, 1, 1),
+        stock: 12,
+        refillThreshold: 10,
+        pillCount: 2,
+      );
+      await storage.savePill(pill);
+      final dose = ref('1', today, '08:00');
 
-    await actions.take(dose);
-    expect((await storage.getPill('1'))!.stockCount, 10);
-    expect(await storage.wasStockAlertSent('1'), isTrue);
+      await actions.take(dose);
+      expect((await storage.getPill('1'))!.stockCount, 10);
+      expect(await storage.wasStockAlertSent('1'), isTrue);
 
-    // Taking twice does not double count.
-    await actions.take(dose);
-    expect((await storage.getPill('1'))!.stockCount, 10);
+      // Taking twice does not double count.
+      await actions.take(dose);
+      expect((await storage.getPill('1'))!.stockCount, 10);
 
-    await actions.undo(dose);
-    expect((await storage.getPill('1'))!.stockCount, 12);
-    expect(await storage.getDoseRecord(dose), isNull);
-    expect(await storage.wasStockAlertSent('1'), isFalse);
-  });
+      await actions.undo(dose);
+      expect((await storage.getPill('1'))!.stockCount, 12);
+      expect(await storage.getDoseRecord(dose), isNull);
+      expect(await storage.wasStockAlertSent('1'), isFalse);
+    },
+  );
 
   test('stock never goes below zero and refill resets the warning', () async {
     final actions = DoseActions();
@@ -102,8 +111,7 @@ void main() {
     expect(await storage.wasStockAlertSent('1'), isFalse);
   });
 
-  test('snooze before the dose time postpones from the scheduled time',
-      () async {
+  test('snooze before the dose time postpones from the scheduled time', () async {
     final actions = DoseActions();
     final later = DateTime.now().add(const Duration(hours: 3));
     final time =
@@ -163,10 +171,7 @@ void main() {
   });
 
   test('import rejects files that are not Dawaii backups', () {
-    expect(
-      () => storage.importData({'hello': 'world'}),
-      throwsFormatException,
-    );
+    expect(() => storage.importData({'hello': 'world'}), throwsFormatException);
   });
 
   group('PillModel', () {
@@ -216,7 +221,9 @@ void main() {
         start: DateTime(2026, 1, 1, 9),
         end: DateTime(2026, 6, 1),
         stock: 5,
-        pauses: [PausePeriod(start: DateTime(2026, 2, 1), end: DateTime(2026, 2, 3))],
+        pauses: [
+          PausePeriod(start: DateTime(2026, 2, 1), end: DateTime(2026, 2, 3)),
+        ],
         scheduleUpdatedAt: DateTime(2026, 1, 15),
       );
       final copy = PillModel.fromJson(pill.toJson());
@@ -227,8 +234,9 @@ void main() {
   group('notification payloads', () {
     test('carry the dose date (old bug: always assumed today)', () {
       final dose = ref('123', DateTime(2026, 3, 9), '23:30');
-      final parsed =
-          NotificationService.parsePayload(NotificationService.payloadFor(dose));
+      final parsed = NotificationService.parsePayload(
+        NotificationService.payloadFor(dose),
+      );
       expect(parsed, dose);
     });
 

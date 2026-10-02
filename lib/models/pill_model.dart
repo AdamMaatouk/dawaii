@@ -27,9 +27,9 @@ class PausePeriod {
       !moment.isBefore(start) && (end == null || moment.isBefore(end!));
 
   Map<String, dynamic> toMap() => {
-        'start': start.toIso8601String(),
-        'end': end?.toIso8601String(),
-      };
+    'start': start.toIso8601String(),
+    'end': end?.toIso8601String(),
+  };
 
   static PausePeriod? fromMap(dynamic value) {
     if (value is! Map) return null;
@@ -150,8 +150,9 @@ class PillModel {
       treatmentDurationValue: treatmentDurationValue != null
           ? treatmentDurationValue()
           : this.treatmentDurationValue,
-      treatmentEndDate:
-          treatmentEndDate != null ? treatmentEndDate() : this.treatmentEndDate,
+      treatmentEndDate: treatmentEndDate != null
+          ? treatmentEndDate()
+          : this.treatmentEndDate,
       photoPath: photoPath != null ? photoPath() : this.photoPath,
       instructions: instructions != null ? instructions() : this.instructions,
       isActive: isActive ?? this.isActive,
@@ -171,8 +172,10 @@ class PillModel {
     if (!active) {
       periods.add(PausePeriod(start: now));
     } else if (periods.isNotEmpty && periods.last.end == null) {
-      periods[periods.length - 1] =
-          PausePeriod(start: periods.last.start, end: now);
+      periods[periods.length - 1] = PausePeriod(
+        start: periods.last.start,
+        end: now,
+      );
     }
     return copyWith(isActive: active, pausePeriods: periods);
   }
@@ -328,16 +331,20 @@ class PillModel {
       pillCount: _atLeastOne(map['pillCount']),
       colorHex: _parseColorHex(map['colorHex']),
       shape: _parseShape(map['shape']),
-      frequencyType: _parseEnum(FrequencyType.values, map['frequencyType']) ??
+      frequencyType:
+          _parseEnum(FrequencyType.values, map['frequencyType']) ??
           FrequencyType.daily,
       scheduleTimes: _parseScheduleTimes(map['scheduleTimes']),
       daysOfWeek: _parseDaysOfWeek(map['daysOfWeek']),
       intervalDays: _atLeastOne(map['intervalDays']),
       startDate: _toDate(map['startDate']) ?? DateTime.now(),
-      treatmentDurationUnit:
-          _parseEnum(TreatmentDurationUnit.values, map['treatmentDurationUnit']),
-      treatmentDurationValue:
-          durationValue == null || durationValue < 1 ? null : durationValue,
+      treatmentDurationUnit: _parseEnum(
+        TreatmentDurationUnit.values,
+        map['treatmentDurationUnit'],
+      ),
+      treatmentDurationValue: durationValue == null || durationValue < 1
+          ? null
+          : durationValue,
       treatmentEndDate: _toDate(map['treatmentEndDate']),
       photoPath: _toNonEmpty(map['photoPath']),
       instructions: _toNonEmpty(map['instructions']),
@@ -347,8 +354,9 @@ class PillModel {
           : const [],
       scheduleUpdatedAt: _toDate(map['scheduleUpdatedAt']),
       stockCount: rawStock == null || rawStock < 0 ? null : rawStock,
-      refillThreshold:
-          rawThreshold == null || rawThreshold < 0 ? 10 : rawThreshold,
+      refillThreshold: rawThreshold == null || rawThreshold < 0
+          ? 10
+          : rawThreshold,
     );
   }
 

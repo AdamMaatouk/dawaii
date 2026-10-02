@@ -50,69 +50,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _exportBackup() => _busyWhile(() async {
-        final l = AppLocalizations.of(context);
-        try {
-          await BackupService().exportBackup(subject: l.exportBackup);
-        } catch (e) {
-          debugPrint('EXPORT ERROR: $e');
-          _showMessage(l.exportError);
-        }
-      });
+    final l = AppLocalizations.of(context);
+    try {
+      await BackupService().exportBackup(subject: l.exportBackup);
+    } catch (e) {
+      debugPrint('EXPORT ERROR: $e');
+      _showMessage(l.exportError);
+    }
+  });
 
   Future<void> _importBackup() => _busyWhile(() async {
-        final l = AppLocalizations.of(context);
-        final backup = BackupService();
-        Map<String, dynamic>? data;
-        try {
-          data = await backup.pickBackup();
-        } catch (e) {
-          debugPrint('IMPORT READ ERROR: $e');
-          _showMessage(l.importError);
-          return;
-        }
-        if (data == null || !mounted) return;
+    final l = AppLocalizations.of(context);
+    final backup = BackupService();
+    Map<String, dynamic>? data;
+    try {
+      data = await backup.pickBackup();
+    } catch (e) {
+      debugPrint('IMPORT READ ERROR: $e');
+      _showMessage(l.importError);
+      return;
+    }
+    if (data == null || !mounted) return;
 
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: Text(l.importConfirmTitle),
-            content: Text(l.importConfirmBody),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: Text(l.cancel),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                ),
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: Text(l.restore),
-              ),
-            ],
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.importConfirmTitle),
+        content: Text(l.importConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l.cancel),
           ),
-        );
-        if (confirmed != true) return;
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l.restore),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
 
-        try {
-          final count = await backup.restore(data);
-          await AppData().reload();
-          _showMessage(l.importSuccess(count));
-        } catch (e) {
-          debugPrint('IMPORT ERROR: $e');
-          _showMessage(l.importError);
-        }
-      });
+    try {
+      final count = await backup.restore(data);
+      await AppData().reload();
+      _showMessage(l.importSuccess(count));
+    } catch (e) {
+      debugPrint('IMPORT ERROR: $e');
+      _showMessage(l.importError);
+    }
+  });
 
   Future<void> _doctorReport() => _busyWhile(() async {
-        final l = AppLocalizations.of(context);
-        try {
-          await ReportService().shareDoctorReport();
-        } catch (e) {
-          debugPrint('REPORT ERROR: $e');
-          _showMessage(l.reportError);
-        }
-      });
+    final l = AppLocalizations.of(context);
+    try {
+      await ReportService().shareDoctorReport();
+    } catch (e) {
+      debugPrint('REPORT ERROR: $e');
+      _showMessage(l.reportError);
+    }
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -313,8 +313,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.settings_applications_rounded,
                     title: l.notificationSettings,
                     onTap: () async {
-                      final opened =
-                          await _notifications.openReminderSettings();
+                      final opened = await _notifications
+                          .openReminderSettings();
                       if (!opened) _showMessage(l.unableOpenReminderSettings);
                     },
                   ),

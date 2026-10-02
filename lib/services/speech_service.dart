@@ -16,7 +16,8 @@ class SpeechService {
   Future<void> speakDose(PillModel pill) async {
     final settings = SettingsService();
     final l = settings.strings;
-    final text = '${l.timeFor(pill.name)}. '
+    final text =
+        '${l.timeFor(pill.name)}. '
         '${l.takeDoseBody(Formatters(l).pills(pill.pillCount), pill.dosage)}.'
         '${pill.instructions != null ? ' ${pill.instructions}.' : ''}';
     await speak(text, settings.languageCode);
