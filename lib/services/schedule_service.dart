@@ -125,6 +125,27 @@ class ScheduleService {
     return changed == null || !ref.scheduledAt.isBefore(changed);
   }
 
+  /// Average number of pills used per day by the current schedule.
+  double pillsPerDay(PillModel pill) {
+    final perDay = pill.pillCount * pill.scheduleTimes.length.toDouble();
+    return switch (pill.frequencyType) {
+      FrequencyType.daily => perDay,
+      FrequencyType.specificDays => perDay * pill.daysOfWeek.length / 7,
+      FrequencyType.interval => perDay / pill.intervalDays,
+    };
+  }
+
+  /// Roughly when the pills in stock will run out ("lasts until"), or null
+  /// when stock is not tracked or nothing is scheduled.
+  DateTime? runsOutOn(PillModel pill, DateTime now) {
+    final stock = pill.stockCount;
+    final perDay = pillsPerDay(pill);
+    if (stock == null || perDay <= 0) return null;
+    final today = dayOf(now);
+    final days = (stock / perDay).floor();
+    return DateTime(today.year, today.month, today.day + days);
+  }
+
   DateTime earliestStart(Iterable<PillModel> pills, DateTime fallback) {
     var earliest = dayOf(fallback);
     for (final pill in pills) {

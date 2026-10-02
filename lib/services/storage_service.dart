@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/dose.dart';
+import '../models/health_reading.dart';
 import '../models/pill_model.dart';
 
 /// Local storage on top of SharedPreferences.
@@ -16,6 +17,7 @@ import '../models/pill_model.dart';
 /// - `stock.<pillId>`      pills left (int), separate so a notification
 ///                         action can decrement it without rewriting the list
 /// - `stockAlerted.<id>`   whether the low-stock warning was already sent
+/// - `reading.<id>`        one JSON [HealthReading] (blood pressure / sugar)
 ///
 /// Every dose lives under its own key, so two writes for different doses
 /// (e.g. the app and a notification button at the same moment, even from
@@ -26,6 +28,7 @@ class StorageService {
   static const String _dosePrefix = 'dose.';
   static const String _stockPrefix = 'stock.';
   static const String _stockAlertPrefix = 'stockAlerted.';
+  static const String _readingPrefix = 'reading.';
   static const String _versionKey = 'storage_version';
   static const int _currentVersion = 2;
 
@@ -289,18 +292,56 @@ class StorageService {
   }
 
   // ============================================================
+  // HEALTH READINGS
+  // ============================================================
+
+  /// All readings, newest first.
+  Future<List<HealthReading>> getReadings() async {
+    final prefs = await _prefs();
+    final readings = <HealthReading>[];
+    for (final key in prefs.getKeys()) {
+      if (!key.startsWith(_readingPrefix)) continue;
+      try {
+        final reading = HealthReading.fromMap(
+          json.decode(prefs.getString(key) ?? ''),
+        );
+        if (reading != null) readings.add(reading);
+      } catch (_) {
+        // Ignore one unreadable reading.
+      }
+    }
+    readings.sort((a, b) => b.at.compareTo(a.at));
+    return readings;
+  }
+
+  Future<void> saveReading(HealthReading reading) async {
+    final prefs = await _prefs(reload: false);
+    await prefs.setString(
+      '$_readingPrefix${reading.id}',
+      json.encode(reading.toMap()),
+    );
+  }
+
+  Future<void> deleteReading(String id) async {
+    final prefs = await _prefs(reload: false);
+    await prefs.remove('$_readingPrefix$id');
+  }
+
+  // ============================================================
   // BACKUP
   // ============================================================
 
   Future<Map<String, dynamic>> exportData() async {
     final pills = await getPills();
     final records = await getDoseRecords();
+    final readings = await getReadings();
     return {
       'app': 'dawaii',
       'version': _currentVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'pills': pills.map((p) => p.toMap()).toList(),
       'doses': records.map((k, v) => MapEntry(k, v.toMap())),
+      'readings': readings.map((r) => r.toMap()).toList(),
     };
   }
 
@@ -316,11 +357,15 @@ class StorageService {
         .where((p) => p.id.isNotEmpty)
         .toList();
     final rawDoses = data['doses'] is Map ? data['doses'] as Map : const {};
+    final rawReadings = data['readings'] is List
+        ? data['readings'] as List
+        : const [];
 
     return _synchronized(() async {
       final prefs = await _prefs();
       for (final key in prefs.getKeys().toList()) {
         if (key.startsWith(_dosePrefix) ||
+            key.startsWith(_readingPrefix) ||
             key.startsWith(_stockPrefix) ||
             key.startsWith(_stockAlertPrefix)) {
           await prefs.remove(key);
@@ -339,6 +384,14 @@ class StorageService {
         await prefs.setString(
           '$_dosePrefix${ref.key}',
           json.encode(record.toMap()),
+        );
+      }
+      for (final raw in rawReadings) {
+        final reading = HealthReading.fromMap(raw);
+        if (reading == null) continue;
+        await prefs.setString(
+          '$_readingPrefix${reading.id}',
+          json.encode(reading.toMap()),
         );
       }
       return pills.length;

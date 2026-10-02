@@ -2003,7 +2003,7 @@ abstract class AppLocalizations {
   /// No description provided for @wizStockTitle.
   ///
   /// In en, this message translates to:
-  /// **'Count your pills?'**
+  /// **'Check and save'**
   String get wizStockTitle;
 
   /// No description provided for @stepOf.
@@ -2057,7 +2057,7 @@ abstract class AppLocalizations {
   /// No description provided for @takenOfLast.
   ///
   /// In en, this message translates to:
-  /// **'You took {taken} of your last {total} doses.'**
+  /// **'{total, plural, =1{You took {taken} of your last dose.} other{You took {taken} of your last {total} doses.}}'**
   String takenOfLast(int taken, int total);
 
   /// No description provided for @previousMonth.
@@ -2101,6 +2101,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide'**
   String get hideDone;
+
+  /// No description provided for @tookAtOtherTime.
+  ///
+  /// In en, this message translates to:
+  /// **'I took it at another time'**
+  String get tookAtOtherTime;
+
+  /// No description provided for @takenSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} taken ✓'**
+  String takenSnack(String name);
+
+  /// No description provided for @takenAllSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 dose taken ✓} other{{count} doses taken ✓}}'**
+  String takenAllSnack(int count);
+
+  /// No description provided for @snoozedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll remind you again in {duration}.'**
+  String snoozedFor(String duration);
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String minutesShort(int count);
+
+  /// No description provided for @hoursShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h'**
+  String hoursShort(int count);
+
+  /// No description provided for @todayProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{taken} of {total} taken today'**
+  String todayProgress(int taken, int total);
+
+  /// No description provided for @dosesLeftToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 dose to go} other{{count} doses to go}}'**
+  String dosesLeftToday(int count);
+
+  /// No description provided for @lastsUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'lasts until {date}'**
+  String lastsUntil(String date);
+
+  /// No description provided for @presetOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a day'**
+  String get presetOnce;
+
+  /// No description provided for @presetTwice.
+  ///
+  /// In en, this message translates to:
+  /// **'Twice a day'**
+  String get presetTwice;
+
+  /// No description provided for @presetThree.
+  ///
+  /// In en, this message translates to:
+  /// **'3 times a day'**
+  String get presetThree;
+
+  /// No description provided for @presetBedtime.
+  ///
+  /// In en, this message translates to:
+  /// **'At bedtime'**
+  String get presetBedtime;
+
+  /// No description provided for @summaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PLEASE CHECK'**
+  String get summaryTitle;
+
+  /// No description provided for @myHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'My health'**
+  String get myHealth;
+
+  /// No description provided for @healthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Health readings'**
+  String get healthTitle;
+
+  /// No description provided for @bloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood pressure'**
+  String get bloodPressure;
+
+  /// No description provided for @bloodSugar.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood sugar'**
+  String get bloodSugar;
+
+  /// No description provided for @addBloodPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Add blood pressure'**
+  String get addBloodPressure;
+
+  /// No description provided for @addBloodSugar.
+  ///
+  /// In en, this message translates to:
+  /// **'Add blood sugar'**
+  String get addBloodSugar;
+
+  /// No description provided for @systolicLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Top number'**
+  String get systolicLabel;
+
+  /// No description provided for @diastolicLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom number'**
+  String get diastolicLabel;
+
+  /// No description provided for @pulseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulse (optional)'**
+  String get pulseLabel;
+
+  /// No description provided for @pulse.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulse'**
+  String get pulse;
+
+  /// No description provided for @pulseValue.
+  ///
+  /// In en, this message translates to:
+  /// **'pulse {count}'**
+  String pulseValue(int count);
+
+  /// No description provided for @sugarLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood sugar'**
+  String get sugarLabel;
+
+  /// No description provided for @unitMmHg.
+  ///
+  /// In en, this message translates to:
+  /// **'mmHg'**
+  String get unitMmHg;
+
+  /// No description provided for @unitMgDl.
+  ///
+  /// In en, this message translates to:
+  /// **'mg/dL'**
+  String get unitMgDl;
+
+  /// No description provided for @whenMeasured.
+  ///
+  /// In en, this message translates to:
+  /// **'When was it measured?'**
+  String get whenMeasured;
+
+  /// No description provided for @sugarFasting.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting'**
+  String get sugarFasting;
+
+  /// No description provided for @sugarBeforeMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a meal'**
+  String get sugarBeforeMeal;
+
+  /// No description provided for @sugarAfterMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'2 h after a meal'**
+  String get sugarAfterMeal;
+
+  /// No description provided for @sugarBedtime.
+  ///
+  /// In en, this message translates to:
+  /// **'At bedtime'**
+  String get sugarBedtime;
+
+  /// No description provided for @sugarRandom.
+  ///
+  /// In en, this message translates to:
+  /// **'Other time'**
+  String get sugarRandom;
+
+  /// No description provided for @measuredAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured at {time}'**
+  String measuredAt(String time);
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptional;
+
+  /// No description provided for @noteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. felt dizzy'**
+  String get noteHint;
+
+  /// No description provided for @enterValueBetween.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number from {min} to {max}'**
+  String enterValueBetween(int min, int max);
+
+  /// No description provided for @levelLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get levelLow;
+
+  /// No description provided for @levelNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get levelNormal;
+
+  /// No description provided for @levelElevated.
+  ///
+  /// In en, this message translates to:
+  /// **'A bit high'**
+  String get levelElevated;
+
+  /// No description provided for @levelHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get levelHigh;
+
+  /// No description provided for @levelVeryHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Very high'**
+  String get levelVeryHigh;
+
+  /// No description provided for @noReadingsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No readings yet'**
+  String get noReadingsYet;
+
+  /// No description provided for @readingsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your readings here. They are included in the report for your doctor.'**
+  String get readingsHelp;
+
+  /// No description provided for @latestReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get latestReading;
+
+  /// No description provided for @readingAdvice.
+  ///
+  /// In en, this message translates to:
+  /// **'If readings like this keep happening, or you feel unwell, contact your doctor.'**
+  String get readingAdvice;
+
+  /// No description provided for @average7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'7-day average'**
+  String get average7Days;
+
+  /// No description provided for @average30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'30-day average'**
+  String get average30Days;
+
+  /// No description provided for @allReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'All readings'**
+  String get allReadings;
+
+  /// No description provided for @deleteReadingQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this reading?'**
+  String get deleteReadingQuestion;
+
+  /// No description provided for @tapToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add'**
+  String get tapToAdd;
+
+  /// No description provided for @reportNoReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'No readings in this period.'**
+  String get reportNoReadings;
+
+  /// No description provided for @reportBpSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reading} other{{count} readings}} • average {average} mmHg • average pulse {pulse}'**
+  String reportBpSummary(int count, String average, String pulse);
+
+  /// No description provided for @reportSugarSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reading} other{{count} readings}} • average {average} mg/dL • lowest {min} • highest {max}'**
+  String reportSugarSummary(int count, String average, String min, String max);
+
+  /// No description provided for @reportDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & time'**
+  String get reportDateTime;
+
+  /// No description provided for @reportLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get reportLevel;
+
+  /// No description provided for @reportReadingsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis.'**
+  String get reportReadingsNote;
 }
 
 class _AppLocalizationsDelegate

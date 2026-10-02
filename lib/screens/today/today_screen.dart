@@ -15,6 +15,7 @@ import '../../widgets/reminder_health_banner.dart';
 import '../../widgets/responsive_center.dart';
 import '../medication_form/add_medication_wizard.dart';
 import 'calendar_strip.dart';
+import 'day_progress.dart';
 import 'day_section.dart';
 import 'dose_action_handler.dart';
 import 'now_card.dart';
@@ -129,6 +130,7 @@ class _TodayScreenState extends State<TodayScreen>
   DoseCallbacks get _callbacks => DoseCallbacks(
     onTake: takeDose,
     onSnooze: snoozeDose,
+    onSnoozeFor: snoozeDoseFor,
     onSkip: skipDose,
     onUndo: undoDose,
     onOptions: openDoseOptions,
@@ -322,6 +324,7 @@ class _TodayScreenState extends State<TodayScreen>
                         ],
                       ),
                     ),
+                  if (isToday && !_data.isLoading) DayProgress(plan: plan),
                   if (healthMessage != null)
                     ReminderHealthBanner(
                       message: healthMessage,

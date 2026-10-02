@@ -10,11 +10,16 @@ class DoseActions {
   final StorageService _storage = StorageService();
   final NotificationService _notifications = NotificationService();
 
-  Future<void> take(DoseRef ref) async {
+  /// Marks a dose as taken, now or at [at] ("I took it earlier").
+  Future<void> take(DoseRef ref, {DateTime? at}) async {
     final previous = await _storage.getDoseRecord(ref);
+    final now = DateTime.now();
     await _storage.setDoseRecord(
       ref,
-      DoseRecord(status: DoseStatus.taken, takenAt: DateTime.now()),
+      DoseRecord(
+        status: DoseStatus.taken,
+        takenAt: at == null || at.isAfter(now) ? now : at,
+      ),
     );
     if (previous?.status != DoseStatus.taken) {
       await _useStock(ref.pillId);

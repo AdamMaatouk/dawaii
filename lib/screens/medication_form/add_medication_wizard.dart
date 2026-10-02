@@ -93,7 +93,17 @@ class _AddMedicationWizardState extends State<AddMedicationWizard> {
       (l.wizLooksTitle, Icons.palette_rounded, LooksSection(form: _form)),
       (l.wizWhenTitle, Icons.alarm_rounded, WhenSection(form: _form)),
       (l.wizHowLongTitle, Icons.flag_rounded, DurationSection(form: _form)),
-      (l.wizStockTitle, Icons.inventory_2_outlined, StockSection(form: _form)),
+      (
+        l.wizStockTitle,
+        Icons.inventory_2_outlined,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            MedicationSummary(form: _form),
+            StockSection(form: _form),
+          ],
+        ),
+      ),
     ];
     final (title, icon, body) = steps[_step];
     final isLast = _step == _stepCount - 1;

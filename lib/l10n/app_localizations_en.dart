@@ -1112,7 +1112,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wizHowLongTitle => 'For how long?';
 
   @override
-  String get wizStockTitle => 'Count your pills?';
+  String get wizStockTitle => 'Check and save';
 
   @override
   String stepOf(int current, int total) {
@@ -1142,7 +1142,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String takenOfLast(int taken, int total) {
-    return 'You took $taken of your last $total doses.';
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: 'You took $taken of your last $total doses.',
+      one: 'You took $taken of your last dose.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1165,4 +1171,231 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hideDone => 'Hide';
+
+  @override
+  String get tookAtOtherTime => 'I took it at another time';
+
+  @override
+  String takenSnack(String name) {
+    return '$name taken ✓';
+  }
+
+  @override
+  String takenAllSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count doses taken ✓',
+      one: '1 dose taken ✓',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String snoozedFor(String duration) {
+    return 'I\'ll remind you again in $duration.';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String hoursShort(int count) {
+    return '$count h';
+  }
+
+  @override
+  String todayProgress(int taken, int total) {
+    return '$taken of $total taken today';
+  }
+
+  @override
+  String dosesLeftToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count doses to go',
+      one: '1 dose to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastsUntil(String date) {
+    return 'lasts until $date';
+  }
+
+  @override
+  String get presetOnce => 'Once a day';
+
+  @override
+  String get presetTwice => 'Twice a day';
+
+  @override
+  String get presetThree => '3 times a day';
+
+  @override
+  String get presetBedtime => 'At bedtime';
+
+  @override
+  String get summaryTitle => 'PLEASE CHECK';
+
+  @override
+  String get myHealth => 'My health';
+
+  @override
+  String get healthTitle => 'Health readings';
+
+  @override
+  String get bloodPressure => 'Blood pressure';
+
+  @override
+  String get bloodSugar => 'Blood sugar';
+
+  @override
+  String get addBloodPressure => 'Add blood pressure';
+
+  @override
+  String get addBloodSugar => 'Add blood sugar';
+
+  @override
+  String get systolicLabel => 'Top number';
+
+  @override
+  String get diastolicLabel => 'Bottom number';
+
+  @override
+  String get pulseLabel => 'Pulse (optional)';
+
+  @override
+  String get pulse => 'Pulse';
+
+  @override
+  String pulseValue(int count) {
+    return 'pulse $count';
+  }
+
+  @override
+  String get sugarLabel => 'Blood sugar';
+
+  @override
+  String get unitMmHg => 'mmHg';
+
+  @override
+  String get unitMgDl => 'mg/dL';
+
+  @override
+  String get whenMeasured => 'When was it measured?';
+
+  @override
+  String get sugarFasting => 'Fasting';
+
+  @override
+  String get sugarBeforeMeal => 'Before a meal';
+
+  @override
+  String get sugarAfterMeal => '2 h after a meal';
+
+  @override
+  String get sugarBedtime => 'At bedtime';
+
+  @override
+  String get sugarRandom => 'Other time';
+
+  @override
+  String measuredAt(String time) {
+    return 'Measured at $time';
+  }
+
+  @override
+  String get noteOptional => 'Note (optional)';
+
+  @override
+  String get noteHint => 'e.g. felt dizzy';
+
+  @override
+  String enterValueBetween(int min, int max) {
+    return 'Enter a number from $min to $max';
+  }
+
+  @override
+  String get levelLow => 'Low';
+
+  @override
+  String get levelNormal => 'Normal';
+
+  @override
+  String get levelElevated => 'A bit high';
+
+  @override
+  String get levelHigh => 'High';
+
+  @override
+  String get levelVeryHigh => 'Very high';
+
+  @override
+  String get noReadingsYet => 'No readings yet';
+
+  @override
+  String get readingsHelp =>
+      'Log your readings here. They are included in the report for your doctor.';
+
+  @override
+  String get latestReading => 'Latest';
+
+  @override
+  String get readingAdvice =>
+      'If readings like this keep happening, or you feel unwell, contact your doctor.';
+
+  @override
+  String get average7Days => '7-day average';
+
+  @override
+  String get average30Days => '30-day average';
+
+  @override
+  String get allReadings => 'All readings';
+
+  @override
+  String get deleteReadingQuestion => 'Delete this reading?';
+
+  @override
+  String get tapToAdd => 'Tap + to add';
+
+  @override
+  String get reportNoReadings => 'No readings in this period.';
+
+  @override
+  String reportBpSummary(int count, String average, String pulse) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count readings',
+      one: '1 reading',
+    );
+    return '$_temp0 • average $average mmHg • average pulse $pulse';
+  }
+
+  @override
+  String reportSugarSummary(int count, String average, String min, String max) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count readings',
+      one: '1 reading',
+    );
+    return '$_temp0 • average $average mg/dL • lowest $min • highest $max';
+  }
+
+  @override
+  String get reportDateTime => 'Date & time';
+
+  @override
+  String get reportLevel => 'Level';
+
+  @override
+  String get reportReadingsNote =>
+      'Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis.';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/dose.dart';
+import '../models/health_reading.dart';
 import '../models/pill_model.dart';
 import 'storage_service.dart';
 
@@ -15,6 +16,7 @@ class AppData extends ChangeNotifier {
 
   List<PillModel> pills = const [];
   Map<String, DoseRecord> records = const {};
+  List<HealthReading> readings = const [];
   bool isLoading = true;
   bool loadFailed = false;
 
@@ -28,8 +30,10 @@ class AppData extends ChangeNotifier {
     try {
       final loadedPills = await _storage.getPills();
       final loadedRecords = await _storage.getDoseRecords();
+      final loadedReadings = await _storage.getReadings();
       pills = loadedPills;
       records = loadedRecords;
+      readings = loadedReadings;
       loadFailed = false;
     } catch (e) {
       debugPrint('LOAD ERROR: $e');

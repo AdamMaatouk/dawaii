@@ -119,6 +119,7 @@ class _MedicationScreenState extends State<MedicationScreen>
     final callbacks = DoseCallbacks(
       onTake: takeDose,
       onSnooze: snoozeDose,
+      onSnoozeFor: snoozeDoseFor,
       onSkip: skipDose,
       onUndo: undoDose,
       onOptions: openDoseOptions,
@@ -302,9 +303,7 @@ class _MedicationScreenState extends State<MedicationScreen>
                   info(
                     Icons.inventory_2_outlined,
                     l.stock,
-                    pill.isLowOnStock
-                        ? '${l.pillsLeft(pill.stockCount!)} • ${l.lowStockWarning}'
-                        : l.pillsLeft(pill.stockCount!),
+                    fmt.stockSummary(pill, DateTime.now()),
                     trailing: FilledButton.icon(
                       onPressed: () => _refill(pill),
                       icon: const Icon(Icons.add_rounded),

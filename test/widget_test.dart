@@ -119,6 +119,10 @@ void main() {
     // The next dose is now the "Now" card.
     expect(find.text('NEXT'), findsOneWidget);
 
+    // Let the Undo bar disappear so it does not cover the list.
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pumpAndSettle();
+
     // The taken dose moved down into "Done", which starts folded.
     expect(find.text('Done'), findsOneWidget);
     expect(find.textContaining('Taken at'), findsNothing);
@@ -220,7 +224,7 @@ void main() {
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(find.text('Please add at least one reminder time.'), findsOneWidget);
-    await tester.tap(find.text('8:00 AM'));
+    await tester.tap(find.text('Twice a day'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
@@ -230,13 +234,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Step 5 of 5'), findsOneWidget);
+    expect(find.text('PLEASE CHECK'), findsOneWidget);
+    expect(find.text('8:00 AM  •  8:00 PM'), findsOneWidget);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     final saved = (await StorageService().getPills()).single;
     expect(saved.name, 'Metformin');
     expect(saved.pillCount, 2);
-    expect(saved.scheduleTimes, ['08:00']);
+    expect(saved.scheduleTimes, ['08:00', '20:00']);
     expect(saved.isOngoing, isTrue);
     expect(saved.tracksStock, isFalse);
   });
@@ -271,6 +277,120 @@ void main() {
     expect(find.text('Last 7 days'), findsOneWidget);
     expect(find.text('Ongoing'), findsOneWidget);
     expect(find.text('Refill'), findsOneWidget);
+  });
+
+  testWidgets('progress ring, undo bar and one-tap snooze', (tester) async {
+    usePhoneSize(tester);
+    final pill = testPill(
+      name: 'Concor',
+      times: ['00:00', '23:59'],
+      start: today.subtract(const Duration(days: 1)),
+    );
+    await pumpApp(tester, {
+      'user_pills': pillsJson([pill]),
+    });
+    expect(find.text('0 of 2 taken today'), findsOneWidget);
+
+    // Take, then undo from the bar that appears.
+    await tester.tap(find.text('I took it'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yes, I took it'));
+    await tester.pumpAndSettle();
+    expect(find.text('Concor taken ✓'), findsOneWidget);
+    expect(find.text('1 of 2 taken today'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(AppData().records, isEmpty);
+    expect(find.text('0 of 2 taken today'), findsOneWidget);
+
+    // One tap snoozes the late dose for 10 minutes.
+    await tester.tap(find.text('10 min'));
+    await tester.pumpAndSettle();
+    final record = AppData().records[ref('1', today, '00:00').key]!;
+    expect(record.status, DoseStatus.snoozed);
+    expect(
+      record.snoozedUntil!.difference(DateTime.now()).inMinutes,
+      inInclusiveRange(8, 10),
+    );
+  });
+
+  testWidgets('"I took it at another time" records the chosen time', (
+    tester,
+  ) async {
+    usePhoneSize(tester);
+    final pill = testPill(times: ['00:00'], start: today);
+    await pumpApp(tester, {
+      'user_pills': pillsJson([pill]),
+    });
+
+    await tester.tap(find.text('I took it'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('I took it at another time'));
+    await tester.pumpAndSettle();
+    // Picker opens at the dose time (12:00 AM); one step up = 1:00 AM.
+    await tester.tap(find.byTooltip('+').first);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final takenAt = AppData().records[ref('1', today, '00:00').key]!.takenAt!;
+    final now = DateTime.now();
+    final expected = DateTime(today.year, today.month, today.day, 1);
+    // Never in the future: if 1:00 AM has not come yet, "now" is used.
+    expect(takenAt, expected.isAfter(now) ? isNot(expected) : expected);
+  });
+
+  testWidgets('log a blood pressure reading from the Progress tab', (
+    tester,
+  ) async {
+    usePhoneSize(tester);
+    await pumpApp(tester, {
+      'user_pills': pillsJson([testPill(start: today)]),
+    });
+    await tester.tap(find.text('Progress').last);
+    await tester.pumpAndSettle();
+    expect(find.text('My health'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Add blood pressure'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Top number'),
+      '128',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Bottom number'),
+      '82',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(AppData().readings.single.systolic, 128);
+    expect(find.text('128/82'), findsOneWidget);
+    expect(find.text('High'), findsOneWidget);
+
+    // Opening the full health screen shows the reading and its level.
+    await tester.tap(find.text('128/82'));
+    await tester.pumpAndSettle();
+    expect(find.text('Health readings'), findsOneWidget);
+    expect(find.text('All readings'), findsOneWidget);
+  });
+
+  testWidgets('blood pressure entry validates the numbers', (tester) async {
+    usePhoneSize(tester);
+    await pumpApp(tester, {
+      'user_pills': pillsJson([testPill(start: today)]),
+    });
+    await tester.tap(find.text('Progress').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add blood pressure'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Top number'),
+      '12',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a number from 60 to 260'), findsOneWidget);
+    expect(AppData().readings, isEmpty);
   });
 
   testWidgets('big time picker steps hours and minutes', (tester) async {

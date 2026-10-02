@@ -142,36 +142,55 @@ class NowCard extends StatelessWidget {
               ),
             ),
             if (group.length == 1) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
+              Text(
+                l.remindAgainIn,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: palette.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // One tap to snooze: no extra sheet to open.
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: palette.warning,
-                        side: BorderSide(
-                          color: palette.warningBorder,
-                          width: 1.5,
+                  for (final minutes in const [10, 30, 60]) ...[
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: palette.warning,
+                          side: BorderSide(
+                            color: palette.warningBorder,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                        onPressed: processing
+                            ? null
+                            : () => callbacks.onSnoozeFor(
+                                first.pill,
+                                first.ref,
+                                minutes,
+                              ),
+                        child: Text(
+                          minutes < 60
+                              ? l.minutesShort(minutes)
+                              : l.hoursShort(minutes ~/ 60),
+                          maxLines: 1,
                         ),
                       ),
-                      onPressed: processing
-                          ? null
-                          : () => callbacks.onSnooze(first.pill, first.ref),
-                      icon: const Icon(Icons.snooze_rounded),
-                      label: Text(l.snooze),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: palette.textSecondary,
-                      ),
-                      onPressed: processing
-                          ? null
-                          : () => callbacks.onSkip(first.pill, first.ref),
-                      child: Text(l.skip),
+                    const SizedBox(width: 8),
+                  ],
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: palette.textSecondary,
                     ),
+                    onPressed: processing
+                        ? null
+                        : () => callbacks.onSkip(first.pill, first.ref),
+                    child: Text(l.skip),
                   ),
                 ],
               ),

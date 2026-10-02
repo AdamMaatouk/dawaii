@@ -230,9 +230,7 @@ class MedicineTile extends StatelessWidget {
                                 if (pill.tracksStock) ...[
                                   const SizedBox(height: 4),
                                   Text(
-                                    pill.isLowOnStock
-                                        ? '${l.pillsLeft(pill.stockCount!)} • ${l.lowStockWarning}'
-                                        : l.pillsLeft(pill.stockCount!),
+                                    fmt.stockSummary(pill, DateTime.now()),
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: pill.isLowOnStock

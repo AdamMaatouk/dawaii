@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/health_reading.dart';
 import '../utils/formatters.dart';
 import 'schedule_service.dart';
 import 'settings_service.dart';
@@ -29,6 +30,7 @@ class ReportService {
     var l = SettingsService().strings;
     final pills = await _storage.getPills();
     final records = await _storage.getDoseRecords();
+    final allReadings = await _storage.getReadings();
     final now = DateTime.now();
     final from = DateTime(now.year, now.month, now.day - (days - 1));
 
@@ -68,6 +70,56 @@ class ReportService {
       now: now,
     );
     final pillsById = {for (final p in pills) p.id: p};
+    final readings = allReadings.where((r) => !r.at.isBefore(from)).toList()
+      ..sort((a, b) => a.at.compareTo(b.at));
+    final bpReadings = readings
+        .where((r) => r.type == ReadingType.bloodPressure)
+        .toList();
+    final sugarReadings = readings
+        .where((r) => r.type == ReadingType.bloodSugar)
+        .toList();
+    final bpSummary = HealthSummary.of(bpReadings, ReadingType.bloodPressure);
+    final sugarSummary = HealthSummary.of(
+      sugarReadings,
+      ReadingType.bloodSugar,
+    );
+
+    PdfColor levelColor(ReadingLevel level) => switch (level) {
+      ReadingLevel.normal => PdfColors.green800,
+      ReadingLevel.elevated => PdfColors.orange800,
+      ReadingLevel.low => PdfColors.blue800,
+      _ => PdfColors.red800,
+    };
+
+    pw.Widget readingTable(List<String> headers, List<List<pw.Widget>> rows) {
+      return pw.Table(
+        border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+        children: [
+          pw.TableRow(
+            decoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xFFEAF1FE),
+            ),
+            children: [
+              for (final h in headers)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 5,
+                  ),
+                  child: pw.Text(
+                    h,
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          for (final row in rows) pw.TableRow(children: row),
+        ],
+      );
+    }
 
     String percent(double? value) =>
         value == null ? '—' : '${(value * 100).round()}%';
@@ -190,6 +242,81 @@ class ReportService {
                     '${pill?.name ?? ''}',
               );
             }),
+          // ---------------- Blood pressure ----------------
+          pw.SizedBox(height: 22),
+          pw.Text(
+            l.bloodPressure,
+            style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 6),
+          if (bpReadings.isEmpty)
+            pw.Text(l.reportNoReadings)
+          else ...[
+            pw.Text(
+              l.reportBpSummary(
+                bpReadings.length,
+                '${bpSummary.avgSystolic!.round()}/'
+                '${bpSummary.avgDiastolic!.round()}',
+                bpSummary.avgPulse == null
+                    ? '—'
+                    : '${bpSummary.avgPulse!.round()}',
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            readingTable(
+              [l.reportDateTime, l.unitMmHg, l.pulse, l.reportLevel],
+              [
+                for (final r in bpReadings)
+                  [
+                    cell('${fmt.date(r.at)} • ${fmt.timeOf(r.at)}'),
+                    cell('${r.systolic}/${r.diastolic}', bold: true),
+                    cell(r.pulse == null ? '—' : '${r.pulse}'),
+                    cell(fmt.levelName(r.level), color: levelColor(r.level)),
+                  ],
+              ],
+            ),
+          ],
+          // ---------------- Blood sugar ----------------
+          pw.SizedBox(height: 22),
+          pw.Text(
+            l.bloodSugar,
+            style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 6),
+          if (sugarReadings.isEmpty)
+            pw.Text(l.reportNoReadings)
+          else ...[
+            pw.Text(
+              l.reportSugarSummary(
+                sugarReadings.length,
+                '${sugarSummary.avgSugar!.round()}',
+                '${sugarSummary.minSugar}',
+                '${sugarSummary.maxSugar}',
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            readingTable(
+              [l.reportDateTime, l.unitMgDl, l.whenMeasured, l.reportLevel],
+              [
+                for (final r in sugarReadings)
+                  [
+                    cell('${fmt.date(r.at)} • ${fmt.timeOf(r.at)}'),
+                    cell('${r.sugar}', bold: true),
+                    cell(
+                      r.sugarContext == null
+                          ? '—'
+                          : fmt.sugarContext(r.sugarContext!),
+                    ),
+                    cell(fmt.levelName(r.level), color: levelColor(r.level)),
+                  ],
+              ],
+            ),
+          ],
+          pw.SizedBox(height: 10),
+          pw.Text(
+            l.reportReadingsNote,
+            style: const pw.TextStyle(color: PdfColors.grey700, fontSize: 9),
+          ),
         ],
       ),
     );

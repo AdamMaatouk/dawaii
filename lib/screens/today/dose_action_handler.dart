@@ -50,11 +50,38 @@ mixin DoseActionHandler<T extends StatefulWidget> on State<T> {
   Future<void> takeDose(PillModel pill, DoseRef ref) async {
     final l = AppLocalizations.of(context);
     if (isProcessing(ref)) return;
-    if (!await confirmTakeDose(context, pill, ref) || !mounted) return;
-    if (await _run([ref], l.unableTake, () => doseActions.take(ref)) &&
+    final at = await confirmTakeDose(context, pill, ref);
+    if (at == null || !mounted) return;
+    if (await _run([ref], l.unableTake, () => doseActions.take(ref, at: at)) &&
         mounted) {
       showSuccessFeedback(context);
+      _showUndoBar(l.takenSnack(pill.name), [ref]);
     }
+  }
+
+  /// A few seconds to undo, without hunting for the dose in "Done".
+  void _showUndoBar(String message, List<DoseRef> refs) {
+    final l = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 6),
+          // A snackbar with an action stays forever by default; this one
+          // must go away on its own so it never covers the list.
+          persist: false,
+          content: Text(message),
+          action: SnackBarAction(
+            label: l.undo,
+            onPressed: () async {
+              for (final ref in refs) {
+                await doseActions.undo(ref);
+              }
+              await AppData().reload();
+            },
+          ),
+        ),
+      );
   }
 
   Future<void> takeAll(List<(PillModel, DoseRef)> doses) async {
@@ -68,7 +95,10 @@ mixin DoseActionHandler<T extends StatefulWidget> on State<T> {
         await doseActions.take(ref);
       }
     });
-    if (ok && mounted) showSuccessFeedback(context);
+    if (ok && mounted) {
+      showSuccessFeedback(context);
+      _showUndoBar(l.takenAllSnack(refs.length), refs);
+    }
   }
 
   Future<void> skipDose(PillModel pill, DoseRef ref) async {
@@ -84,6 +114,24 @@ mixin DoseActionHandler<T extends StatefulWidget> on State<T> {
     final minutes = await showSnoozeSheet(context, pill);
     if (minutes == null || !mounted) return;
     await _run([ref], l.unableSnooze, () => doseActions.snooze(ref, minutes));
+  }
+
+  /// One-tap snooze from the Now card (no sheet).
+  Future<void> snoozeDoseFor(PillModel pill, DoseRef ref, int minutes) async {
+    final l = AppLocalizations.of(context);
+    if (isProcessing(ref)) return;
+    final ok = await _run(
+      [ref],
+      l.unableSnooze,
+      () => doseActions.snooze(ref, minutes),
+    );
+    if (ok && mounted) {
+      showMessage(
+        l.snoozedFor(
+          minutes < 60 ? l.minutesCount(minutes) : l.hoursCount(minutes ~/ 60),
+        ),
+      );
+    }
   }
 
   Future<void> undoDose(PillModel pill, DoseRef ref) async {

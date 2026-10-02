@@ -1129,7 +1129,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wizHowLongTitle => 'لأي مدة؟';
 
   @override
-  String get wizStockTitle => 'هل تريد عدّ حباتك؟';
+  String get wizStockTitle => 'راجع واحفظ';
 
   @override
   String stepOf(int current, int total) {
@@ -1159,7 +1159,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String takenOfLast(int taken, int total) {
-    return 'أخذت $taken من آخر $total جرعة.';
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: 'أخذت $taken من آخر $total جرعة.',
+      many: 'أخذت $taken من آخر $total جرعة.',
+      few: 'أخذت $taken من آخر $total جرعات.',
+      two: 'أخذت $taken من آخر جرعتين.',
+      one: 'أخذت $taken من آخر جرعة.',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1182,4 +1191,243 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hideDone => 'إخفاء';
+
+  @override
+  String get tookAtOtherTime => 'أخذته في وقت آخر';
+
+  @override
+  String takenSnack(String name) {
+    return 'تم أخذ $name ✓';
+  }
+
+  @override
+  String takenAllSnack(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تم أخذ $count جرعة ✓',
+      many: 'تم أخذ $count جرعة ✓',
+      few: 'تم أخذ $count جرعات ✓',
+      two: 'تم أخذ جرعتين ✓',
+      one: 'تم أخذ جرعة واحدة ✓',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String snoozedFor(String duration) {
+    return 'سأذكّرك مجددًا بعد $duration.';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '$count د';
+  }
+
+  @override
+  String hoursShort(int count) {
+    return '$count س';
+  }
+
+  @override
+  String todayProgress(int taken, int total) {
+    return 'أُخذ $taken من $total اليوم';
+  }
+
+  @override
+  String dosesLeftToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'بقيت $count جرعة',
+      many: 'بقيت $count جرعة',
+      few: 'بقيت $count جرعات',
+      two: 'بقيت جرعتان',
+      one: 'بقيت جرعة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastsUntil(String date) {
+    return 'تكفي حتى $date';
+  }
+
+  @override
+  String get presetOnce => 'مرة يوميًا';
+
+  @override
+  String get presetTwice => 'مرتين يوميًا';
+
+  @override
+  String get presetThree => '3 مرات يوميًا';
+
+  @override
+  String get presetBedtime => 'قبل النوم';
+
+  @override
+  String get summaryTitle => 'يرجى المراجعة';
+
+  @override
+  String get myHealth => 'صحتي';
+
+  @override
+  String get healthTitle => 'قياساتي الصحية';
+
+  @override
+  String get bloodPressure => 'ضغط الدم';
+
+  @override
+  String get bloodSugar => 'السكر في الدم';
+
+  @override
+  String get addBloodPressure => 'إضافة قياس الضغط';
+
+  @override
+  String get addBloodSugar => 'إضافة قياس السكر';
+
+  @override
+  String get systolicLabel => 'الرقم الأعلى';
+
+  @override
+  String get diastolicLabel => 'الرقم الأدنى';
+
+  @override
+  String get pulseLabel => 'النبض (اختياري)';
+
+  @override
+  String get pulse => 'النبض';
+
+  @override
+  String pulseValue(int count) {
+    return 'النبض $count';
+  }
+
+  @override
+  String get sugarLabel => 'السكر';
+
+  @override
+  String get unitMmHg => 'ملم زئبق';
+
+  @override
+  String get unitMgDl => 'ملغ/دل';
+
+  @override
+  String get whenMeasured => 'متى تم القياس؟';
+
+  @override
+  String get sugarFasting => 'صائم';
+
+  @override
+  String get sugarBeforeMeal => 'قبل الأكل';
+
+  @override
+  String get sugarAfterMeal => 'بعد الأكل بساعتين';
+
+  @override
+  String get sugarBedtime => 'قبل النوم';
+
+  @override
+  String get sugarRandom => 'وقت آخر';
+
+  @override
+  String measuredAt(String time) {
+    return 'تم القياس الساعة $time';
+  }
+
+  @override
+  String get noteOptional => 'ملاحظة (اختياري)';
+
+  @override
+  String get noteHint => 'مثال: شعرت بدوخة';
+
+  @override
+  String enterValueBetween(int min, int max) {
+    return 'أدخل رقمًا من $min إلى $max';
+  }
+
+  @override
+  String get levelLow => 'منخفض';
+
+  @override
+  String get levelNormal => 'طبيعي';
+
+  @override
+  String get levelElevated => 'مرتفع قليلًا';
+
+  @override
+  String get levelHigh => 'مرتفع';
+
+  @override
+  String get levelVeryHigh => 'مرتفع جدًا';
+
+  @override
+  String get noReadingsYet => 'لا توجد قياسات بعد';
+
+  @override
+  String get readingsHelp =>
+      'سجّل قياساتك هنا. ستُضاف إلى التقرير الخاص بطبيبك.';
+
+  @override
+  String get latestReading => 'آخر قياس';
+
+  @override
+  String get readingAdvice =>
+      'إذا تكررت قياسات كهذه أو شعرت بتوعك، تواصل مع طبيبك.';
+
+  @override
+  String get average7Days => 'متوسط 7 أيام';
+
+  @override
+  String get average30Days => 'متوسط 30 يومًا';
+
+  @override
+  String get allReadings => 'كل القياسات';
+
+  @override
+  String get deleteReadingQuestion => 'حذف هذا القياس؟';
+
+  @override
+  String get tapToAdd => 'اضغط + للإضافة';
+
+  @override
+  String get reportNoReadings => 'لا توجد قياسات في هذه الفترة.';
+
+  @override
+  String reportBpSummary(int count, String average, String pulse) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count قياس',
+      many: '$count قياسًا',
+      few: '$count قياسات',
+      two: 'قياسان',
+      one: 'قياس واحد',
+    );
+    return '$_temp0 • المتوسط $average ملم زئبق • متوسط النبض $pulse';
+  }
+
+  @override
+  String reportSugarSummary(int count, String average, String min, String max) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count قياس',
+      many: '$count قياسًا',
+      few: '$count قياسات',
+      two: 'قياسان',
+      one: 'قياس واحد',
+    );
+    return '$_temp0 • المتوسط $average ملغ/دل • الأدنى $min • الأعلى $max';
+  }
+
+  @override
+  String get reportDateTime => 'التاريخ والوقت';
+
+  @override
+  String get reportLevel => 'المستوى';
+
+  @override
+  String get reportReadingsNote =>
+      'أدخل المريض هذه القياسات. تتبع المستويات الإرشادات الشائعة (AHA / ADA) وليست تشخيصًا.';
 }

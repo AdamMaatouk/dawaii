@@ -11,6 +11,7 @@ import '../utils/formatters.dart';
 import '../services/day_planner.dart';
 import '../widgets/pill_shape_widget.dart';
 import '../widgets/responsive_center.dart';
+import 'health/health_card.dart';
 import 'today/calendar_strip.dart';
 
 enum AnalyticsTimeframe { last7Days, last30Days, thisYear, allTime }
@@ -155,6 +156,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         now: now,
                       ),
                     ),
+                    const HealthCard(),
                     DropdownButtonFormField<AnalyticsTimeframe>(
                       initialValue: _timeframe,
                       isExpanded: true,

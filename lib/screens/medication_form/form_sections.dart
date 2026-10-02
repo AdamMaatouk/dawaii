@@ -502,6 +502,39 @@ class WhenSection extends StatelessWidget {
           ],
           const SizedBox(height: 22),
           formLabel(context, l.doseTimings),
+          // Most people take medicines at common times: one tap sets them.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (label, preset) in [
+                (l.presetOnce, const [TimeOfDay(hour: 8, minute: 0)]),
+                (
+                  l.presetTwice,
+                  const [
+                    TimeOfDay(hour: 8, minute: 0),
+                    TimeOfDay(hour: 20, minute: 0),
+                  ],
+                ),
+                (
+                  l.presetThree,
+                  const [
+                    TimeOfDay(hour: 8, minute: 0),
+                    TimeOfDay(hour: 14, minute: 0),
+                    TimeOfDay(hour: 20, minute: 0),
+                  ],
+                ),
+                (l.presetBedtime, const [TimeOfDay(hour: 22, minute: 0)]),
+              ])
+                ChoiceChip(
+                  label: Text(label, style: const TextStyle(fontSize: 17)),
+                  selected: form.hasExactly(preset),
+                  selectedColor: palette.softAccent,
+                  onSelected: (_) => form.setTimes(preset),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
           if (form.times.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -946,6 +979,117 @@ class _ColorDot extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Reads the whole medication back in plain words before saving, so a
+/// wrong time or strength is caught before it becomes a reminder.
+class MedicationSummary extends StatelessWidget {
+  final MedicationFormController form;
+
+  const MedicationSummary({super.key, required this.form});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final palette = context.palette;
+    final fmt = Formatters(l);
+    final count = int.tryParse(form.pillCount.text.trim()) ?? 1;
+
+    final frequency = switch (form.frequency) {
+      FrequencyType.daily => l.everyDay,
+      FrequencyType.specificDays =>
+        (List.of(form.days)..sort())
+            .map((d) => fmt.weekdayShortNames[d - 1])
+            .join(l.localeName == 'ar' ? '، ' : ', '),
+      FrequencyType.interval => l.everyNDays(form.intervalDays),
+    };
+    final duration = form.ongoing
+        ? l.ongoing
+        : form.validDuration == null
+        ? ''
+        : l.scheduleEndsDate(fmt.date(form.endDate(form.validDuration!)));
+
+    Widget line(IconData icon, String text) => Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 22, color: palette.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 17, color: palette.textBody),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: palette.softAccent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: palette.accent.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l.summaryTitle,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: palette.accent,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              PillShapeWidget(
+                shape: form.shape,
+                color: Color(form.colorHex),
+                size: 34,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      form.name.text.trim(),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${fmt.pills(count < 1 ? 1 : count)} • ${form.dosage.text.trim()}',
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          line(Icons.repeat_rounded, frequency),
+          line(
+            Icons.alarm_rounded,
+            form.times.map((t) => fmt.time(t.hour, t.minute)).join('  •  '),
+          ),
+          if (duration.isNotEmpty) line(Icons.flag_rounded, duration),
+          if (form.instructions.text.trim().isNotEmpty)
+            line(Icons.info_outline_rounded, form.instructions.text.trim()),
+        ],
       ),
     );
   }

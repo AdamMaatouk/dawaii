@@ -132,6 +132,16 @@ class MedicationFormController extends ChangeNotifier {
     return true;
   }
 
+  /// Replaces all times at once (schedule presets).
+  void setTimes(List<TimeOfDay> newTimes) {
+    times = List.of(newTimes);
+    _sortTimes();
+    notifyListeners();
+  }
+
+  bool hasExactly(List<TimeOfDay> other) =>
+      times.length == other.length && other.every(hasTime);
+
   void removeTime(TimeOfDay time) {
     times.removeWhere((e) => e.hour == time.hour && e.minute == time.minute);
     notifyListeners();

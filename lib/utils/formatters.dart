@@ -1,5 +1,7 @@
 import '../l10n/app_localizations.dart';
+import '../models/health_reading.dart';
 import '../models/pill_model.dart';
+import '../services/schedule_service.dart';
 
 /// Text formatting shared by the UI, notifications and the PDF report.
 class Formatters {
@@ -119,5 +121,34 @@ class Formatters {
     PillShape.tablet => l.tablet,
     PillShape.caplet => l.caplet,
     PillShape.softgel => l.softgel,
+  };
+
+  /// "24 pills left • lasts until 14 Oct • Refill soon"
+  String stockSummary(PillModel pill, DateTime now) {
+    final stock = pill.stockCount;
+    if (stock == null) return '';
+    final parts = [l.pillsLeft(stock)];
+    final runsOut = const ScheduleService().runsOutOn(pill, now);
+    if (runsOut != null && stock > 0) {
+      parts.add(l.lastsUntil(shortDate(runsOut)));
+    }
+    if (pill.isLowOnStock) parts.add(l.lowStockWarning);
+    return parts.join(' • ');
+  }
+
+  String levelName(ReadingLevel level) => switch (level) {
+    ReadingLevel.low => l.levelLow,
+    ReadingLevel.normal => l.levelNormal,
+    ReadingLevel.elevated => l.levelElevated,
+    ReadingLevel.high => l.levelHigh,
+    ReadingLevel.veryHigh => l.levelVeryHigh,
+  };
+
+  String sugarContext(SugarContext c) => switch (c) {
+    SugarContext.fasting => l.sugarFasting,
+    SugarContext.beforeMeal => l.sugarBeforeMeal,
+    SugarContext.afterMeal => l.sugarAfterMeal,
+    SugarContext.bedtime => l.sugarBedtime,
+    SugarContext.random => l.sugarRandom,
   };
 }

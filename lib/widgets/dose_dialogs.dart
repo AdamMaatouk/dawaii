@@ -6,6 +6,7 @@ import '../models/dose.dart';
 import '../models/pill_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
+import 'big_time_picker.dart';
 import 'pill_shape_widget.dart';
 
 /// Pill picture + name + dose + time, shown at the top of dose dialogs.
@@ -111,50 +112,111 @@ Future<bool> _confirm({
   return result ?? false;
 }
 
-Future<bool> confirmTakeDose(
+/// Asks "Did you take this dose?". Returns when it was taken (now, or an
+/// earlier time picked with "I took it at another time"), or null.
+Future<DateTime?> confirmTakeDose(
   BuildContext context,
   PillModel pill,
   DoseRef ref,
 ) {
   final l = AppLocalizations.of(context);
   final palette = context.palette;
-  return _confirm(
+
+  return showDialog<DateTime>(
     context: context,
-    title: l.confirmDose,
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _DoseHeader(pill: pill, ref: ref),
-        if (pill.instructions != null) ...[
-          const SizedBox(height: 12),
+    builder: (dialogContext) {
+      Future<void> pickEarlier() async {
+        final parts = ref.time.split(':');
+        final picked = await showBigTimePicker(
+          dialogContext,
+          initial: TimeOfDay(
+            hour: int.parse(parts[0]),
+            minute: int.parse(parts[1]),
+          ),
+        );
+        if (picked == null || !dialogContext.mounted) return;
+        final at = DateTime(
+          ref.date.year,
+          ref.date.month,
+          ref.date.day,
+          picked.hour,
+          picked.minute,
+        );
+        final now = DateTime.now();
+        Navigator.of(dialogContext).pop(at.isAfter(now) ? now : at);
+      }
+
+      return AlertDialog(
+        title: Text(l.confirmDose),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DoseHeader(pill: pill, ref: ref),
+              if (pill.instructions != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: palette.accent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        pill.instructions!,
+                        style: TextStyle(fontSize: 16, color: palette.textBody),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              Text(
+                l.markTakenQuestion,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: palette.textBody,
+                ),
+              ),
+              const SizedBox(height: 4),
+              TextButton.icon(
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                onPressed: pickEarlier,
+                icon: const Icon(Icons.history_rounded),
+                label: Text(l.tookAtOtherTime),
+              ),
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
           Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: palette.accent),
-              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  pill.instructions!,
-                  style: TextStyle(fontSize: 16, color: palette.textBody),
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(l.cancel),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF047857),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () =>
+                      Navigator.of(dialogContext).pop(DateTime.now()),
+                  icon: const Icon(Icons.check_rounded),
+                  label: Text(l.yesTaken, textAlign: TextAlign.center),
                 ),
               ),
             ],
           ),
         ],
-        const SizedBox(height: 16),
-        Text(
-          l.markTakenQuestion,
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: palette.textBody,
-          ),
-        ),
-      ],
-    ),
-    confirmText: l.yesTaken,
-    confirmIcon: Icons.check_rounded,
-    confirmColor: const Color(0xFF059669),
+      );
+    },
   );
 }
 

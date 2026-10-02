@@ -440,7 +440,7 @@
   "wizLooksTitle": "What does it look like?",
   "wizWhenTitle": "When do you take it?",
   "wizHowLongTitle": "For how long?",
-  "wizStockTitle": "Count your pills?",
+  "wizStockTitle": "Check and save",
   "stepOf": "Step {current} of {total}",
   "@stepOf": {
     "placeholders": {
@@ -459,7 +459,7 @@
   "encouragementGreat": "Excellent! Keep it up.",
   "encouragementGood": "Good job. Keep going.",
   "encouragementLow": "Every dose counts. You can do it.",
-  "takenOfLast": "You took {taken} of your last {total} doses.",
+  "takenOfLast": "{total, plural, =1{You took {taken} of your last dose.} other{You took {taken} of your last {total} doses.}}",
   "@takenOfLast": {
     "placeholders": {
       "taken": {
@@ -476,5 +476,175 @@
   "legendSomeMissed": "Some missed",
   "doneTitle": "Done",
   "showDone": "Show",
-  "hideDone": "Hide"
+  "hideDone": "Hide",
+  "tookAtOtherTime": "I took it at another time",
+  "takenSnack": "{name} taken ✓",
+  "@takenSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "takenAllSnack": "{count, plural, =1{1 dose taken ✓} other{{count} doses taken ✓}}",
+  "@takenAllSnack": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "snoozedFor": "I'll remind you again in {duration}.",
+  "@snoozedFor": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "minutesShort": "{count} min",
+  "@minutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursShort": "{count} h",
+  "@hoursShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayProgress": "{taken} of {total} taken today",
+  "@todayProgress": {
+    "placeholders": {
+      "taken": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "dosesLeftToday": "{count, plural, =1{1 dose to go} other{{count} doses to go}}",
+  "@dosesLeftToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastsUntil": "lasts until {date}",
+  "@lastsUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "presetOnce": "Once a day",
+  "presetTwice": "Twice a day",
+  "presetThree": "3 times a day",
+  "presetBedtime": "At bedtime",
+  "summaryTitle": "PLEASE CHECK",
+  "myHealth": "My health",
+  "healthTitle": "Health readings",
+  "bloodPressure": "Blood pressure",
+  "bloodSugar": "Blood sugar",
+  "addBloodPressure": "Add blood pressure",
+  "addBloodSugar": "Add blood sugar",
+  "systolicLabel": "Top number",
+  "diastolicLabel": "Bottom number",
+  "pulseLabel": "Pulse (optional)",
+  "pulse": "Pulse",
+  "pulseValue": "pulse {count}",
+  "@pulseValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sugarLabel": "Blood sugar",
+  "unitMmHg": "mmHg",
+  "unitMgDl": "mg/dL",
+  "whenMeasured": "When was it measured?",
+  "sugarFasting": "Fasting",
+  "sugarBeforeMeal": "Before a meal",
+  "sugarAfterMeal": "2 h after a meal",
+  "sugarBedtime": "At bedtime",
+  "sugarRandom": "Other time",
+  "measuredAt": "Measured at {time}",
+  "@measuredAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "noteOptional": "Note (optional)",
+  "noteHint": "e.g. felt dizzy",
+  "enterValueBetween": "Enter a number from {min} to {max}",
+  "@enterValueBetween": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "levelLow": "Low",
+  "levelNormal": "Normal",
+  "levelElevated": "A bit high",
+  "levelHigh": "High",
+  "levelVeryHigh": "Very high",
+  "noReadingsYet": "No readings yet",
+  "readingsHelp": "Log your readings here. They are included in the report for your doctor.",
+  "latestReading": "Latest",
+  "readingAdvice": "If readings like this keep happening, or you feel unwell, contact your doctor.",
+  "average7Days": "7-day average",
+  "average30Days": "30-day average",
+  "allReadings": "All readings",
+  "deleteReadingQuestion": "Delete this reading?",
+  "tapToAdd": "Tap + to add",
+  "reportNoReadings": "No readings in this period.",
+  "reportBpSummary": "{count, plural, =1{1 reading} other{{count} readings}} • average {average} mmHg • average pulse {pulse}",
+  "@reportBpSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "average": {
+        "type": "String"
+      },
+      "pulse": {
+        "type": "String"
+      }
+    }
+  },
+  "reportSugarSummary": "{count, plural, =1{1 reading} other{{count} readings}} • average {average} mg/dL • lowest {min} • highest {max}",
+  "@reportSugarSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "average": {
+        "type": "String"
+      },
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDateTime": "Date & time",
+  "reportLevel": "Level",
+  "reportReadingsNote": "Readings were entered by the patient. Levels follow common guidance (AHA / ADA) and are not a diagnosis."
 }
