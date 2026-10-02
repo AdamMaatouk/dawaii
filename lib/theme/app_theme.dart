@@ -19,7 +19,6 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color accentStrong;
   final Color softAccent;
   final Color success;
-  final Color successStrong;
   final Color successText;
   final Color softSuccess;
   final Color danger;
@@ -46,7 +45,6 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.accentStrong,
     required this.softAccent,
     required this.success,
-    required this.successStrong,
     required this.successText,
     required this.softSuccess,
     required this.danger,
@@ -58,7 +56,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.warningBorder,
   });
 
-  // "Soft slate": teal accent on cool, quiet greys. Text is dark
+  // "Soft slate": clear blue accent on cool, quiet greys. Text is dark
   // slate grey instead of black (and soft off-white instead of pure white
   // in dark mode), still above WCAG AA contrast everywhere. Status colors
   // (green = taken, amber = later / refill, red = late) stay distinct.
@@ -74,12 +72,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     cardBorder: Color(0xFFE4E7EC),
     pillTray: Color(0xFFEDF0F3),
     pillTrayBorder: Color(0xFFD5DAE0),
-    accent: Color(0xFF0F766E),
-    accentStrong: Color(0xFF0F766E),
-    softAccent: Color(0xFFE0F2EF),
-    // Taken = a true green, kept clearly apart from the teal accent.
-    success: Color(0xFF16A34A),
-    successStrong: Color(0xFF15803D),
+    accent: Color(0xFF2563EB),
+    accentStrong: Color(0xFF2563EB),
+    softAccent: Color(0xFFE8F0FD),
+    success: Color(0xFF059669),
     successText: Color(0xFF15803D),
     softSuccess: Color(0xFFDCFCE7),
     danger: Color(0xFFDC2626),
@@ -103,12 +99,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
     cardBorder: Color(0xFF2B3038),
     pillTray: Color(0xFF252A31),
     pillTrayBorder: Color(0xFF3B414A),
-    accent: Color(0xFF2DD4BF),
-    accentStrong: Color(0xFF0F766E),
-    softAccent: Color(0xFF113A36),
-    success: Color(0xFF4ADE80),
-    successStrong: Color(0xFF15803D),
-    successText: Color(0xFF86EFAC),
+    accent: Color(0xFF60A5FA),
+    accentStrong: Color(0xFF2563EB),
+    softAccent: Color(0xFF1C2C46),
+    success: Color(0xFF10B981),
+    successText: Color(0xFF6EE7B7),
     softSuccess: Color(0xFF15352A),
     danger: Color(0xFFF87171),
     dangerText: Color(0xFFFCA5A5),
@@ -143,7 +138,7 @@ class AppTheme {
 
   static ThemeData _build(AppPalette p, Brightness brightness, bool arabic) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF0F766E),
+      seedColor: const Color(0xFF2563EB),
       brightness: brightness,
       primary: p.accentStrong,
       surface: p.surface,
