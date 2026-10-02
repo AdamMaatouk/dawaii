@@ -128,12 +128,6 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get remove;
 
-  /// No description provided for @close.
-  ///
-  /// In en, this message translates to:
-  /// **'Close'**
-  String get close;
-
   /// No description provided for @undo.
   ///
   /// In en, this message translates to:
@@ -158,12 +152,6 @@ abstract class AppLocalizations {
   /// **'now'**
   String get now;
 
-  /// No description provided for @mainMenu.
-  ///
-  /// In en, this message translates to:
-  /// **'Menu'**
-  String get mainMenu;
-
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
@@ -175,24 +163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paused medications'**
   String get pausedMedications;
-
-  /// No description provided for @pausedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =0{None paused} =1{1 medication paused} other{{count} medications paused}}'**
-  String pausedCount(int count);
-
-  /// No description provided for @showingPaused.
-  ///
-  /// In en, this message translates to:
-  /// **'Paused medications'**
-  String get showingPaused;
-
-  /// No description provided for @backToSchedule.
-  ///
-  /// In en, this message translates to:
-  /// **'Back to schedule'**
-  String get backToSchedule;
 
   /// No description provided for @today.
   ///
@@ -247,18 +217,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have taken care of every dose today. Well done.'**
   String get allDoneBody;
-
-  /// No description provided for @noPaused.
-  ///
-  /// In en, this message translates to:
-  /// **'No paused medications'**
-  String get noPaused;
-
-  /// No description provided for @pausedEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'When you pause a medication, it will appear here.'**
-  String get pausedEmpty;
 
   /// No description provided for @addMedication.
   ///
@@ -398,29 +356,11 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 day} other{{count} days}}'**
   String daysCount(int count);
 
-  /// No description provided for @weeksCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 week} other{{count} weeks}}'**
-  String weeksCount(int count);
-
-  /// No description provided for @monthsCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 month} other{{count} months}}'**
-  String monthsCount(int count);
-
   /// No description provided for @pillsCount.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 pill} other{{count} pills}}'**
   String pillsCount(int count);
-
-  /// No description provided for @dosesCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 dose} other{{count} doses}}'**
-  String dosesCount(int count);
 
   /// No description provided for @hoursMinutes.
   ///
@@ -451,12 +391,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'just now'**
   String get justNow;
-
-  /// No description provided for @doseLine.
-  ///
-  /// In en, this message translates to:
-  /// **'Dose: {summary}'**
-  String doseLine(Object summary);
 
   /// No description provided for @taken.
   ///
@@ -566,12 +500,6 @@ abstract class AppLocalizations {
   /// **'Unable to delete medication.'**
   String get unableDelete;
 
-  /// No description provided for @unableLoadMedications.
-  ///
-  /// In en, this message translates to:
-  /// **'Unable to load medications.'**
-  String get unableLoadMedications;
-
   /// No description provided for @pause.
   ///
   /// In en, this message translates to:
@@ -643,12 +571,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Every day} =2{Every other day} other{Every {count} days}}'**
   String everyNDays(int count);
-
-  /// No description provided for @timesPerDay.
-  ///
-  /// In en, this message translates to:
-  /// **'Times a day'**
-  String get timesPerDay;
 
   /// No description provided for @scheduleEnds.
   ///
@@ -745,12 +667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pills per dose'**
   String get numberOfPills;
-
-  /// No description provided for @pillCountHint.
-  ///
-  /// In en, this message translates to:
-  /// **'e.g. 1 or 2'**
-  String get pillCountHint;
 
   /// No description provided for @invalidPillCount.
   ///
@@ -1183,12 +1099,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Progress'**
   String get analyticsHistory;
-
-  /// No description provided for @refresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get refresh;
 
   /// No description provided for @timeframe.
   ///
@@ -1807,6 +1717,372 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dec'**
   String get dec;
+
+  /// No description provided for @greetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get greetingMorning;
+
+  /// No description provided for @greetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get greetingAfternoon;
+
+  /// No description provided for @greetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get greetingEvening;
+
+  /// No description provided for @greetingWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'{greeting}, {name}'**
+  String greetingWithName(String greeting, String name);
+
+  /// No description provided for @partMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning'**
+  String get partMorning;
+
+  /// No description provided for @partAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon'**
+  String get partAfternoon;
+
+  /// No description provided for @partEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening'**
+  String get partEvening;
+
+  /// No description provided for @partNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get partNight;
+
+  /// No description provided for @sectionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{taken} of {total} taken'**
+  String sectionProgress(int taken, int total);
+
+  /// No description provided for @tookAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Took all'**
+  String get tookAll;
+
+  /// No description provided for @iTookIt.
+  ///
+  /// In en, this message translates to:
+  /// **'I took it'**
+  String get iTookIt;
+
+  /// No description provided for @iTookThemAll.
+  ///
+  /// In en, this message translates to:
+  /// **'I took them all'**
+  String get iTookThemAll;
+
+  /// No description provided for @takeEarly.
+  ///
+  /// In en, this message translates to:
+  /// **'Take it now (early)'**
+  String get takeEarly;
+
+  /// No description provided for @yesTookAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I took them all'**
+  String get yesTookAll;
+
+  /// No description provided for @confirmTakeAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you take all of these?'**
+  String get confirmTakeAllTitle;
+
+  /// No description provided for @nowTimeToTake.
+  ///
+  /// In en, this message translates to:
+  /// **'TIME TO TAKE'**
+  String get nowTimeToTake;
+
+  /// No description provided for @nowNext.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT'**
+  String get nowNext;
+
+  /// No description provided for @laterToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Later today'**
+  String get laterToday;
+
+  /// No description provided for @backToToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get backToToday;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @tabToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get tabToday;
+
+  /// No description provided for @tabMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicines'**
+  String get tabMedicines;
+
+  /// No description provided for @medicinesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My medicines'**
+  String get medicinesTitle;
+
+  /// No description provided for @activeMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get activeMedicines;
+
+  /// No description provided for @medicationPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'This medication is paused. No reminders until you resume it.'**
+  String get medicationPaused;
+
+  /// No description provided for @medicationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine details'**
+  String get medicationDetails;
+
+  /// No description provided for @onbNameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we call you?'**
+  String get onbNameTitle;
+
+  /// No description provided for @onbNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Dawaii uses it to greet you.'**
+  String get onbNameHelp;
+
+  /// No description provided for @onbNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first name'**
+  String get onbNameHint;
+
+  /// No description provided for @onbTextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Is this text easy to read?'**
+  String get onbTextTitle;
+
+  /// No description provided for @onbTextHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the size that feels comfortable. You can change it later in Settings.'**
+  String get onbTextHelp;
+
+  /// No description provided for @onbSampleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Aspirin'**
+  String get onbSampleName;
+
+  /// No description provided for @onbRemindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow reminders'**
+  String get onbRemindersTitle;
+
+  /// No description provided for @onbRemindersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Dawaii needs your permission to remind you about your medicines, even when the phone is locked.\n\nOn the next screen, please tap \"Allow\".'**
+  String get onbRemindersBody;
+
+  /// No description provided for @onbAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get onbAllow;
+
+  /// No description provided for @onbNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get onbNotNow;
+
+  /// No description provided for @nextStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextStep;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @pickTimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a time'**
+  String get pickTimeTitle;
+
+  /// No description provided for @hourLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hour'**
+  String get hourLabel;
+
+  /// No description provided for @minuteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minute'**
+  String get minuteLabel;
+
+  /// No description provided for @addOtherTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Another time'**
+  String get addOtherTime;
+
+  /// No description provided for @wizNameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the medicine called?'**
+  String get wizNameTitle;
+
+  /// No description provided for @wizLooksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What does it look like?'**
+  String get wizLooksTitle;
+
+  /// No description provided for @wizWhenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you take it?'**
+  String get wizWhenTitle;
+
+  /// No description provided for @wizHowLongTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For how long?'**
+  String get wizHowLongTitle;
+
+  /// No description provided for @wizStockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Count your pills?'**
+  String get wizStockTitle;
+
+  /// No description provided for @stepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String stepOf(int current, int total);
+
+  /// No description provided for @noStockTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'No, don\'t count'**
+  String get noStockTracking;
+
+  /// No description provided for @yourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get yourName;
+
+  /// No description provided for @yourNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Used to greet you (optional)'**
+  String get yourNameHelp;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved.'**
+  String get saved;
+
+  /// No description provided for @encouragementGreat.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent! Keep it up.'**
+  String get encouragementGreat;
+
+  /// No description provided for @encouragementGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good job. Keep going.'**
+  String get encouragementGood;
+
+  /// No description provided for @encouragementLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Every dose counts. You can do it.'**
+  String get encouragementLow;
+
+  /// No description provided for @takenOfLast.
+  ///
+  /// In en, this message translates to:
+  /// **'You took {taken} of your last {total} doses.'**
+  String takenOfLast(int taken, int total);
+
+  /// No description provided for @previousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get previousMonth;
+
+  /// No description provided for @nextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get nextMonth;
+
+  /// No description provided for @legendAllTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'All taken'**
+  String get legendAllTaken;
+
+  /// No description provided for @legendSomeMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Some missed'**
+  String get legendSomeMissed;
 }
 
 class _AppLocalizationsDelegate

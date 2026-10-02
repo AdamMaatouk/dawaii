@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
-import '../../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 /// Warns when the phone's settings would stop reminders from arriving.
 class ReminderHealthBanner extends StatelessWidget {

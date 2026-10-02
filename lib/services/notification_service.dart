@@ -426,7 +426,16 @@ class NotificationService {
           title: _fmt.l.timeFor(pill.name),
           body: _doseBody(pill),
           scheduledDate: tz.TZDateTime.from(reminder.fireAt, tz.local),
-          notificationDetails: _reminderDetails(imagePaths[pill.id]),
+          notificationDetails: _reminderDetails(
+            imagePaths[pill.id],
+            iosAttachment: await _iosAttachmentCopy(
+              imagePaths[pill.id],
+              reminder.id,
+            ),
+            photoPath: _existingPhoto(pill),
+            title: _fmt.l.timeFor(pill.name),
+            body: _doseBody(pill),
+          ),
           androidScheduleMode: mode,
           payload: payloadFor(reminder.ref),
         );
@@ -468,7 +477,39 @@ class NotificationService {
     }
   }
 
-  NotificationDetails _reminderDetails(String? imagePath) {
+  /// The medication's own photo, if it still exists on disk.
+  String? _existingPhoto(PillModel pill) {
+    final path = pill.photoPath;
+    if (path == null) return null;
+    try {
+      return File(path).existsSync() ? path : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// iOS moves an attached file into its own storage when a notification
+  /// is scheduled, so each reminder gets its own small copy of the pill
+  /// drawing (never the user's photo, which would disappear).
+  Future<String?> _iosAttachmentCopy(String? imagePath, int id) async {
+    if (!_isIOS || imagePath == null) return null;
+    try {
+      final copy = File('${File(imagePath).parent.path}/n_$id.png');
+      await File(imagePath).copy(copy.path);
+      return copy.path;
+    } catch (e) {
+      debugPrint('IOS ATTACHMENT COPY ERROR: $e');
+      return null;
+    }
+  }
+
+  NotificationDetails _reminderDetails(
+    String? imagePath, {
+    String? iosAttachment,
+    String? photoPath,
+    String? title,
+    String? body,
+  }) {
     final l = _settings.strings;
     final persistent = _settings.persistentAlarm;
     return NotificationDetails(
@@ -489,6 +530,19 @@ class NotificationService {
             ? Int32List.fromList([_flagInsistent])
             : null,
         largeIcon: imagePath != null ? FilePathAndroidBitmap(imagePath) : null,
+        // Expanded notification shows the real photo of the medication, so
+        // it can be recognized without opening the app.
+        styleInformation: photoPath == null
+            ? null
+            : BigPictureStyleInformation(
+                FilePathAndroidBitmap(photoPath),
+                contentTitle: title,
+                summaryText: body,
+                largeIcon: imagePath != null
+                    ? FilePathAndroidBitmap(imagePath)
+                    : null,
+                hideExpandedLargeIcon: true,
+              ),
         actions: [
           AndroidNotificationAction(_actionTake, l.notificationTake),
           AndroidNotificationAction(_actionSnooze, l.notificationSnooze15),
@@ -497,8 +551,8 @@ class NotificationService {
       ),
       iOS: DarwinNotificationDetails(
         categoryIdentifier: _darwinCategory,
-        attachments: imagePath != null
-            ? [DarwinNotificationAttachment(imagePath)]
+        attachments: iosAttachment != null
+            ? [DarwinNotificationAttachment(iosAttachment)]
             : null,
       ),
     );

@@ -13,7 +13,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await SettingsService().load();
-  await NotificationService().initialize();
+  // Permission is asked during onboarding (with an explanation first), not
+  // the moment the app opens.
+  await NotificationService().initialize(requestPermissions: false);
 
   runApp(const DawaiiApp());
 
@@ -35,8 +37,8 @@ class DawaiiApp extends StatelessWidget {
           onGenerateTitle: (context) => AppLocalizations.of(context).appName,
           debugShowCheckedModeBanner: false,
           themeMode: settings.themeMode,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.light(arabic: settings.isArabic),
+          darkTheme: AppTheme.dark(arabic: settings.isArabic),
           locale: settings.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [

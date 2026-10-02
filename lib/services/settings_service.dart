@@ -18,6 +18,8 @@ class SettingsService extends ChangeNotifier {
   static const _simpleModeKey = 'simple_mode';
   static const _persistentAlarmKey = 'persistent_alarm';
   static const _readAloudKey = 'read_aloud';
+  static const _userNameKey = 'user_name';
+  static const _onboardingKey = 'onboarding_done';
 
   static const List<double> textScales = [1.0, 1.15, 1.3];
 
@@ -27,6 +29,8 @@ class SettingsService extends ChangeNotifier {
   bool _simpleMode = false;
   bool _persistentAlarm = true;
   bool _readAloud = true;
+  String _userName = '';
+  bool _onboardingDone = false;
 
   ThemeMode get themeMode => _themeMode;
   String get languageCode => _languageCode;
@@ -36,6 +40,10 @@ class SettingsService extends ChangeNotifier {
   bool get simpleMode => _simpleMode;
   bool get persistentAlarm => _persistentAlarm;
   bool get readAloud => _readAloud;
+
+  /// Optional first name used in the greeting. Empty when not given.
+  String get userName => _userName;
+  bool get onboardingDone => _onboardingDone;
 
   /// Strings for code that has no BuildContext (notifications, PDF).
   AppLocalizations get strings => lookupAppLocalizations(locale);
@@ -61,6 +69,10 @@ class SettingsService extends ChangeNotifier {
     _simpleMode = prefs.getBool(_simpleModeKey) ?? false;
     _persistentAlarm = prefs.getBool(_persistentAlarmKey) ?? true;
     _readAloud = prefs.getBool(_readAloudKey) ?? true;
+    _userName = prefs.getString(_userNameKey) ?? '';
+    // People who already have medications saved skip the setup screens.
+    _onboardingDone =
+        prefs.getBool(_onboardingKey) ?? prefs.containsKey('user_pills');
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -110,5 +122,21 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_readAloudKey, value);
+  }
+
+  Future<void> setUserName(String name) async {
+    final trimmed = name.trim();
+    if (_userName == trimmed) return;
+    _userName = trimmed;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userNameKey, trimmed);
+  }
+
+  Future<void> completeOnboarding() async {
+    _onboardingDone = true;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, true);
   }
 }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../l10n/app_localizations.dart';
-import '../../models/dose.dart';
-import '../../models/pill_model.dart';
-import '../../theme/app_theme.dart';
-import '../../utils/formatters.dart';
-import '../../widgets/pill_shape_widget.dart';
+import '../l10n/app_localizations.dart';
+import '../models/dose.dart';
+import '../models/pill_model.dart';
+import '../theme/app_theme.dart';
+import '../utils/formatters.dart';
+import 'pill_shape_widget.dart';
 
 /// Pill picture + name + dose + time, shown at the top of dose dialogs.
 class _DoseHeader extends StatelessWidget {
@@ -389,4 +389,123 @@ class _RefillDialogState extends State<_RefillDialog> {
       ],
     );
   }
+}
+
+/// Confirms several doses at once ("I took them all").
+Future<bool> confirmTakeAll(
+  BuildContext context,
+  List<(PillModel, DoseRef)> doses,
+) {
+  final l = AppLocalizations.of(context);
+  return _confirm(
+    context: context,
+    title: l.confirmTakeAllTitle,
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (pill, ref) in doses) ...[
+          _DoseHeader(pill: pill, ref: ref),
+          const SizedBox(height: 8),
+        ],
+      ],
+    ),
+    confirmText: l.yesTookAll,
+    confirmIcon: Icons.done_all_rounded,
+    confirmColor: const Color(0xFF059669),
+  );
+}
+
+enum DoseOption { take, later, skip, undo, details }
+
+/// Options for a dose shown as a compact row (tap to open).
+Future<DoseOption?> showDoseOptionsSheet(
+  BuildContext context, {
+  required PillModel pill,
+  required DoseRef ref,
+  required bool isLogged,
+}) {
+  final l = AppLocalizations.of(context);
+  final palette = context.palette;
+
+  Widget option(DoseOption value, IconData icon, String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: palette.innerSurface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Navigator.of(context).pop(value),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: 26),
+                const SizedBox(width: 14),
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: palette.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  return showModalBottomSheet<DoseOption>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _DoseHeader(pill: pill, ref: ref),
+            const SizedBox(height: 16),
+            if (isLogged)
+              option(
+                DoseOption.undo,
+                Icons.undo_rounded,
+                l.undo,
+                palette.accent,
+              )
+            else ...[
+              option(
+                DoseOption.take,
+                Icons.check_circle_rounded,
+                l.iTookIt,
+                palette.success,
+              ),
+              option(
+                DoseOption.later,
+                Icons.snooze_rounded,
+                l.snooze,
+                palette.warning,
+              ),
+              option(
+                DoseOption.skip,
+                Icons.block_rounded,
+                l.skip,
+                palette.danger,
+              ),
+            ],
+            option(
+              DoseOption.details,
+              Icons.medication_rounded,
+              l.medicationDetails,
+              palette.accent,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

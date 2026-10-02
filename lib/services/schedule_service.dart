@@ -70,6 +70,9 @@ class ScheduleService {
   /// Dose-level rule: frequency + first-day cut-off + pause periods.
   bool isDoseDue(PillModel pill, DoseRef ref) {
     if (!pill.scheduleTimes.contains(ref.time)) return false;
+    // Paused by an older version of the app, which did not record when:
+    // never report its doses as due (or missed).
+    if (!pill.isActive && pill.pausePeriods.isEmpty) return false;
     if (!isPillScheduledForDate(pill, ref.date)) return false;
 
     final at = ref.scheduledAt;

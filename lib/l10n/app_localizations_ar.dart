@@ -25,9 +25,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get remove => 'إزالة';
 
   @override
-  String get close => 'إغلاق';
-
-  @override
   String get undo => 'تراجع';
 
   @override
@@ -40,34 +37,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get now => 'الآن';
 
   @override
-  String get mainMenu => 'القائمة';
-
-  @override
   String get settings => 'الإعدادات';
 
   @override
   String get pausedMedications => 'الأدوية المتوقفة';
-
-  @override
-  String pausedCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count دواء متوقف',
-      many: '$count دواءً متوقفًا',
-      few: '$count أدوية متوقفة',
-      two: 'دواءان متوقفان',
-      one: 'دواء واحد متوقف',
-      zero: 'لا توجد أدوية متوقفة',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get showingPaused => 'الأدوية المتوقفة';
-
-  @override
-  String get backToSchedule => 'العودة إلى الجدول';
 
   @override
   String get today => 'اليوم';
@@ -96,12 +69,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get allDoneBody => 'أخذت جميع جرعات اليوم. أحسنت.';
-
-  @override
-  String get noPaused => 'لا توجد أدوية متوقفة';
-
-  @override
-  String get pausedEmpty => 'عند إيقاف دواء مؤقتًا، سيظهر هنا.';
 
   @override
   String get addMedication => 'إضافة دواء';
@@ -211,34 +178,6 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String weeksCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count أسبوع',
-      many: '$count أسبوعًا',
-      few: '$count أسابيع',
-      two: 'أسبوعين',
-      one: 'أسبوع واحد',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String monthsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count شهر',
-      many: '$count شهرًا',
-      few: '$count أشهر',
-      two: 'شهرين',
-      one: 'شهر واحد',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String pillsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -248,20 +187,6 @@ class AppLocalizationsAr extends AppLocalizations {
       few: '$count حبات',
       two: 'حبتين',
       one: 'حبة واحدة',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String dosesCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count جرعة',
-      many: '$count جرعة',
-      few: '$count جرعات',
-      two: 'جرعتان',
-      one: 'جرعة واحدة',
     );
     return '$_temp0';
   }
@@ -286,11 +211,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get justNow => 'الآن';
-
-  @override
-  String doseLine(Object summary) {
-    return 'الجرعة: $summary';
-  }
 
   @override
   String get taken => 'تم أخذها';
@@ -351,9 +271,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get unableDelete => 'تعذر حذف الدواء.';
 
   @override
-  String get unableLoadMedications => 'تعذر تحميل الأدوية.';
-
-  @override
   String get pause => 'إيقاف مؤقت';
 
   @override
@@ -403,9 +320,6 @@ class AppLocalizationsAr extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get timesPerDay => 'مرات في اليوم';
 
   @override
   String get scheduleEnds => 'ينتهي';
@@ -466,9 +380,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get numberOfPills => 'عدد الحبات في الجرعة';
-
-  @override
-  String get pillCountHint => 'مثال: 1 أو 2';
 
   @override
   String get invalidPillCount => 'أدخل رقمًا من 1 إلى 99';
@@ -693,9 +604,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get analyticsHistory => 'التقدم';
-
-  @override
-  String get refresh => 'تحديث';
 
   @override
   String get timeframe => 'الفترة';
@@ -1071,4 +979,198 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dec => 'كانون الأول';
+
+  @override
+  String get greetingMorning => 'صباح الخير';
+
+  @override
+  String get greetingAfternoon => 'نهارك سعيد';
+
+  @override
+  String get greetingEvening => 'مساء الخير';
+
+  @override
+  String greetingWithName(String greeting, String name) {
+    return '$greeting يا $name';
+  }
+
+  @override
+  String get partMorning => 'الصباح';
+
+  @override
+  String get partAfternoon => 'بعد الظهر';
+
+  @override
+  String get partEvening => 'المساء';
+
+  @override
+  String get partNight => 'الليل';
+
+  @override
+  String sectionProgress(int taken, int total) {
+    return 'أُخذ $taken من $total';
+  }
+
+  @override
+  String get tookAll => 'أخذتها كلها';
+
+  @override
+  String get iTookIt => 'أخذته';
+
+  @override
+  String get iTookThemAll => 'أخذتها كلها';
+
+  @override
+  String get takeEarly => 'خذه الآن (مبكرًا)';
+
+  @override
+  String get yesTookAll => 'نعم، أخذتها كلها';
+
+  @override
+  String get confirmTakeAllTitle => 'هل أخذت كل هذه الأدوية؟';
+
+  @override
+  String get nowTimeToTake => 'حان الموعد';
+
+  @override
+  String get nowNext => 'التالي';
+
+  @override
+  String get laterToday => 'لاحقًا اليوم';
+
+  @override
+  String get backToToday => 'اليوم';
+
+  @override
+  String get add => 'إضافة';
+
+  @override
+  String get tabToday => 'اليوم';
+
+  @override
+  String get tabMedicines => 'أدويتي';
+
+  @override
+  String get medicinesTitle => 'أدويتي';
+
+  @override
+  String get activeMedicines => 'الأدوية الحالية';
+
+  @override
+  String get medicationPaused =>
+      'هذا الدواء متوقف مؤقتًا. لن تصل تذكيرات حتى تستأنفه.';
+
+  @override
+  String get medicationDetails => 'تفاصيل الدواء';
+
+  @override
+  String get onbNameTitle => 'بماذا نناديك؟';
+
+  @override
+  String get onbNameHelp => 'اختياري. يستخدمه دوائي للترحيب بك.';
+
+  @override
+  String get onbNameHint => 'اسمك الأول';
+
+  @override
+  String get onbTextTitle => 'هل هذا النص سهل القراءة؟';
+
+  @override
+  String get onbTextHelp =>
+      'اختر الحجم المريح لك. يمكنك تغييره لاحقًا من الإعدادات.';
+
+  @override
+  String get onbSampleName => 'أسبرين';
+
+  @override
+  String get onbRemindersTitle => 'السماح بالتذكيرات';
+
+  @override
+  String get onbRemindersBody =>
+      'يحتاج دوائي إلى إذنك ليذكّرك بأدويتك، حتى عندما يكون الهاتف مقفلًا.\n\nفي الشاشة التالية، يرجى الضغط على \"السماح\".';
+
+  @override
+  String get onbAllow => 'متابعة';
+
+  @override
+  String get onbNotNow => 'ليس الآن';
+
+  @override
+  String get nextStep => 'التالي';
+
+  @override
+  String get back => 'رجوع';
+
+  @override
+  String get ok => 'تم';
+
+  @override
+  String get pickTimeTitle => 'اختر الوقت';
+
+  @override
+  String get hourLabel => 'الساعة';
+
+  @override
+  String get minuteLabel => 'الدقيقة';
+
+  @override
+  String get addOtherTime => 'وقت آخر';
+
+  @override
+  String get wizNameTitle => 'ما اسم الدواء؟';
+
+  @override
+  String get wizLooksTitle => 'كيف يبدو؟';
+
+  @override
+  String get wizWhenTitle => 'متى تأخذه؟';
+
+  @override
+  String get wizHowLongTitle => 'لأي مدة؟';
+
+  @override
+  String get wizStockTitle => 'هل تريد عدّ حباتك؟';
+
+  @override
+  String stepOf(int current, int total) {
+    return 'الخطوة $current من $total';
+  }
+
+  @override
+  String get noStockTracking => 'لا، بدون عدّ';
+
+  @override
+  String get yourName => 'اسمك';
+
+  @override
+  String get yourNameHelp => 'للترحيب بك (اختياري)';
+
+  @override
+  String get saved => 'تم الحفظ.';
+
+  @override
+  String get encouragementGreat => 'ممتاز! استمر على هذا.';
+
+  @override
+  String get encouragementGood => 'عمل جيد. واصل.';
+
+  @override
+  String get encouragementLow => 'كل جرعة مهمة. أنت قادر على ذلك.';
+
+  @override
+  String takenOfLast(int taken, int total) {
+    return 'أخذت $taken من آخر $total جرعة.';
+  }
+
+  @override
+  String get previousMonth => 'الشهر السابق';
+
+  @override
+  String get nextMonth => 'الشهر التالي';
+
+  @override
+  String get legendAllTaken => 'أُخذت كلها';
+
+  @override
+  String get legendSomeMissed => 'فاتت بعضها';
 }

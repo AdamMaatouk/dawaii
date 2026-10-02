@@ -1,26 +1,17 @@
 {
   "@@locale": "en",
-
   "appName": "Dawaii",
   "cancel": "Cancel",
   "delete": "Delete",
   "edit": "Edit",
   "remove": "Remove",
-  "close": "Close",
   "undo": "Undo",
   "medication": "Medication",
   "yourDose": "your dose",
   "now": "now",
-
-  "mainMenu": "Menu",
   "settings": "Settings",
   "pausedMedications": "Paused medications",
-  "pausedCount": "{count, plural, =0{None paused} =1{1 medication paused} other{{count} medications paused}}",
-  "@pausedCount": {"placeholders": {"count": {"type": "int"}}},
-  "showingPaused": "Paused medications",
-  "backToSchedule": "Back to schedule",
   "today": "Today",
-
   "welcomeTitle": "Welcome to Dawaii",
   "welcomeBody": "Add your first medication and Dawaii will remind you when it is time to take it.",
   "addFirstMedication": "Add my first medication",
@@ -29,12 +20,8 @@
   "nothingDayBody": "No doses are scheduled for this day.",
   "allDoneTitle": "All done for today!",
   "allDoneBody": "You have taken care of every dose today. Well done.",
-  "noPaused": "No paused medications",
-  "pausedEmpty": "When you pause a medication, it will appear here.",
-
   "addMedication": "Add medication",
   "editMedication": "Edit medication",
-
   "remindersNeedAttention": "Reminders need attention",
   "reminderAttentionDefault": "Your reminder settings need attention.",
   "fix": "Fix",
@@ -43,7 +30,6 @@
   "notificationsDisabled": "Notifications are turned off. Reminders cannot appear.",
   "exactAlarmDisabled": "Exact alarms are turned off. Reminders may arrive late.",
   "soundDisabled": "Reminder sound is off. Reminders will appear silently.",
-
   "confirmDose": "Confirm dose",
   "markTakenQuestion": "Did you take this dose?",
   "yesTaken": "Yes, I took it",
@@ -55,27 +41,52 @@
   "snoozeMedication": "Remind me about {name}",
   "remindAgainIn": "Remind me again in:",
   "minutesCount": "{count, plural, =1{1 minute} other{{count} minutes}}",
-  "@minutesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@minutesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "hoursCount": "{count, plural, =1{1 hour} other{{count} hours}}",
-  "@hoursCount": {"placeholders": {"count": {"type": "int"}}},
+  "@hoursCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
-  "@daysCount": {"placeholders": {"count": {"type": "int"}}},
-  "weeksCount": "{count, plural, =1{1 week} other{{count} weeks}}",
-  "@weeksCount": {"placeholders": {"count": {"type": "int"}}},
-  "monthsCount": "{count, plural, =1{1 month} other{{count} months}}",
-  "@monthsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pillsCount": "{count, plural, =1{1 pill} other{{count} pills}}",
-  "@pillsCount": {"placeholders": {"count": {"type": "int"}}},
-  "dosesCount": "{count, plural, =1{1 dose} other{{count} doses}}",
-  "@dosesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@pillsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "hoursMinutes": "{hours} h {minutes} min",
-  "@hoursMinutes": {"placeholders": {"hours": {"type": "String"}, "minutes": {"type": "String"}}},
+  "@hoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
   "inDuration": "in {duration}",
   "agoDuration": "{duration} ago",
   "lessThanMinute": "in less than a minute",
   "justNow": "just now",
-
-  "doseLine": "Dose: {summary}",
   "taken": "Taken",
   "takenAt": "Taken at {time}",
   "skipped": "Skipped",
@@ -94,8 +105,6 @@
   "unableResume": "Unable to resume medication.",
   "unablePause": "Unable to pause medication.",
   "unableDelete": "Unable to delete medication.",
-  "unableLoadMedications": "Unable to load medications.",
-
   "pause": "Pause",
   "resume": "Resume",
   "editSchedule": "Edit",
@@ -108,18 +117,28 @@
   "specificDays": "Specific days",
   "interval": "Every few days",
   "everyNDays": "{count, plural, =1{Every day} =2{Every other day} other{Every {count} days}}",
-  "@everyNDays": {"placeholders": {"count": {"type": "int"}}},
-  "timesPerDay": "Times a day",
+  "@everyNDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "scheduleEnds": "Ends",
   "ongoing": "Ongoing",
   "pillsLeft": "{count, plural, =0{No pills left} =1{1 pill left} other{{count} pills left}}",
-  "@pillsLeft": {"placeholders": {"count": {"type": "int"}}},
+  "@pillsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lowStockWarning": "Refill soon",
   "refill": "Refill",
   "refillTitle": "Add pills",
   "refillLabel": "How many pills did you add?",
   "refillSaved": "Stock updated.",
-
   "medicationInfo": "Medication",
   "medicationName": "Medication name",
   "medicationNameHint": "e.g. Aspirin",
@@ -128,7 +147,6 @@
   "dosageHint": "e.g. 100mg",
   "enterDosage": "Enter the strength",
   "numberOfPills": "Pills per dose",
-  "pillCountHint": "e.g. 1 or 2",
   "invalidPillCount": "Enter a number from 1 to 99",
   "instructions": "Instructions",
   "stock": "Pills in stock",
@@ -184,7 +202,6 @@
   "pillsInBox": "Pills I have now",
   "refillThreshold": "Warn me when this many are left",
   "enterWholeNumber": "Enter a whole number",
-
   "mon": "Monday",
   "tue": "Tuesday",
   "wed": "Wednesday",
@@ -199,18 +216,22 @@
   "friShort": "Fri",
   "satShort": "Sat",
   "sunShort": "Sun",
-
   "schedule": "Schedule",
   "analytics": "Progress",
   "analyticsHistory": "Progress",
-  "refresh": "Refresh",
   "timeframe": "Period",
   "last7Days": "Last 7 days",
   "last30Days": "Last 30 days",
   "thisYear": "This year",
   "allTime": "All time",
   "streakDays": "{count, plural, =1{1 day} other{{count} days}}",
-  "@streakDays": {"placeholders": {"count": {"type": "int"}}},
+  "@streakDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "activeStreak": "Perfect days in a row",
   "adherenceRate": "Doses taken",
   "doseBreakdown": "Doses",
@@ -218,11 +239,19 @@
   "perMedication": "Each medication",
   "noSavedMedications": "No medications yet.",
   "dosePerDay": "{dosage} • {count, plural, =1{once a day} =2{twice a day} other{{count} times a day}}",
-  "@dosePerDay": {"placeholders": {"dosage": {"type": "String"}, "count": {"type": "int"}}},
+  "@dosePerDay": {
+    "placeholders": {
+      "dosage": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lastTaken": "Last taken {time}",
   "noDataYet": "No data yet",
   "adherenceExplanation": "Missed means a dose from a past day that was never marked as taken or skipped.",
-
   "appearance": "Appearance",
   "darkMode": "Dark mode",
   "themeSystem": "Same as phone",
@@ -254,13 +283,18 @@
   "importConfirmBody": "This replaces all current medications and history with the backup. This cannot be undone.",
   "restore": "Restore",
   "importSuccess": "{count, plural, =1{Restored 1 medication.} other{Restored {count} medications.}}",
-  "@importSuccess": {"placeholders": {"count": {"type": "int"}}},
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importError": "This file is not a valid Dawaii backup.",
   "exportError": "Unable to create the backup.",
   "doctorReport": "Report for my doctor",
   "doctorReportHelp": "A PDF of the last 30 days to share or print.",
   "reportError": "Unable to create the report.",
-
   "aboutDawaii": "About Dawaii",
   "aboutSubtitle": "Medication reminders made simple.",
   "aboutParagraph1": "Dawaii was created to solve a real everyday problem: forgetting medication, missing doses, and struggling to keep track of different schedules.",
@@ -269,7 +303,6 @@
   "creatorBio": "Computer Science & Engineering student at the American University of Beirut (AUB), interested in solving real-world problems through practical, user-centered technology.",
   "contact": "Contact",
   "emailCopied": "Email copied: {email}",
-
   "notificationChannelName": "Medication reminders",
   "notificationChannelDescription": "Reminders to take your medications",
   "alarmChannelName": "Medication alarms",
@@ -281,18 +314,41 @@
   "notificationSkip": "Skip",
   "timeFor": "Time for {name}",
   "takeDoseBody": "Take {pillLabel} • {dosage}",
-  "@takeDoseBody": {"placeholders": {"pillLabel": {"type": "String"}, "dosage": {"type": "String"}}},
+  "@takeDoseBody": {
+    "placeholders": {
+      "pillLabel": {
+        "type": "String"
+      },
+      "dosage": {
+        "type": "String"
+      }
+    }
+  },
   "keepAliveTitle": "Please open Dawaii",
   "keepAliveBody": "Open the app so your medication reminders keep coming.",
   "lowStockTitle": "{name} is running low",
   "lowStockBody": "{count, plural, =0{No pills left. Please refill.} =1{Only 1 pill left. Please refill soon.} other{Only {count} pills left. Please refill soon.}}",
-  "@lowStockBody": {"placeholders": {"count": {"type": "int"}}},
+  "@lowStockBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "testReminderTitle": "Test reminder",
   "testReminderBody": "Reminders are working.",
-
   "reportTitle": "Medication report",
   "reportPeriod": "Period: {from} – {to}",
-  "@reportPeriod": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
+  "@reportPeriod": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
   "reportGenerated": "Created on {date}",
   "reportMedication": "Medication",
   "reportSchedule": "Schedule",
@@ -303,7 +359,6 @@
   "reportOverall": "Overall",
   "reportMissedList": "Missed doses",
   "reportNoMissed": "No missed doses in this period.",
-
   "am": "AM",
   "pm": "PM",
   "jan": "Jan",
@@ -317,5 +372,106 @@
   "sep": "Sep",
   "oct": "Oct",
   "nov": "Nov",
-  "dec": "Dec"
+  "dec": "Dec",
+  "greetingMorning": "Good morning",
+  "greetingAfternoon": "Good afternoon",
+  "greetingEvening": "Good evening",
+  "greetingWithName": "{greeting}, {name}",
+  "@greetingWithName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "partMorning": "Morning",
+  "partAfternoon": "Afternoon",
+  "partEvening": "Evening",
+  "partNight": "Night",
+  "sectionProgress": "{taken} of {total} taken",
+  "@sectionProgress": {
+    "placeholders": {
+      "taken": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tookAll": "Took all",
+  "iTookIt": "I took it",
+  "iTookThemAll": "I took them all",
+  "takeEarly": "Take it now (early)",
+  "yesTookAll": "Yes, I took them all",
+  "confirmTakeAllTitle": "Did you take all of these?",
+  "nowTimeToTake": "TIME TO TAKE",
+  "nowNext": "NEXT",
+  "laterToday": "Later today",
+  "backToToday": "Today",
+  "add": "Add",
+  "tabToday": "Today",
+  "tabMedicines": "Medicines",
+  "medicinesTitle": "My medicines",
+  "activeMedicines": "Active",
+  "medicationPaused": "This medication is paused. No reminders until you resume it.",
+  "medicationDetails": "Medicine details",
+  "onbNameTitle": "What should we call you?",
+  "onbNameHelp": "Optional. Dawaii uses it to greet you.",
+  "onbNameHint": "Your first name",
+  "onbTextTitle": "Is this text easy to read?",
+  "onbTextHelp": "Choose the size that feels comfortable. You can change it later in Settings.",
+  "onbSampleName": "Aspirin",
+  "onbRemindersTitle": "Allow reminders",
+  "onbRemindersBody": "Dawaii needs your permission to remind you about your medicines, even when the phone is locked.\n\nOn the next screen, please tap \"Allow\".",
+  "onbAllow": "Continue",
+  "onbNotNow": "Not now",
+  "nextStep": "Next",
+  "back": "Back",
+  "ok": "OK",
+  "pickTimeTitle": "Choose a time",
+  "hourLabel": "Hour",
+  "minuteLabel": "Minute",
+  "addOtherTime": "Another time",
+  "wizNameTitle": "What is the medicine called?",
+  "wizLooksTitle": "What does it look like?",
+  "wizWhenTitle": "When do you take it?",
+  "wizHowLongTitle": "For how long?",
+  "wizStockTitle": "Count your pills?",
+  "stepOf": "Step {current} of {total}",
+  "@stepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "noStockTracking": "No, don't count",
+  "yourName": "Your name",
+  "yourNameHelp": "Used to greet you (optional)",
+  "saved": "Saved.",
+  "encouragementGreat": "Excellent! Keep it up.",
+  "encouragementGood": "Good job. Keep going.",
+  "encouragementLow": "Every dose counts. You can do it.",
+  "takenOfLast": "You took {taken} of your last {total} doses.",
+  "@takenOfLast": {
+    "placeholders": {
+      "taken": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "legendAllTaken": "All taken",
+  "legendSomeMissed": "Some missed"
 }

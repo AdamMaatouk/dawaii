@@ -63,7 +63,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     textPrimary: Color(0xFF0F172A),
     textBody: Color(0xFF334155),
     textSecondary: Color(0xFF475569),
-    textMuted: Color(0xFF64748B),
+    textMuted: Color(0xFF5B6B80),
     border: Color(0xFFE2E8F0),
     cardBorder: Color(0xFFE3E9F2),
     pillTray: Color(0xFFEEF2F7),
@@ -77,7 +77,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     danger: Color(0xFFDC2626),
     dangerText: Color(0xFFB91C1C),
     softDanger: Color(0xFFFEF2F2),
-    warning: Color(0xFFD97706),
+    warning: Color(0xFFB45309),
     warningText: Color(0xFF92400E),
     softWarning: Color(0xFFFFFBEB),
     warningBorder: Color(0xFFFDE68A),
@@ -124,10 +124,15 @@ extension AppPaletteContext on BuildContext {
 }
 
 class AppTheme {
-  static ThemeData get light => _build(AppPalette.light, Brightness.light);
-  static ThemeData get dark => _build(AppPalette.dark, Brightness.dark);
+  static const String latinFont = 'Atkinson';
+  static const String arabicFont = 'PlexArabic';
 
-  static ThemeData _build(AppPalette p, Brightness brightness) {
+  static ThemeData light({bool arabic = false}) =>
+      _build(AppPalette.light, Brightness.light, arabic);
+  static ThemeData dark({bool arabic = false}) =>
+      _build(AppPalette.dark, Brightness.dark, arabic);
+
+  static ThemeData _build(AppPalette p, Brightness brightness, bool arabic) {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF4F46E5),
       brightness: brightness,
@@ -139,11 +144,26 @@ class AppTheme {
     final buttonShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     );
-    const buttonText = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
+    // Every explicit TextStyle in the theme must name the font: buttons,
+    // dialogs and inputs do not inherit ThemeData.fontFamily, and the
+    // default font has no Arabic letters (shows empty boxes).
+    final family = arabic ? arabicFont : latinFont;
+    final fallback = arabic ? const [latinFont] : const [arabicFont];
+    final buttonText = TextStyle(
+      fontFamily: family,
+      fontFamilyFallback: fallback,
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+    );
     const minButton = Size(64, 52);
 
     return ThemeData(
       useMaterial3: true,
+      // Atkinson Hyperlegible was designed for low-vision readers; IBM Plex
+      // Sans Arabic covers Arabic (also as a fallback for Arabic medication
+      // names typed while the app is in English).
+      fontFamily: arabic ? arabicFont : latinFont,
+      fontFamilyFallback: arabic ? const [latinFont] : const [arabicFont],
       brightness: brightness,
       colorScheme: colorScheme,
       extensions: [p],
@@ -161,6 +181,8 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontSize: 24,
           fontWeight: FontWeight.w800,
@@ -168,28 +190,63 @@ class AppTheme {
       ),
       textTheme: TextTheme(
         headlineSmall: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontWeight: FontWeight.w800,
         ),
         titleLarge: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontWeight: FontWeight.w800,
         ),
         titleMedium: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontWeight: FontWeight.w700,
         ),
-        bodyLarge: TextStyle(color: p.textBody, fontSize: 17),
-        bodyMedium: TextStyle(color: p.textBody, fontSize: 15),
-        bodySmall: TextStyle(color: p.textMuted, fontSize: 13),
+        bodyLarge: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textBody,
+          fontSize: 17,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textBody,
+          fontSize: 15,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textMuted,
+          fontSize: 13,
+        ),
         labelLarge: buttonText,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: p.innerSurface,
-        labelStyle: TextStyle(color: p.textSecondary, fontSize: 16),
-        hintStyle: TextStyle(color: p.textMuted),
-        helperStyle: TextStyle(color: p.textMuted, fontSize: 13),
+        labelStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textSecondary,
+          fontSize: 16,
+        ),
+        hintStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textMuted,
+        ),
+        helperStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textMuted,
+          fontSize: 13,
+        ),
         prefixIconColor: p.textMuted,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -215,17 +272,29 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: p.danger, width: 2),
         ),
-        errorStyle: TextStyle(color: p.dangerText, fontSize: 13),
+        errorStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.dangerText,
+          fontSize: 13,
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontSize: 21,
           fontWeight: FontWeight.w800,
         ),
-        contentTextStyle: TextStyle(color: p.textBody, fontSize: 16),
+        contentTextStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textBody,
+          fontSize: 16,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -242,6 +311,8 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
+            fontFamily: family,
+            fontFamilyFallback: fallback,
             fontSize: 14,
             color: states.contains(WidgetState.selected)
                 ? p.accent
@@ -305,7 +376,12 @@ class AppTheme {
           backgroundColor: p.innerSurface,
           side: BorderSide(color: p.border),
           minimumSize: const Size(48, 52),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: TextStyle(
+            fontFamily: family,
+            fontFamilyFallback: fallback,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       switchTheme: SwitchThemeData(
@@ -314,7 +390,12 @@ class AppTheme {
       popupMenuTheme: PopupMenuThemeData(
         color: p.surface,
         surfaceTintColor: Colors.transparent,
-        textStyle: TextStyle(color: p.textPrimary, fontSize: 16),
+        textStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textPrimary,
+          fontSize: 16,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: p.border),
@@ -325,6 +406,8 @@ class AppTheme {
             ? const Color(0xFFE2E8F0)
             : const Color(0xFF1E293B),
         contentTextStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: brightness == Brightness.dark
               ? const Color(0xFF0F172A)
               : Colors.white,
@@ -338,11 +421,18 @@ class AppTheme {
         iconColor: p.accent,
         textColor: p.textPrimary,
         titleTextStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
           color: p.textPrimary,
           fontSize: 17,
           fontWeight: FontWeight.w700,
         ),
-        subtitleTextStyle: TextStyle(color: p.textMuted, fontSize: 14),
+        subtitleTextStyle: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: fallback,
+          color: p.textMuted,
+          fontSize: 14,
+        ),
         minVerticalPadding: 12,
       ),
     );

@@ -226,6 +226,17 @@ void main() {
       expect(stats.missed, 1); // only 9th (8th 09:00 is before the edit)
     });
 
+    test('a medication paused by an older version is never missed', () {
+      final pill = testPill(start: DateTime(2026, 3, 1), active: false);
+      final stats = schedule.stats(
+        pills: [pill],
+        records: const {},
+        from: DateTime(2026, 3, 1),
+        now: now,
+      );
+      expect(stats.total, 0);
+    });
+
     test('paused days are not missed', () {
       final pill = testPill(
         start: DateTime(2026, 3, 1),

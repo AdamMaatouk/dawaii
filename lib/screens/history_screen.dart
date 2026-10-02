@@ -8,7 +8,10 @@ import '../services/report_service.dart';
 import '../services/schedule_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
+import '../services/day_planner.dart';
 import '../widgets/pill_shape_widget.dart';
+import '../widgets/responsive_center.dart';
+import 'today/calendar_strip.dart';
 
 enum AnalyticsTimeframe { last7Days, last30Days, thisYear, allTime }
 
@@ -139,124 +142,368 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _data.reload,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-                children: [
-                  DropdownButtonFormField<AnalyticsTimeframe>(
-                    initialValue: _timeframe,
-                    decoration: InputDecoration(
-                      labelText: l.timeframe,
-                      prefixIcon: const Icon(Icons.date_range_rounded),
-                    ),
-                    dropdownColor: palette.surface,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: palette.textPrimary,
-                    ),
-                    items: [
-                      for (final t in AnalyticsTimeframe.values)
-                        DropdownMenuItem(value: t, child: Text(_label(l, t))),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) setState(() => _timeframe = v);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _MetricCard(
-                          icon: Icons.local_fire_department_rounded,
-                          iconColor: const Color(0xFFF97316),
-                          value: l.streakDays(streak),
-                          label: l.activeStreak,
-                        ),
+              child: ResponsiveCenter(
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                  children: [
+                    _Encouragement(
+                      stats: _schedule.stats(
+                        pills: _data.pills,
+                        records: _data.records,
+                        from: DateTime(now.year, now.month, now.day - 6),
+                        now: now,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _MetricCard(
-                          icon: Icons.pie_chart_rounded,
-                          iconColor: palette.accent,
-                          value: percent(overall.adherence),
-                          label: l.adherenceRate,
-                        ),
+                    ),
+                    DropdownButtonFormField<AnalyticsTimeframe>(
+                      initialValue: _timeframe,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: l.timeframe,
+                        prefixIcon: const Icon(Icons.date_range_rounded),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _Panel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      dropdownColor: palette.surface,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: palette.textPrimary,
+                      ),
+                      items: [
+                        for (final t in AnalyticsTimeframe.values)
+                          DropdownMenuItem(value: t, child: Text(_label(l, t))),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) setState(() => _timeframe = v);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
                       children: [
-                        Text(
-                          l.doseBreakdown,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: palette.textPrimary,
+                        Expanded(
+                          child: _MetricCard(
+                            icon: Icons.local_fire_department_rounded,
+                            iconColor: const Color(0xFFF97316),
+                            value: l.streakDays(streak),
+                            label: l.activeStreak,
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _Stat(l.taken, overall.taken, palette.success),
-                            _Stat(l.skipped, overall.skipped, palette.danger),
-                            _Stat(l.missed, overall.missed, palette.warning),
-                            _Stat(l.totalDue, overall.total, palette.accent),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          l.adherenceExplanation,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: palette.textMuted,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _MetricCard(
+                            icon: Icons.pie_chart_rounded,
+                            iconColor: palette.accent,
+                            value: percent(overall.adherence),
+                            label: l.adherenceRate,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    l.perMedication,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: palette.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (_data.pills.isEmpty)
+                    const SizedBox(height: 4),
+                    _MonthCalendar(now: now),
+                    const SizedBox(height: 4),
                     _Panel(
-                      child: Center(
-                        child: Text(
-                          l.noSavedMedications,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: palette.textSecondary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l.doseBreakdown,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: palette.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _Stat(l.taken, overall.taken, palette.success),
+                              _Stat(l.skipped, overall.skipped, palette.danger),
+                              _Stat(l.missed, overall.missed, palette.warning),
+                              _Stat(l.totalDue, overall.total, palette.accent),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            l.adherenceExplanation,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: palette.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      l.perMedication,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_data.pills.isEmpty)
+                      _Panel(
+                        child: Center(
+                          child: Text(
+                            l.noSavedMedications,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: palette.textSecondary,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    for (final pill in _data.pills)
-                      _PillAdherence(
-                        pill: pill,
-                        stats: _schedule.stats(
-                          pills: [pill],
-                          records: _data.records,
-                          from: from,
-                          now: now,
+                      )
+                    else
+                      for (final pill in _data.pills)
+                        _PillAdherence(
+                          pill: pill,
+                          stats: _schedule.stats(
+                            pills: [pill],
+                            records: _data.records,
+                            from: from,
+                            now: now,
+                          ),
+                          lastTaken: _lastTaken(pill),
+                          fmt: fmt,
                         ),
-                        lastTaken: _lastTaken(pill),
-                        fmt: fmt,
-                      ),
-                ],
+                  ],
+                ),
               ),
             ),
+    );
+  }
+}
+
+/// A warm, never-scolding summary of the last 7 days.
+class _Encouragement extends StatelessWidget {
+  final DoseStats stats;
+
+  const _Encouragement({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final palette = context.palette;
+    if (stats.total == 0) return const SizedBox.shrink();
+    final ratio = stats.taken / stats.total;
+    final (
+      IconData icon,
+      String tone,
+      Color color,
+      Color background,
+    ) = ratio >= 0.9
+        ? (
+            Icons.emoji_events_rounded,
+            l.encouragementGreat,
+            palette.successText,
+            palette.softSuccess,
+          )
+        : ratio >= 0.6
+        ? (
+            Icons.thumb_up_alt_rounded,
+            l.encouragementGood,
+            palette.accent,
+            palette.softAccent,
+          )
+        : (
+            Icons.favorite_rounded,
+            l.encouragementLow,
+            palette.warningText,
+            palette.softWarning,
+          );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 40),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.takenOfLast(stats.taken, stats.total),
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(tone, style: TextStyle(fontSize: 16, color: color)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Month view: each day colored by how it went.
+class _MonthCalendar extends StatefulWidget {
+  final DateTime now;
+
+  const _MonthCalendar({required this.now});
+
+  @override
+  State<_MonthCalendar> createState() => _MonthCalendarState();
+}
+
+class _MonthCalendarState extends State<_MonthCalendar> {
+  int _offset = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final palette = context.palette;
+    final fmt = Formatters(l);
+    final data = AppData();
+    const planner = DayPlanner();
+    final month = DateTime(widget.now.year, widget.now.month + _offset);
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final leading = (month.weekday - DateTime.monday) % 7;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final today = ScheduleService.dayOf(widget.now);
+
+    Widget legend(Color color, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(fontSize: 14, color: palette.textSecondary),
+        ),
+      ],
+    );
+
+    return _Panel(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                tooltip: l.previousMonth,
+                onPressed: () => setState(() => _offset--),
+                icon: Icon(
+                  rtl
+                      ? Icons.chevron_right_rounded
+                      : Icons.chevron_left_rounded,
+                  size: 30,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  fmt.monthYear(month),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: palette.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: l.nextMonth,
+                onPressed: _offset >= 0
+                    ? null
+                    : () => setState(() => _offset++),
+                icon: Icon(
+                  rtl
+                      ? Icons.chevron_left_rounded
+                      : Icons.chevron_right_rounded,
+                  size: 30,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          GridView.count(
+            crossAxisCount: 7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
+            children: [
+              for (final name in fmt.weekdayShortNames)
+                Center(
+                  child: FittedBox(
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              for (var i = 0; i < leading; i++) const SizedBox.shrink(),
+              for (var d = 1; d <= daysInMonth; d++)
+                Builder(
+                  builder: (context) {
+                    final day = DateTime(month.year, month.month, d);
+                    final status = planner.statusOf(
+                      pills: data.pills,
+                      records: data.records,
+                      day: day,
+                      now: widget.now,
+                    );
+                    final color = status == DayStatus.future
+                        ? null
+                        : dayStatusColor(context, status);
+                    final isToday = day == today;
+                    return Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color?.withValues(alpha: 0.22),
+                        border: isToday
+                            ? Border.all(color: palette.accent, width: 3)
+                            : color != null
+                            ? Border.all(color: color, width: 2)
+                            : null,
+                      ),
+                      child: Text(
+                        '$d',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: palette.textPrimary,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              legend(palette.success, l.legendAllTaken),
+              legend(palette.warning, l.legendSomeMissed),
+              legend(palette.accent, l.today),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

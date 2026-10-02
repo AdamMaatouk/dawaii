@@ -25,9 +25,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remove => 'Remove';
 
   @override
-  String get close => 'Close';
-
-  @override
   String get undo => 'Undo';
 
   @override
@@ -40,31 +37,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get now => 'now';
 
   @override
-  String get mainMenu => 'Menu';
-
-  @override
   String get settings => 'Settings';
 
   @override
   String get pausedMedications => 'Paused medications';
-
-  @override
-  String pausedCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count medications paused',
-      one: '1 medication paused',
-      zero: 'None paused',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get showingPaused => 'Paused medications';
-
-  @override
-  String get backToSchedule => 'Back to schedule';
 
   @override
   String get today => 'Today';
@@ -94,12 +70,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get allDoneBody =>
       'You have taken care of every dose today. Well done.';
-
-  @override
-  String get noPaused => 'No paused medications';
-
-  @override
-  String get pausedEmpty => 'When you pause a medication, it will appear here.';
 
   @override
   String get addMedication => 'Add medication';
@@ -203,45 +173,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String weeksCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count weeks',
-      one: '1 week',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String monthsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count months',
-      one: '1 month',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String pillsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
       other: '$count pills',
       one: '1 pill',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String dosesCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count doses',
-      one: '1 dose',
     );
     return '$_temp0';
   }
@@ -266,11 +203,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get justNow => 'just now';
-
-  @override
-  String doseLine(Object summary) {
-    return 'Dose: $summary';
-  }
 
   @override
   String get taken => 'Taken';
@@ -331,9 +263,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unableDelete => 'Unable to delete medication.';
 
   @override
-  String get unableLoadMedications => 'Unable to load medications.';
-
-  @override
   String get pause => 'Pause';
 
   @override
@@ -381,9 +310,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get timesPerDay => 'Times a day';
 
   @override
   String get scheduleEnds => 'Ends';
@@ -441,9 +367,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get numberOfPills => 'Pills per dose';
-
-  @override
-  String get pillCountHint => 'e.g. 1 or 2';
 
   @override
   String get invalidPillCount => 'Enter a number from 1 to 99';
@@ -669,9 +592,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analyticsHistory => 'Progress';
-
-  @override
-  String get refresh => 'Refresh';
 
   @override
   String get timeframe => 'Period';
@@ -1042,4 +962,198 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dec => 'Dec';
+
+  @override
+  String get greetingMorning => 'Good morning';
+
+  @override
+  String get greetingAfternoon => 'Good afternoon';
+
+  @override
+  String get greetingEvening => 'Good evening';
+
+  @override
+  String greetingWithName(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String get partMorning => 'Morning';
+
+  @override
+  String get partAfternoon => 'Afternoon';
+
+  @override
+  String get partEvening => 'Evening';
+
+  @override
+  String get partNight => 'Night';
+
+  @override
+  String sectionProgress(int taken, int total) {
+    return '$taken of $total taken';
+  }
+
+  @override
+  String get tookAll => 'Took all';
+
+  @override
+  String get iTookIt => 'I took it';
+
+  @override
+  String get iTookThemAll => 'I took them all';
+
+  @override
+  String get takeEarly => 'Take it now (early)';
+
+  @override
+  String get yesTookAll => 'Yes, I took them all';
+
+  @override
+  String get confirmTakeAllTitle => 'Did you take all of these?';
+
+  @override
+  String get nowTimeToTake => 'TIME TO TAKE';
+
+  @override
+  String get nowNext => 'NEXT';
+
+  @override
+  String get laterToday => 'Later today';
+
+  @override
+  String get backToToday => 'Today';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get tabToday => 'Today';
+
+  @override
+  String get tabMedicines => 'Medicines';
+
+  @override
+  String get medicinesTitle => 'My medicines';
+
+  @override
+  String get activeMedicines => 'Active';
+
+  @override
+  String get medicationPaused =>
+      'This medication is paused. No reminders until you resume it.';
+
+  @override
+  String get medicationDetails => 'Medicine details';
+
+  @override
+  String get onbNameTitle => 'What should we call you?';
+
+  @override
+  String get onbNameHelp => 'Optional. Dawaii uses it to greet you.';
+
+  @override
+  String get onbNameHint => 'Your first name';
+
+  @override
+  String get onbTextTitle => 'Is this text easy to read?';
+
+  @override
+  String get onbTextHelp =>
+      'Choose the size that feels comfortable. You can change it later in Settings.';
+
+  @override
+  String get onbSampleName => 'Aspirin';
+
+  @override
+  String get onbRemindersTitle => 'Allow reminders';
+
+  @override
+  String get onbRemindersBody =>
+      'Dawaii needs your permission to remind you about your medicines, even when the phone is locked.\n\nOn the next screen, please tap \"Allow\".';
+
+  @override
+  String get onbAllow => 'Continue';
+
+  @override
+  String get onbNotNow => 'Not now';
+
+  @override
+  String get nextStep => 'Next';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get pickTimeTitle => 'Choose a time';
+
+  @override
+  String get hourLabel => 'Hour';
+
+  @override
+  String get minuteLabel => 'Minute';
+
+  @override
+  String get addOtherTime => 'Another time';
+
+  @override
+  String get wizNameTitle => 'What is the medicine called?';
+
+  @override
+  String get wizLooksTitle => 'What does it look like?';
+
+  @override
+  String get wizWhenTitle => 'When do you take it?';
+
+  @override
+  String get wizHowLongTitle => 'For how long?';
+
+  @override
+  String get wizStockTitle => 'Count your pills?';
+
+  @override
+  String stepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get noStockTracking => 'No, don\'t count';
+
+  @override
+  String get yourName => 'Your name';
+
+  @override
+  String get yourNameHelp => 'Used to greet you (optional)';
+
+  @override
+  String get saved => 'Saved.';
+
+  @override
+  String get encouragementGreat => 'Excellent! Keep it up.';
+
+  @override
+  String get encouragementGood => 'Good job. Keep going.';
+
+  @override
+  String get encouragementLow => 'Every dose counts. You can do it.';
+
+  @override
+  String takenOfLast(int taken, int total) {
+    return 'You took $taken of your last $total doses.';
+  }
+
+  @override
+  String get previousMonth => 'Previous month';
+
+  @override
+  String get nextMonth => 'Next month';
+
+  @override
+  String get legendAllTaken => 'All taken';
+
+  @override
+  String get legendSomeMissed => 'Some missed';
 }

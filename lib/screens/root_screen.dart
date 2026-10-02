@@ -10,10 +10,15 @@ import '../services/notification_service.dart';
 import '../services/settings_service.dart';
 import '../theme/app_theme.dart';
 import 'history_screen.dart';
-import 'home/home_screen.dart';
+import 'medicines/medicines_screen.dart';
+import 'onboarding_screen.dart';
+import 'settings_screen.dart';
+import 'today/today_screen.dart';
 
-/// App shell: bottom navigation, app lifecycle, notification taps and the
-/// periodic refresh that keeps "in 5 min" / "LATE" labels current.
+enum AppTab { today, medicines, progress, settings }
+
+/// App shell: first-launch setup, labeled bottom tabs, app lifecycle,
+/// notification taps and the periodic refresh of time labels.
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
 
@@ -24,11 +29,12 @@ class RootScreen extends StatefulWidget {
 class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
   final AppData _data = AppData();
   final NotificationService _notifications = NotificationService();
+  final SettingsService _settings = SettingsService();
 
-  /// A dose the user opened from a notification, handled by HomeScreen.
+  /// A dose the user opened from a notification, handled by TodayScreen.
   final ValueNotifier<DoseRef?> _openedDose = ValueNotifier(null);
 
-  int _tab = 0;
+  AppTab _tab = AppTab.today;
   Timer? _ticker;
   StreamSubscription<DoseRef?>? _tapSub;
   StreamSubscription<void>? _changeSub;
@@ -38,12 +44,12 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    SettingsService().addListener(_onSettingsChanged);
+    _settings.addListener(_onSettingsChanged);
     _data.reload();
 
     _tapSub = _notifications.taps.listen(_openDose);
     _changeSub = _notifications.changes.listen((_) => _data.reload());
-    _notifications.launchDose().then(_openDose);
+    _notifications.launchDose().then(_openDose).catchError((_) {});
 
     _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
       // Pick up notification-button changes made in the background isolate.
@@ -61,7 +67,7 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
 
   void _openDose(DoseRef? ref) {
     if (ref == null) return;
-    setState(() => _tab = 0);
+    setState(() => _tab = AppTab.today);
     _openedDose.value = ref;
   }
 
@@ -76,7 +82,7 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    SettingsService().removeListener(_onSettingsChanged);
+    _settings.removeListener(_onSettingsChanged);
     _ticker?.cancel();
     _tapSub?.cancel();
     _changeSub?.cancel();
@@ -86,11 +92,20 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    if (!_settings.onboardingDone) return const OnboardingScreen();
+
     final l = AppLocalizations.of(context);
     final palette = context.palette;
-    final simple = SettingsService().simpleMode;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final tab = simple ? 0 : _tab;
+
+    // Simple mode hides the Progress tab.
+    final tabs = [
+      AppTab.today,
+      AppTab.medicines,
+      if (!_settings.simpleMode) AppTab.progress,
+      AppTab.settings,
+    ];
+    final tab = tabs.contains(_tab) ? _tab : AppTab.today;
 
     final overlay =
         (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
@@ -102,42 +117,54 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
                   : Brightness.dark,
             );
 
+    NavigationDestination destination(AppTab t) => switch (t) {
+      AppTab.today => NavigationDestination(
+        icon: const Icon(Icons.today_outlined),
+        selectedIcon: const Icon(Icons.today_rounded),
+        label: l.tabToday,
+      ),
+      AppTab.medicines => NavigationDestination(
+        icon: const Icon(Icons.medication_outlined),
+        selectedIcon: const Icon(Icons.medication_rounded),
+        label: l.tabMedicines,
+      ),
+      AppTab.progress => NavigationDestination(
+        icon: const Icon(Icons.insights_rounded),
+        selectedIcon: const Icon(Icons.auto_graph_rounded),
+        label: l.analytics,
+      ),
+      AppTab.settings => NavigationDestination(
+        icon: const Icon(Icons.settings_outlined),
+        selectedIcon: const Icon(Icons.settings_rounded),
+        label: l.settings,
+      ),
+    };
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
         body: IndexedStack(
-          index: tab,
+          index: tab.index,
           children: [
-            HomeScreen(openedDose: _openedDose),
+            TodayScreen(openedDose: _openedDose),
+            const MedicinesScreen(),
             const HistoryScreen(),
+            const SettingsScreen(),
           ],
         ),
-        bottomNavigationBar: simple
-            ? null
-            : DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: palette.border)),
-                ),
-                child: NavigationBar(
-                  selectedIndex: tab,
-                  onDestinationSelected: (i) {
-                    setState(() => _tab = i);
-                    if (i == 1) _data.reload();
-                  },
-                  destinations: [
-                    NavigationDestination(
-                      icon: const Icon(Icons.today_rounded),
-                      selectedIcon: const Icon(Icons.calendar_month_rounded),
-                      label: l.schedule,
-                    ),
-                    NavigationDestination(
-                      icon: const Icon(Icons.insights_rounded),
-                      selectedIcon: const Icon(Icons.auto_graph_rounded),
-                      label: l.analytics,
-                    ),
-                  ],
-                ),
-              ),
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: palette.border)),
+          ),
+          child: NavigationBar(
+            selectedIndex: tabs.indexOf(tab),
+            onDestinationSelected: (i) {
+              setState(() => _tab = tabs[i]);
+              _data.reload();
+            },
+            destinations: [for (final t in tabs) destination(t)],
+          ),
+        ),
       ),
     );
   }

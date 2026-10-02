@@ -68,6 +68,8 @@ class Formatters {
     return '${local.day} ${_months[local.month - 1]} ${local.year}';
   }
 
+  String monthYear(DateTime d) => '${_months[d.month - 1]} ${d.year}';
+
   String shortDate(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 
   String pills(int count) => l.pillsCount(count);
