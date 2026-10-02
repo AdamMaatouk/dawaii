@@ -120,7 +120,7 @@ class NowCard extends StatelessWidget {
               height: 68,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF047857),
+                  backgroundColor: palette.successStrong,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),

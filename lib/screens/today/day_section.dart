@@ -412,7 +412,7 @@ class _ActionRow extends StatelessWidget {
           flex: 3,
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF047857),
+              backgroundColor: palette.successStrong,
               foregroundColor: Colors.white,
               minimumSize: Size(0, height),
               padding: const EdgeInsets.symmetric(horizontal: 8),

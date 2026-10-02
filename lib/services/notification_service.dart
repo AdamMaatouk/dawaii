@@ -521,7 +521,7 @@ class NotificationService {
             : l.notificationChannelDescription,
         importance: Importance.max,
         priority: Priority.high,
-        color: const Color(0xFF2563EB),
+        color: const Color(0xFF0F766E),
         category: AndroidNotificationCategory.alarm,
         visibility: NotificationVisibility.public,
         audioAttributesUsage: persistent
@@ -566,7 +566,7 @@ class NotificationService {
         _infoChannel,
         l.infoChannelName,
         channelDescription: l.infoChannelDescription,
-        color: const Color(0xFF2563EB),
+        color: const Color(0xFF0F766E),
       ),
       iOS: const DarwinNotificationDetails(),
     );

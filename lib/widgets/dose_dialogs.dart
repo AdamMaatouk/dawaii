@@ -203,7 +203,7 @@ Future<DateTime?> confirmTakeDose(
                 flex: 2,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF047857),
+                    backgroundColor: context.palette.successStrong,
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () =>
@@ -473,7 +473,7 @@ Future<bool> confirmTakeAll(
     ),
     confirmText: l.yesTookAll,
     confirmIcon: Icons.done_all_rounded,
-    confirmColor: const Color(0xFF059669),
+    confirmColor: context.palette.successStrong,
   );
 }
 
