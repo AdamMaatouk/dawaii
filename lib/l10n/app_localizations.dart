@@ -2083,6 +2083,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Some missed'**
   String get legendSomeMissed;
+
+  /// No description provided for @doneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get doneTitle;
+
+  /// No description provided for @showDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get showDone;
+
+  /// No description provided for @hideDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hideDone;
 }
 
 class _AppLocalizationsDelegate

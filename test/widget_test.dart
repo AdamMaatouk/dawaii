@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pill_reminder_app/main.dart';
+import 'package:pill_reminder_app/models/dose.dart';
 import 'package:pill_reminder_app/models/pill_model.dart';
 import 'package:pill_reminder_app/services/app_data.dart';
 import 'package:pill_reminder_app/services/notification_service.dart';
@@ -118,6 +119,48 @@ void main() {
     expect(find.text('1 of 2 taken'), findsOneWidget);
     // The next dose is now the "Now" card.
     expect(find.text('NEXT'), findsOneWidget);
+
+    // The taken dose moved down into "Done", which can be folded away.
+    expect(find.text('Done'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Hide'),
+      300,
+      scrollable: find
+          .byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+          )
+          .first,
+    );
+    await tester.tap(find.text('Hide'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Taken at'), findsNothing);
+    await tester.tap(find.text('Show'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Taken at'), findsOneWidget);
+  });
+
+  testWidgets('a part of the day disappears once all its doses are done', (
+    tester,
+  ) async {
+    usePhoneSize(tester);
+    final pill = testPill(
+      name: 'Concor',
+      times: ['00:00', '23:59'],
+      start: today.subtract(const Duration(days: 1)),
+    );
+    await pumpApp(tester, {
+      'user_pills': pillsJson([pill]),
+      'dose.${ref('1', today, '00:00').key}': json.encode(
+        const DoseRecord(status: DoseStatus.taken).toMap(),
+      ),
+      'dose.${ref('1', today, '23:59').key}': json.encode(
+        const DoseRecord(status: DoseStatus.skipped).toMap(),
+      ),
+    });
+    expect(find.text('Night'), findsNothing);
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.text('Taken'), findsOneWidget);
+    expect(find.text('Skipped'), findsOneWidget);
   });
 
   testWidgets('"Took all" logs every due dose of a section at once', (

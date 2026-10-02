@@ -1156,4 +1156,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get legendSomeMissed => 'Some missed';
+
+  @override
+  String get doneTitle => 'Done';
+
+  @override
+  String get showDone => 'Show';
+
+  @override
+  String get hideDone => 'Hide';
 }

@@ -122,8 +122,15 @@ class DaySectionView extends StatelessWidget {
               ],
             ),
           ),
-          for (final item in section.items)
-            DoseTile(item: item, now: now, callbacks: callbacks, large: large),
+          // Taken / skipped doses leave their group for the Done section.
+          for (final item in section.openItems)
+            DoseTile(
+              key: ValueKey(item.ref.key),
+              item: item,
+              now: now,
+              callbacks: callbacks,
+              large: large,
+            ),
         ],
       ),
     );
@@ -161,11 +168,15 @@ class DoseTile extends StatelessWidget {
 
     // White / very light pills get a visible outline instead of a stripe.
     final pillColor = Color(pill.colorHex);
-    final stripe = pillColor.computeLuminance() > 0.75
+    final stripe = logged
+        ? palette.border
+        : pillColor.computeLuminance() > 0.75
         ? palette.pillTrayBorder
         : pillColor;
 
-    final border = late
+    final border = logged
+        ? palette.border
+        : late
         ? palette.danger.withValues(alpha: 0.6)
         : actionable
         ? palette.accent.withValues(alpha: 0.5)
@@ -182,7 +193,8 @@ class DoseTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: palette.surface,
+        // Done doses sit back on a quieter background.
+        color: logged ? palette.innerSurface : palette.surface,
         borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -203,42 +215,47 @@ class DoseTile extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              PillVisual(
-                                pill: pill,
-                                width: large ? 68 : 58,
-                                height: large ? 62 : 54,
-                                shapeSize: large ? 38 : 32,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      pill.name,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: large ? 21 : 19,
-                                        fontWeight: FontWeight.w800,
-                                        color: palette.textPrimary,
-                                      ),
-                                    ),
-                                    Text(
-                                      fmt.doseSummary(pill),
-                                      style: TextStyle(
-                                        fontSize: large ? 17 : 15,
-                                        color: palette.textSecondary,
-                                      ),
-                                    ),
-                                  ],
+                          // Greyed out once taken or skipped; the undo chip
+                          // below stays fully visible and tappable.
+                          Opacity(
+                            opacity: logged ? 0.55 : 1,
+                            child: Row(
+                              children: [
+                                _DonePillVisual(
+                                  item: item,
+                                  done: logged,
+                                  large: large,
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              _TimeColumn(item: item, now: now, large: large),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        pill.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: large ? 21 : 19,
+                                          fontWeight: FontWeight.w800,
+                                          color: palette.textPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        fmt.doseSummary(pill),
+                                        style: TextStyle(
+                                          fontSize: large ? 17 : 15,
+                                          color: palette.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                _TimeColumn(item: item, now: now, large: large),
+                              ],
+                            ),
                           ),
                           if (pill.instructions != null && item.isOpen) ...[
                             const SizedBox(height: 6),
@@ -500,6 +517,218 @@ class _LoggedChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Turns a picture grey (used for doses that are done).
+const ColorFilter _greyscale = ColorFilter.matrix(<double>[
+  0.2126, 0.7152, 0.0722, 0, 0, //
+  0.2126, 0.7152, 0.0722, 0, 0, //
+  0.2126, 0.7152, 0.0722, 0, 0, //
+  0, 0, 0, 1, 0,
+]);
+
+/// The pill picture; when done it turns grey and gets a check (or cross)
+/// badge so the state is clear even without reading.
+class _DonePillVisual extends StatelessWidget {
+  final DoseItem item;
+  final bool done;
+  final bool large;
+
+  const _DonePillVisual({
+    required this.item,
+    required this.done,
+    required this.large,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final visual = PillVisual(
+      pill: item.pill,
+      width: large ? 68 : 58,
+      height: large ? 62 : 54,
+      shapeSize: large ? 38 : 32,
+    );
+    if (!done) return visual;
+
+    final taken = item.state == DoseState.taken;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ColorFiltered(colorFilter: _greyscale, child: visual),
+        PositionedDirectional(
+          end: -6,
+          bottom: -6,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: palette.surface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              taken ? Icons.check_circle_rounded : Icons.cancel_rounded,
+              size: 24,
+              color: taken ? palette.success : palette.danger,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Done" at the bottom of the day: everything already taken or skipped,
+/// greyed out, with undo still one tap away. Can be folded away.
+class DoneSection extends StatelessWidget {
+  final List<DoseItem> items;
+  final DateTime now;
+  final DoseCallbacks callbacks;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final bool large;
+
+  const DoneSection({
+    super.key,
+    required this.items,
+    required this.now,
+    required this.callbacks,
+    required this.expanded,
+    required this.onToggle,
+    this.large = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final l = AppLocalizations.of(context);
+    final palette = context.palette;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            button: true,
+            expanded: expanded,
+            label:
+                '${l.doneTitle} ${items.length}. '
+                '${expanded ? l.hideDone : l.showDone}',
+            excludeSemantics: true,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: onToggle,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(4, 6, 4, 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.task_alt_rounded,
+                      color: palette.success,
+                      size: 26,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l.doneTitle,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: palette.softSuccess,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${items.length}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: palette.successText,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      expanded ? l.hideDone : l.showDone,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: palette.accent,
+                      ),
+                    ),
+                    AnimatedRotation(
+                      turns: expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        color: palette.accent,
+                        size: 28,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final item in items)
+                        _ArrivesFromAbove(
+                          key: ValueKey('done-${item.ref.key}'),
+                          child: DoseTile(
+                            item: item,
+                            now: now,
+                            callbacks: callbacks,
+                            large: large,
+                          ),
+                        ),
+                    ],
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A short fade + slide down the first time a dose lands in Done, so the
+/// eye can follow it from its group to the bottom.
+class _ArrivesFromAbove extends StatelessWidget {
+  final Widget child;
+
+  const _ArrivesFromAbove({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+          offset: Offset(0, -24 * (1 - t)),
+          child: child,
+        ),
+      ),
+      child: child,
     );
   }
 }

@@ -110,7 +110,12 @@ class _MedicationScreenState extends State<MedicationScreen>
             date: today,
             now: now,
           )
-        : const <DoseItem>[];
+        : <DoseItem>[];
+    // Open doses first; taken / skipped ones sink to the bottom (greyed).
+    final openFirst = [
+      ...todayItems.where((i) => i.isOpen),
+      ...todayItems.where((i) => !i.isOpen),
+    ];
     final callbacks = DoseCallbacks(
       onTake: takeDose,
       onSnooze: snoozeDose,
@@ -276,7 +281,7 @@ class _MedicationScreenState extends State<MedicationScreen>
                 ],
                 if (todayItems.isNotEmpty) ...[
                   title(l.today),
-                  for (final item in todayItems)
+                  for (final item in openFirst)
                     DoseTile(item: item, now: now, callbacks: callbacks),
                 ],
                 title(l.scheduleConfiguration),

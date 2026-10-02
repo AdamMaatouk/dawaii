@@ -1173,4 +1173,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get legendSomeMissed => 'فاتت بعضها';
+
+  @override
+  String get doneTitle => 'تمّ';
+
+  @override
+  String get showDone => 'إظهار';
+
+  @override
+  String get hideDone => 'إخفاء';
 }

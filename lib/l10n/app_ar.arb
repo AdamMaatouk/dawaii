@@ -330,5 +330,8 @@
   "previousMonth": "الشهر السابق",
   "nextMonth": "الشهر التالي",
   "legendAllTaken": "أُخذت كلها",
-  "legendSomeMissed": "فاتت بعضها"
+  "legendSomeMissed": "فاتت بعضها",
+  "doneTitle": "تمّ",
+  "showDone": "إظهار",
+  "hideDone": "إخفاء"
 }

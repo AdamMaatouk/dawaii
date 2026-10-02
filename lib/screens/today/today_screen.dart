@@ -43,6 +43,10 @@ class _TodayScreenState extends State<TodayScreen>
   NotificationHealth? _health;
   bool _fixingHealth = false;
 
+  /// The Done section starts open: seeing what was already taken is
+  /// reassuring. It can be folded away.
+  bool _doneExpanded = true;
+
   @override
   void initState() {
     super.initState();
@@ -202,7 +206,7 @@ class _TodayScreenState extends State<TodayScreen>
           ),
         );
       }
-      for (final section in plan.sections) {
+      for (final section in plan.openSections) {
         children.add(
           DaySectionView(
             section: section,
@@ -212,6 +216,16 @@ class _TodayScreenState extends State<TodayScreen>
           ),
         );
       }
+      children.add(
+        DoneSection(
+          items: plan.doneItems,
+          now: now,
+          callbacks: _callbacks,
+          large: simple,
+          expanded: _doneExpanded,
+          onToggle: () => setState(() => _doneExpanded = !_doneExpanded),
+        ),
+      );
     }
 
     return Scaffold(

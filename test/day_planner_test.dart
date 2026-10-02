@@ -102,6 +102,29 @@ void main() {
     expect(plan.allDone, isTrue);
   });
 
+  test('taken and skipped doses move to Done; finished parts disappear', () {
+    final pill = testPill(
+      times: ['08:00', '09:00', '20:00'],
+      start: DateTime(2026, 1, 1),
+    );
+    final plan = planner.plan(
+      pills: [pill],
+      records: {
+        ref('1', today, '08:00').key: taken,
+        ref('1', today, '09:00').key: skipped,
+      },
+      date: today,
+      now: now,
+    );
+    expect(plan.openSections.map((s) => s.part), [DayPart.evening]);
+    expect(plan.doneItems.map((i) => i.ref.time), ['08:00', '09:00']);
+    // The morning section still knows its progress for the header.
+    final morning = plan.sections.first;
+    expect(morning.part, DayPart.morning);
+    expect(morning.takenCount, 1);
+    expect(morning.openItems, isEmpty);
+  });
+
   test('no Now group on other days; paused medications are hidden', () {
     final active = testPill(id: 'a', start: DateTime(2026, 1, 1));
     final paused = testPill(

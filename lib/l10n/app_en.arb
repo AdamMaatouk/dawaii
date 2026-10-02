@@ -473,5 +473,8 @@
   "previousMonth": "Previous month",
   "nextMonth": "Next month",
   "legendAllTaken": "All taken",
-  "legendSomeMissed": "Some missed"
+  "legendSomeMissed": "Some missed",
+  "doneTitle": "Done",
+  "showDone": "Show",
+  "hideDone": "Hide"
 }

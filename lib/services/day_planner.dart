@@ -56,6 +56,11 @@ class DaySection {
 
   int get takenCount => items.where((i) => i.state == DoseState.taken).length;
 
+  /// Doses still to take or log; taken/skipped ones move to "Done".
+  List<DoseItem> get openItems => items.where((i) => i.isOpen).toList();
+
+  bool get hasOpen => items.any((i) => i.isOpen);
+
   List<DoseItem> openActionable(DateTime now) =>
       items.where((i) => i.isOpen && i.isActionable(now)).toList();
 }
@@ -79,6 +84,14 @@ class DayPlan {
   bool get isEmpty => sections.isEmpty;
 
   List<DoseItem> get items => [for (final s in sections) ...s.items];
+
+  /// Parts of the day that still have something to do. A part whose doses
+  /// are all logged disappears; its doses live in [doneItems].
+  List<DaySection> get openSections =>
+      sections.where((s) => s.hasOpen).toList();
+
+  /// Taken and skipped doses, in time order, shown greyed out at the bottom.
+  List<DoseItem> get doneItems => items.where((i) => !i.isOpen).toList();
 }
 
 class DayPlanner {
