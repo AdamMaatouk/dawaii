@@ -165,7 +165,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         prefixIcon: const Icon(Icons.date_range_rounded),
                       ),
                       dropdownColor: palette.surface,
-                      style: TextStyle(
+                      // Keeps the app fonts (style replaces, not merges).
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
                         color: palette.textPrimary,

@@ -39,11 +39,17 @@ const List<TimeOfDay> quickTimes = [
   TimeOfDay(hour: 22, minute: 0),
 ];
 
-TextStyle formInputStyle(BuildContext context) => TextStyle(
-  fontSize: 18,
-  fontWeight: FontWeight.w500,
-  color: context.palette.textPrimary,
-);
+/// Built on the theme's body style so it keeps the app fonts: a dropdown's
+/// `style` replaces the inherited one (it would fall back to Roboto, and
+/// show empty boxes for Arabic).
+TextStyle formInputStyle(BuildContext context) => Theme.of(context)
+    .textTheme
+    .bodyLarge!
+    .copyWith(
+      fontSize: 18,
+      fontWeight: FontWeight.w500,
+      color: context.palette.textPrimary,
+    );
 
 Widget formLabel(BuildContext context, String text) => Padding(
   padding: const EdgeInsets.only(bottom: 10),

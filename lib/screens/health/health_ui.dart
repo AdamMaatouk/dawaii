@@ -84,7 +84,9 @@ class ReadingChart extends StatelessWidget {
           second: palette.warning,
           band: palette.success.withValues(alpha: 0.10),
           grid: palette.border,
-          label: palette.textMuted,
+          // Axis numbers in the app font (a painter does not inherit it).
+          labelStyle: Theme.of(context).textTheme.bodySmall!
+              .copyWith(color: palette.textMuted, fontSize: 12),
           rtl: Directionality.of(context) == TextDirection.rtl,
         ),
         child: const SizedBox.expand(),
@@ -100,7 +102,7 @@ class _ChartPainter extends CustomPainter {
   final Color second;
   final Color band;
   final Color grid;
-  final Color label;
+  final TextStyle labelStyle;
   final bool rtl;
 
   _ChartPainter({
@@ -110,7 +112,7 @@ class _ChartPainter extends CustomPainter {
     required this.second,
     required this.band,
     required this.grid,
-    required this.label,
+    required this.labelStyle,
     required this.rtl,
   });
 
@@ -153,10 +155,7 @@ class _ChartPainter extends CustomPainter {
         gridPaint,
       );
       final text = TextPainter(
-        text: TextSpan(
-          text: v.round().toString(),
-          style: TextStyle(color: label, fontSize: 11),
-        ),
+        text: TextSpan(text: v.round().toString(), style: labelStyle),
         textDirection: TextDirection.ltr,
       )..layout();
       text.paint(canvas, Offset(0, y(v) - text.height / 2));
