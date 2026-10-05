@@ -11,6 +11,8 @@
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS-555)
 ![Languages](https://img.shields.io/badge/languages-English%20%7C%20العربية-555)
 
+**[⬇ Download for Android](https://github.com/AdamMaatouk/dawaii/releases/latest)** · iPhone coming later
+
 </div>
 
 Dawaii (Arabic for "my medicine") reminds you when it is time to take each medication, lets you log it with one tap, and shows how well you are keeping up. It was built for an older family member, so every screen is designed around large text, clear wording and forgiving interactions. Everything stays on the phone: no account, no server, no tracking.
